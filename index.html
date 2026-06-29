@@ -168,6 +168,9 @@ const APP = {
     originalData: null,
     initialStats: null,
     inputFormat: 'csv',
+    workbook: null,
+    sheetNames: [],
+    activeSheet: '',
     columns: [],
     fileName: '',
     qualityReport: null,
@@ -233,6 +236,9 @@ function handleFile(file) {
     APP.fileName = file.name;
     const ext = file.name.toLowerCase().split('.').pop();
     APP.inputFormat = (ext === 'xlsx' || ext === 'xls') ? 'xlsx' : ext;
+    APP.workbook = null;
+    APP.sheetNames = [];
+    APP.activeSheet = '';
     const reader = new FileReader();
 
     if (ext === 'csv') {
@@ -247,14 +253,9 @@ function handleFile(file) {
     } else if (ext === 'xlsx' || ext === 'xls') {
         reader.onload = e => {
             const wb = XLSX.read(e.target.result, { type: 'array' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(ws, { defval: null });
-            if (json.length > 0) {
-                APP.columns = Object.keys(json[0]);
-                APP.data = json;
-                APP.originalData = JSON.parse(JSON.stringify(json));
-            }
-            onDataLoaded();
+            APP.workbook = wb;
+            APP.sheetNames = wb.SheetNames;
+            loadSheet(wb.SheetNames[0]);
         };
         reader.readAsArrayBuffer(file);
     } else if (ext === 'json') {
@@ -272,6 +273,22 @@ function handleFile(file) {
     } else {
         alert('Format non supporté. Utilisez CSV, Excel ou JSON.');
     }
+}
+
+function loadSheet(sheetName) {
+    const ws = APP.workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(ws, { defval: null });
+    APP.activeSheet = sheetName;
+    if (json.length > 0) {
+        APP.columns = Object.keys(json[0]);
+        APP.data = json;
+        APP.originalData = JSON.parse(JSON.stringify(json));
+    } else {
+        APP.columns = [];
+        APP.data = [];
+        APP.originalData = [];
+    }
+    onDataLoaded();
 }
 
 function onDataLoaded() {
@@ -364,11 +381,36 @@ function renderStep1() {
         html += `<div style="margin-top:1rem;padding:.6rem 1rem;background:#E8F5E9;border-radius:8px;color:var(--primary);font-weight:600">
             ✅ Fichier chargé : ${APP.fileName}</div>`;
 
+        if (APP.sheetNames.length > 1) {
+            html += `<div class="card" style="margin-top:1rem"><h3>Feuilles du fichier (${APP.sheetNames.length})</h3>
+                <div class="form-row" style="align-items:center;gap:1rem">
+                    <div class="form-group"><label>Feuille active :</label>
+                        <select id="sheet-select" onchange="loadSheet(this.value)">
+                            ${APP.sheetNames.map(s => `<option value="${s}" ${s === APP.activeSheet ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="font-size:.85rem;color:#666">
+                        ${APP.sheetNames.map(s => {
+                            const ws = APP.workbook.Sheets[s];
+                            const ref = ws['!ref'];
+                            let info = '(vide)';
+                            if (ref) {
+                                const range = XLSX.utils.decode_range(ref);
+                                info = `${range.e.r} lignes, ${range.e.c + 1} colonnes`;
+                            }
+                            return `<span style="margin-right:1rem;${s === APP.activeSheet ? 'font-weight:700;color:var(--primary)' : ''}">${s}: ${info}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
         html += `<div class="metrics">
             <div class="metric"><div class="val">${APP.data.length}</div><div class="label">Lignes</div></div>
             <div class="metric"><div class="val">${APP.columns.length}</div><div class="label">Colonnes</div></div>
             <div class="metric"><div class="val">${totalMissing}</div><div class="label">Valeurs manquantes</div></div>
             <div class="metric"><div class="val">${nDup}</div><div class="label">Doublons</div></div>
+            ${APP.sheetNames.length > 1 ? `<div class="metric"><div class="val">${APP.sheetNames.length}</div><div class="label">Feuilles</div></div>` : ''}
         </div>`;
 
         html += `<div class="card"><h3>Aperçu des données</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
