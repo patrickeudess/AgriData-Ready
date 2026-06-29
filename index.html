@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriData Ready — From Raw Data to FAIR & AI-Ready Data</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #333; background: #FAFAFA; line-height: 1.6;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 40%, #43A047 100%);
+            color: white; text-align: center; padding: 4rem 2rem 3rem;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+        .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+        .hero .icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
+        .hero .slogan {
+            font-size: 1.3rem; font-style: italic; opacity: 0.95;
+            margin-bottom: 0.8rem; font-weight: 300;
+        }
+        .hero .subtitle { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2rem; }
+        .btn {
+            display: inline-block; padding: 0.9rem 2.5rem; border-radius: 50px;
+            font-size: 1.1rem; font-weight: 700; text-decoration: none;
+            transition: all 0.3s ease; margin: 0.4rem;
+        }
+        .btn-primary {
+            background: white; color: #1B5E20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .btn-secondary {
+            background: transparent; color: white;
+            border: 2px solid rgba(255,255,255,0.7);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: white; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+        .section { padding: 4rem 0; }
+        .section-title {
+            text-align: center; font-size: 2rem; font-weight: 700;
+            color: #1B5E20; margin-bottom: 0.5rem;
+        }
+        .section-subtitle {
+            text-align: center; color: #666; margin-bottom: 3rem; font-size: 1.05rem;
+        }
+
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .step {
+            background: white; border-radius: 12px; padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 5px solid #4CAF50;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .step-number {
+            display: inline-block; width: 36px; height: 36px; line-height: 36px;
+            border-radius: 50%; background: #1B5E20; color: white;
+            text-align: center; font-weight: 800; font-size: 0.9rem; margin-bottom: 0.8rem;
+        }
+        .step h3 { color: #1B5E20; font-size: 1.1rem; margin-bottom: 0.4rem; }
+        .step p { color: #555; font-size: 0.9rem; }
+
+        .features-highlight {
+            background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%);
+        }
+
+        .scores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+        .score-card {
+            background: white; border-radius: 12px; padding: 2rem; text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .score-card h3 { color: #1B5E20; font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .score-card .icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+        .score-card p { color: #555; font-size: 0.9rem; }
+        .score-letters { margin-top: 1rem; }
+        .score-letter {
+            display: inline-block; width: 45px; height: 45px; line-height: 45px;
+            border-radius: 50%; color: white; font-weight: 800; font-size: 1.2rem;
+            margin: 0.2rem; background: #2E7D32;
+        }
+
+        .install-section { background: #1B5E20; color: white; text-align: center; }
+        .install-section .section-title { color: white; }
+        .install-section .section-subtitle { color: rgba(255,255,255,0.8); }
+        .code-block {
+            background: #0D3311; border-radius: 10px; padding: 1.5rem 2rem;
+            max-width: 500px; margin: 0 auto; text-align: left;
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 0.95rem;
+            color: #A5D6A7;
+        }
+        .code-block .comment { color: #66BB6A; }
+        .code-block .command { color: #E8F5E9; }
+
+        .export-list {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem; margin-top: 2rem;
+        }
+        .export-item {
+            background: white; border-radius: 10px; padding: 1rem 1.2rem;
+            display: flex; align-items: center; gap: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .export-item .icon { font-size: 1.5rem; flex-shrink: 0; }
+        .export-item span { font-size: 0.9rem; color: #333; }
+
+        .footer {
+            background: #263238; color: rgba(255,255,255,0.7); text-align: center;
+            padding: 2rem; font-size: 0.85rem;
+        }
+        .footer a { color: #81C784; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .references { margin-top: 1rem; font-size: 0.8rem; opacity: 0.7; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .hero .slogan { font-size: 1rem; }
+            .scores-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<section class="hero">
+    <div class="hero-content">
+        <span class="icon">🌾</span>
+        <h1>AgriData Ready</h1>
+        <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
+        <p class="subtitle">
+            Transformez vos données brutes en données propres, documentées,
+            conformes aux principes FAIR et prêtes pour l'intelligence artificielle.
+        </p>
+        <a href="https://github.com/patrickeudess/AgriData-Ready" class="btn btn-primary">
+            Voir sur GitHub
+        </a>
+        <a href="#installation" class="btn btn-secondary">
+            Installation
+        </a>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">9 étapes pour des données prêtes</h2>
+        <p class="section-subtitle">L'application vous guide pas à pas, de l'import à l'export final</p>
+        <div class="steps">
+            <div class="step">
+                <span class="step-number">1</span>
+                <h3>Importer les données</h3>
+                <p>Déposez un fichier CSV, Excel ou JSON. L'application affiche un aperçu immédiat : lignes, colonnes, types, valeurs manquantes.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <h3>Analyser la qualité</h3>
+                <p>Détection automatique des problèmes : valeurs manquantes, doublons, colonnes vides, noms mal écrits, formats incohérents, valeurs anormales.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <h3>Modifier les données</h3>
+                <p>Éditez directement dans l'application : modifier une cellule, renommer ou supprimer des colonnes, traiter les valeurs manquantes, supprimer les doublons.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">4</span>
+                <h3>Documenter les variables</h3>
+                <p>Pour chaque colonne : description, type de donnée, unité, format attendu, valeurs possibles, règle de validation, utilité pour l'IA.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">5</span>
+                <h3>Compléter les métadonnées</h3>
+                <p>Titre, auteur, organisation, pays, zone géographique, période de collecte, licence, méthode, contact, citation recommandée.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">6</span>
+                <h3>Évaluer la conformité FAIR</h3>
+                <p>Score sur 100 réparti en 4 principes : Findable, Accessible, Interoperable, Reusable. Avec le détail de ce qui manque.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">7</span>
+                <h3>Évaluer l'AI Readiness</h3>
+                <p>Score sur 100 évaluant 7 dimensions : complétude, cohérence, documentation, qualité des variables, variable cible, structure, données sensibles.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">8</span>
+                <h3>Recommandations</h3>
+                <p>Actions concrètes hiérarchisées par priorité : urgent, important, amélioration. Chaque recommandation est directement actionnable.</p>
+            </div>
+            <div class="step">
+                <span class="step-number">9</span>
+                <h3>Exporter le dossier final</h3>
+                <p>Téléchargez un ZIP complet contenant toutes les pièces nécessaires pour un jeu de données documenté et exploitable.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section features-highlight">
+    <div class="container">
+        <h2 class="section-title">Deux scores complémentaires</h2>
+        <p class="section-subtitle">Évaluez la maturité de vos données sous deux angles essentiels</p>
+        <div class="scores-grid">
+            <div class="score-card">
+                <span class="icon">📊</span>
+                <h3>Score FAIR</h3>
+                <p>Conformité aux principes internationaux de gestion des données scientifiques (Wilkinson et al., 2016)</p>
+                <div class="score-letters">
+                    <span class="score-letter">F</span>
+                    <span class="score-letter">A</span>
+                    <span class="score-letter">I</span>
+                    <span class="score-letter">R</span>
+                </div>
+                <p style="margin-top:0.8rem; font-size:0.8rem; color:#888">Findable · Accessible · Interoperable · Reusable</p>
+            </div>
+            <div class="score-card">
+                <span class="icon">🤖</span>
+                <h3>Score AI Readiness</h3>
+                <p>Préparation des données pour une exploitation efficace par les algorithmes d'intelligence artificielle</p>
+                <div style="margin-top:1rem; display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem">
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Complétude</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Cohérence</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Documentation</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Variables</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Cible</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Structure</span>
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600">Sensibilité</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Dossier d'export complet</h2>
+        <p class="section-subtitle">Tout ce dont vous avez besoin, en un seul téléchargement ZIP</p>
+        <div class="export-list">
+            <div class="export-item"><span class="icon">📄</span><span>Base de données corrigée (CSV)</span></div>
+            <div class="export-item"><span class="icon">📋</span><span>Métadonnées (JSON)</span></div>
+            <div class="export-item"><span class="icon">📖</span><span>Dictionnaire de données (CSV + JSON)</span></div>
+            <div class="export-item"><span class="icon">🔍</span><span>Rapport qualité (JSON)</span></div>
+            <div class="export-item"><span class="icon">📊</span><span>Score FAIR (JSON)</span></div>
+            <div class="export-item"><span class="icon">🤖</span><span>Score AI Readiness (JSON)</span></div>
+            <div class="export-item"><span class="icon">💡</span><span>Recommandations (JSON)</span></div>
+            <div class="export-item"><span class="icon">📝</span><span>Historique des modifications (JSON)</span></div>
+            <div class="export-item"><span class="icon">🌐</span><span>Rapport final complet (HTML)</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="section install-section" id="installation">
+    <div class="container">
+        <h2 class="section-title">Installation</h2>
+        <p class="section-subtitle">Lancez l'application en quelques secondes</p>
+        <div class="code-block">
+            <span class="comment"># Cloner le dépôt</span><br>
+            <span class="command">git clone https://github.com/patrickeudess/AgriData-Ready.git</span><br>
+            <span class="command">cd AgriData-Ready</span><br><br>
+            <span class="comment"># Installer les dépendances</span><br>
+            <span class="command">pip install -r requirements.txt</span><br><br>
+            <span class="comment"># Lancer l'application</span><br>
+            <span class="command">streamlit run app.py</span>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>
+        <strong>AgriData Ready</strong> — From Raw Data to FAIR & AI-Ready Data<br>
+        Mémoire DU Données — <a href="#">UCAD/EBAD</a> — Patrick-Eudess Zatty ALLA — 2026
+    </p>
+    <p class="references">
+        Références : Wilkinson et al. (2016) · Wang & Strong (1996) · Sambasivan et al. (2021) · Andrew Ng (Data-Centric AI)
+    </p>
+</footer>
+
+</body>
+</html>
