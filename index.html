@@ -166,6 +166,7 @@ const APP = {
     step: 1,
     data: null,
     originalData: null,
+    initialStats: null,
     columns: [],
     fileName: '',
     qualityReport: null,
@@ -279,6 +280,15 @@ function onDataLoaded() {
     APP.qualityReport = null;
     APP.fairScore = null;
     APP.aiScore = null;
+    let initMissing = 0;
+    for (const col of APP.columns) initMissing += countMissing(col);
+    APP.initialStats = {
+        rows: APP.data.length,
+        cols: APP.columns.length,
+        columns: [...APP.columns],
+        missing: initMissing,
+        duplicates: countDuplicates()
+    };
     updateFileInfo();
     renderNav();
     renderStep();
@@ -1070,7 +1080,47 @@ function renderStep8() {
         html += `<div class="reco ${prio}"><strong>${icon} ${title}</strong>${desc}</div>`;
     }
 
+    html += renderChangeLog();
     html += navButtons(7, 9, 'Exporter →');
+    return html;
+}
+
+function renderChangeLog() {
+    const ini = APP.initialStats;
+    if (!ini) return '';
+    let curMissing = 0;
+    for (const col of APP.columns) curMissing += countMissing(col);
+    const curDup = countDuplicates();
+    const addedCols = APP.columns.filter(c => !ini.columns.includes(c));
+    const removedCols = ini.columns.filter(c => !APP.columns.includes(c));
+
+    let html = `<div class="card" style="margin-top:1.5rem"><h3>📋 Bilan des modifications</h3>`;
+    html += `<h4 style="margin:.8rem 0 .5rem;font-size:.9rem;color:#555">Comparatif avant / après</h4>`;
+    html += `<div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
+    function diffBadge(before, after, lowerIsBetter) {
+        const d = after - before;
+        if (d === 0) return '<span style="color:#888">—</span>';
+        const good = lowerIsBetter ? d < 0 : d > 0;
+        const color = good ? 'var(--primary)' : 'var(--danger)';
+        return `<span style="color:${color};font-weight:700">${d > 0 ? '+' : ''}${d}</span>`;
+    }
+    html += `<tr><td>Lignes</td><td>${ini.rows}</td><td>${APP.data.length}</td><td>${diffBadge(ini.rows, APP.data.length, false)}</td></tr>`;
+    html += `<tr><td>Colonnes</td><td>${ini.cols}</td><td>${APP.columns.length}</td><td>${diffBadge(ini.cols, APP.columns.length, false)}</td></tr>`;
+    html += `<tr><td>Valeurs manquantes</td><td>${ini.missing}</td><td>${curMissing}</td><td>${diffBadge(ini.missing, curMissing, true)}</td></tr>`;
+    html += `<tr><td>Doublons</td><td>${ini.duplicates}</td><td>${curDup}</td><td>${diffBadge(ini.duplicates, curDup, true)}</td></tr>`;
+    html += '</table></div>';
+    if (removedCols.length) html += `<p style="font-size:.85rem;margin-top:.5rem">🗑️ Colonnes supprimées : <strong>${removedCols.join(', ')}</strong></p>`;
+    if (addedCols.length) html += `<p style="font-size:.85rem;margin-top:.3rem">➕ Colonnes ajoutées : <strong>${addedCols.join(', ')}</strong></p>`;
+
+    if (APP.editHistory.length > 0) {
+        html += `<h4 style="margin:1rem 0 .5rem;font-size:.9rem;color:#555">Journal des actions (${APP.editHistory.length})</h4>`;
+        html += `<div class="table-wrap" style="max-height:300px;overflow-y:auto"><table><tr><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
+        for (const h of APP.editHistory) html += `<tr><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
+        html += '</table></div>';
+    } else {
+        html += `<p style="color:#888;margin-top:.5rem;font-style:italic">Aucune modification effectuée.</p>`;
+    }
+    html += '</div>';
     return html;
 }
 
@@ -1141,6 +1191,10 @@ function buildHTMLReport() {
         return `<tr><td style="color:${color};font-weight:bold">${p.toUpperCase()}</td><td><strong>${t}</strong><br>${d}</td></tr>`;
     }).join('');
     let histRows = APP.editHistory.map(h => `<tr><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`).join('');
+    const ini = APP.initialStats || {};
+    let curMissing = 0;
+    for (const col of APP.columns) curMissing += countMissing(col);
+    const curDup = countDuplicates();
 
     return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport AgriData Ready</title>
 <style>body{font-family:'Segoe UI',sans-serif;max-width:1000px;margin:0 auto;padding:2rem;color:#333}
@@ -1158,7 +1212,15 @@ td{padding:.5rem;border-bottom:1px solid #E0E0E0}tr:nth-child(even){background:#
 <h2>5. Score FAIR</h2><div class="score-box">${f.total}/100</div><table><tr><th>Principe</th><th>Score</th></tr>${fairRows}</table>
 <h2>6. Score AI Readiness</h2><div class="score-box">${a.total}/100</div><table><tr><th>Dimension</th><th>Score</th></tr>${aiRows}</table>
 <h2>7. Recommandations</h2><table><tr><th>Priorité</th><th>Recommandation</th></tr>${recoRows}</table>
-<h2>8. Historique des modifications</h2><table><tr><th>Heure</th><th>Action</th><th>Détail</th></tr>${histRows}</table>
+<h2>8. Bilan des modifications</h2>
+<h3>Comparatif avant / après</h3>
+<table><tr><th>Indicateur</th><th>Avant</th><th>Après</th></tr>
+<tr><td>Lignes</td><td>${ini.rows || '—'}</td><td>${APP.data.length}</td></tr>
+<tr><td>Colonnes</td><td>${ini.cols || '—'}</td><td>${APP.columns.length}</td></tr>
+<tr><td>Valeurs manquantes</td><td>${ini.missing ?? '—'}</td><td>${curMissing}</td></tr>
+<tr><td>Doublons</td><td>${ini.duplicates ?? '—'}</td><td>${curDup}</td></tr></table>
+<h3>Journal des actions</h3>
+<table><tr><th>Heure</th><th>Action</th><th>Détail</th></tr>${histRows}</table>
 <hr><p style="text-align:center;color:#888;font-size:.8rem">AgriData Ready — From Raw Data to FAIR & AI-Ready Data</p></body></html>`;
 }
 
