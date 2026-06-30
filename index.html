@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriData Ready — From Raw Data to FAIR & AI-Ready Data</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+<script src="libs/papaparse.min.js"></script>
+<script src="libs/xlsx.full.min.js"></script>
+<script src="libs/jszip.min.js"></script>
+<script src="libs/FileSaver.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#333;background:#f5f6fa;min-height:100vh;display:flex}
+:root{--primary:#1B5E20;--primary-light:#4CAF50;--accent:#FF6F00;--danger:#C62828;--warn:#F57F17;--bg:#f5f6fa;--card:#fff;--radius:10px}
+
+/* Sidebar */
+.sidebar{width:260px;background:linear-gradient(180deg,#1B5E20 0%,#2E7D32 100%);color:#fff;padding:1.5rem 1rem;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100}
+.sidebar h1{font-size:1.3rem;text-align:center;margin-bottom:.3rem}
+.sidebar .slogan{font-size:.75rem;text-align:center;opacity:.8;font-style:italic;margin-bottom:1.5rem}
+.sidebar .nav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;margin-bottom:.3rem;font-size:.85rem;transition:all .2s;color:rgba(255,255,255,.7)}
+.sidebar .nav-item:hover{background:rgba(255,255,255,.15);color:#fff}
+.sidebar .nav-item.active{background:rgba(255,255,255,.25);color:#fff;font-weight:700}
+.sidebar .nav-item.done{color:#A5D6A7}
+.sidebar .nav-item .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.sidebar .nav-item.active .num{background:#fff;color:#1B5E20}
+.sidebar .nav-item.done .num{background:#A5D6A7;color:#1B5E20}
+.sidebar .file-info{margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.2);font-size:.78rem;opacity:.8}
+.sidebar .file-info p{margin:.2rem 0}
+
+/* Main */
+.main{margin-left:260px;flex:1;padding:1.5rem 2rem 3rem;min-height:100vh}
+.step-view{display:none}
+.step-view.active{display:block}
+
+/* Header */
+.page-header{background:linear-gradient(135deg,#1B5E20 0%,#2E7D32 50%,#43A047 100%);color:#fff;padding:1.5rem 2rem;border-radius:var(--radius);margin-bottom:1.5rem;text-align:center}
+.page-header h2{font-size:1.5rem;margin-bottom:.3rem}
+.page-header p{opacity:.85;font-size:.9rem}
+
+/* Cards & metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+.metric{background:var(--card);border-radius:var(--radius);padding:1rem;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border-top:4px solid var(--primary-light)}
+.metric .val{font-size:1.8rem;font-weight:800;color:var(--primary)}
+.metric .label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.05em}
+
+.card{background:var(--card);border-radius:var(--radius);padding:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.card h3{color:var(--primary);font-size:1rem;margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:2px solid #E8F5E9}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:.8rem 0;max-height:500px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:var(--primary);color:#fff;padding:.5rem .6rem;text-align:left;position:sticky;top:0;z-index:1}
+td{padding:.4rem .6rem;border-bottom:1px solid #eee}
+tr:nth-child(even){background:#f9f9f9}
+tr:hover{background:#E8F5E9}
+td input,td select{border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:.8rem;width:100%}
+td input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 2px rgba(76,175,80,.2)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#2E7D32;transform:translateY(-1px)}
+.btn-secondary{background:#E8F5E9;color:var(--primary)}
+.btn-secondary:hover{background:#C8E6C9}
+.btn-danger{background:#FFEBEE;color:var(--danger)}
+.btn-danger:hover{background:#FFCDD2}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:#E65100}
+.btn-sm{padding:.3rem .8rem;font-size:.78rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-group{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* Navigation buttons */
+.nav-buttons{display:flex;justify-content:space-between;margin-top:2rem;padding-top:1rem;border-top:2px solid #eee}
+
+/* Forms */
+.form-group{margin-bottom:.8rem}
+.form-group label{display:block;font-weight:600;font-size:.82rem;color:#555;margin-bottom:.2rem}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.4rem .6rem;border:1px solid #ddd;border-radius:6px;font-size:.85rem;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 2px rgba(76,175,80,.2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* Issues */
+.issue{padding:.5rem .8rem;border-radius:0 8px 8px 0;margin:.3rem 0;font-size:.83rem;display:flex;align-items:center;gap:.5rem}
+.issue.critical{background:#FFEBEE;border-left:4px solid var(--danger)}
+.issue.warning{background:#FFF3E0;border-left:4px solid var(--accent)}
+.issue.info{background:#E8F5E9;border-left:4px solid var(--primary-light)}
+
+/* Reco */
+.reco{padding:.6rem 1rem;border-radius:0 8px 8px 0;margin:.4rem 0;font-size:.85rem}
+.reco.urgent{background:#FFEBEE;border-left:4px solid var(--danger)}
+.reco.important{background:#FFF3E0;border-left:4px solid var(--accent)}
+.reco.improve{background:#E8F5E9;border-left:4px solid var(--primary-light)}
+.reco strong{display:block;margin-bottom:.2rem}
+
+/* Progress */
+.progress-bar{background:#E0E0E0;border-radius:10px;height:12px;overflow:hidden;margin:.5rem 0}
+.progress-bar .fill{height:100%;border-radius:10px;transition:width .5s ease}
+
+/* Score display */
+.score-display{text-align:center;padding:1.5rem}
+.score-big{font-size:3.5rem;font-weight:800;color:var(--primary)}
+.score-max{font-size:1.2rem;color:#888}
+.score-level{display:inline-block;padding:.3rem 1.2rem;border-radius:20px;font-weight:700;margin-top:.5rem}
+
+/* FAIR letters */
+.fair-row{display:flex;justify-content:center;gap:1rem;margin:1.5rem 0}
+.fair-item{text-align:center}
+.fair-letter{width:60px;height:60px;line-height:60px;border-radius:50%;color:#fff;font-size:1.5rem;font-weight:800;display:inline-block}
+.fair-label{font-size:.7rem;color:#888;margin-top:.3rem;display:block}
+
+/* Score bars */
+.score-bar-row{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;font-size:.82rem}
+.score-bar-label{width:170px;font-weight:600;flex-shrink:0}
+.score-bar-track{flex:1;background:#E0E0E0;border-radius:8px;height:16px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:8px;transition:width .5s}
+.score-bar-val{width:50px;text-align:right;font-weight:700}
+
+/* Tabs */
+.tabs{display:flex;gap:0;margin-bottom:1rem;border-bottom:2px solid #E0E0E0}
+.tab{padding:.5rem 1.2rem;cursor:pointer;font-size:.85rem;font-weight:600;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* Upload zone */
+.upload-zone{border:3px dashed #C8E6C9;border-radius:12px;padding:3rem;text-align:center;cursor:pointer;transition:all .3s;background:#f9fff9}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--primary);background:#E8F5E9}
+.upload-zone .icon{font-size:3rem;margin-bottom:.5rem;display:block}
+.upload-zone input{display:none}
+
+/* Responsive */
+@media(max-width:900px){
+.sidebar{width:200px}
+.main{margin-left:200px}
+.form-row{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+.sidebar{position:relative;width:100%}
+.main{margin-left:0}
+body{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <h1>🌾 AgriData Ready</h1>
+    <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
+    <div id="nav-items"></div>
+    <div class="file-info" id="file-info" style="display:none">
+        <p><strong>Fichier :</strong> <span id="info-filename"></span></p>
+        <p><strong>Lignes :</strong> <span id="info-rows"></span></p>
+        <p><strong>Colonnes :</strong> <span id="info-cols"></span></p>
+        <p><strong>Modifications :</strong> <span id="info-edits">0</span></p>
+    </div>
+</nav>
+
+<div class="main" id="main-content"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// APPLICATION STATE
+// ═══════════════════════════════════════════════════════════════
+const APP = {
+    step: 1,
+    data: null,
+    originalData: null,
+    initialStats: null,
+    inputFormat: 'csv',
+    workbook: null,
+    sheetNames: [],
+    activeSheet: '',
+    columns: [],
+    fileName: '',
+    qualityReport: null,
+    variableDocs: {},
+    metadata: {},
+    fairScore: null,
+    aiScore: null,
+    recommendations: [],
+    editHistory: [],
+    editCount: 0
+};
+
+const STEPS = [
+    'Importer les données',
+    'Qualité des données',
+    'Modifier les données',
+    'Documenter les variables',
+    'Métadonnées',
+    'Score FAIR',
+    'Score AI Readiness',
+    'Recommandations',
+    'Exporter'
+];
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function renderNav() {
+    const c = document.getElementById('nav-items');
+    c.innerHTML = STEPS.map((name, i) => {
+        const n = i + 1;
+        let cls = 'nav-item';
+        if (n === APP.step) cls += ' active';
+        else if (APP.data && n < APP.step) cls += ' done';
+        const disabled = !APP.data && n > 1;
+        return `<div class="${cls}" onclick="${disabled ? '' : `goStep(${n})`}" style="${disabled ? 'opacity:.4;cursor:default' : ''}">
+            <span class="num">${n === APP.step ? '▶' : (APP.data && n < APP.step ? '✓' : n)}</span>
+            <span>${name}</span>
+        </div>`;
+    }).join('');
+}
+
+function goStep(n) {
+    APP.step = n;
+    renderNav();
+    renderStep();
+}
+
+function updateFileInfo() {
+    const el = document.getElementById('file-info');
+    if (!APP.data) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    document.getElementById('info-filename').textContent = APP.fileName;
+    document.getElementById('info-rows').textContent = APP.data.length;
+    document.getElementById('info-cols').textContent = APP.columns.length;
+    document.getElementById('info-edits').textContent = APP.editCount;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILE LOADING
+// ═══════════════════════════════════════════════════════════════
+function handleFile(file) {
+    APP.fileName = file.name;
+    const ext = file.name.toLowerCase().split('.').pop();
+    APP.inputFormat = (ext === 'xlsx' || ext === 'xls') ? 'xlsx' : ext;
+    APP.workbook = null;
+    APP.sheetNames = [];
+    APP.activeSheet = '';
+    const reader = new FileReader();
+
+    if (ext === 'csv') {
+        reader.onload = e => {
+            const result = Papa.parse(e.target.result, { header: true, skipEmptyLines: true, dynamicTyping: true });
+            APP.columns = result.meta.fields || [];
+            APP.data = result.data;
+            APP.originalData = JSON.parse(JSON.stringify(result.data));
+            onDataLoaded();
+        };
+        reader.readAsText(file);
+    } else if (ext === 'xlsx' || ext === 'xls') {
+        reader.onload = e => {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            APP.workbook = wb;
+            APP.sheetNames = wb.SheetNames;
+            loadSheet(wb.SheetNames[0]);
+        };
+        reader.readAsArrayBuffer(file);
+    } else if (ext === 'json') {
+        reader.onload = e => {
+            try {
+                const json = JSON.parse(e.target.result);
+                const arr = Array.isArray(json) ? json : [json];
+                APP.columns = Object.keys(arr[0] || {});
+                APP.data = arr;
+                APP.originalData = JSON.parse(JSON.stringify(arr));
+                onDataLoaded();
+            } catch (err) { alert('Erreur JSON : ' + err.message); }
+        };
+        reader.readAsText(file);
+    } else {
+        alert('Format non supporté. Utilisez CSV, Excel ou JSON.');
+    }
+}
+
+function loadSheet(sheetName) {
+    const ws = APP.workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(ws, { defval: null });
+    APP.activeSheet = sheetName;
+    if (json.length > 0) {
+        APP.columns = Object.keys(json[0]);
+        APP.data = json;
+        APP.originalData = JSON.parse(JSON.stringify(json));
+    } else {
+        APP.columns = [];
+        APP.data = [];
+        APP.originalData = [];
+    }
+    onDataLoaded();
+}
+
+function onDataLoaded() {
+    APP.variableDocs = {};
+    APP.metadata = {};
+    APP.editHistory = [];
+    APP.editCount = 0;
+    APP.qualityReport = null;
+    APP.fairScore = null;
+    APP.aiScore = null;
+    let initMissing = 0;
+    for (const col of APP.columns) initMissing += countMissing(col);
+    APP.initialStats = {
+        rows: APP.data.length,
+        cols: APP.columns.length,
+        columns: [...APP.columns],
+        missing: initMissing,
+        duplicates: countDuplicates()
+    };
+    updateFileInfo();
+    renderNav();
+    renderStep();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function getVal(row, col) { return row[col]; }
+function isNull(v) { return v === null || v === undefined || v === '' || (typeof v === 'number' && isNaN(v)); }
+function countMissing(col) { return APP.data.filter(r => isNull(r[col])).length; }
+function countDuplicates() {
+    const seen = new Set();
+    let dup = 0;
+    for (const row of APP.data) {
+        const key = APP.columns.map(c => String(row[c] ?? '')).join('|');
+        if (seen.has(key)) dup++;
+        else seen.add(key);
+    }
+    return dup;
+}
+function isNumericCol(col) {
+    let numCount = 0, total = 0;
+    for (const row of APP.data) {
+        const v = row[col];
+        if (isNull(v)) continue;
+        total++;
+        if (typeof v === 'number' || (typeof v === 'string' && !isNaN(parseFloat(v)) && isFinite(v))) numCount++;
+    }
+    return total > 0 && numCount / total > 0.7;
+}
+function numericValues(col) {
+    return APP.data.map(r => r[col]).filter(v => !isNull(v) && !isNaN(parseFloat(v))).map(v => parseFloat(v));
+}
+function addHistory(action, detail) {
+    APP.editHistory.push({ time: new Date().toLocaleTimeString(), action, detail });
+    APP.editCount++;
+    APP.qualityReport = null;
+    APP.fairScore = null;
+    APP.aiScore = null;
+    updateFileInfo();
+}
+function pct(a, b) { return b > 0 ? Math.round(a / b * 1000) / 10 : 0; }
+function scoreColor(ratio) { return ratio < 0.4 ? 'var(--danger)' : ratio < 0.7 ? 'var(--accent)' : 'var(--primary)'; }
+function navButtons(prev, next, nextLabel = 'Suivant →') {
+    return `<div class="nav-buttons">
+        <div>${prev ? `<button class="btn btn-secondary" onclick="goStep(${prev})">← Retour</button>` : ''}</div>
+        <div>${next ? `<button class="btn btn-primary" onclick="goStep(${next})">${nextLabel}</button>` : ''}</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 1: IMPORT
+// ═══════════════════════════════════════════════════════════════
+function renderStep1() {
+    let html = `<div class="page-header"><h2>Étape 1 : Importer les données</h2><p>Déposez votre fichier de données brut pour commencer</p></div>`;
+
+    html += `<div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <span class="icon">📂</span>
+        <h3>Glissez-déposez un fichier ici</h3>
+        <p style="color:#888;margin-top:.3rem">ou cliquez pour sélectionner — CSV, Excel (.xlsx), JSON</p>
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" onchange="if(this.files[0])handleFile(this.files[0])">
+    </div>`;
+
+    if (APP.data) {
+        const totalCells = APP.data.length * APP.columns.length;
+        let totalMissing = 0;
+        for (const col of APP.columns) totalMissing += countMissing(col);
+        const nDup = countDuplicates();
+
+        html += `<div style="margin-top:1rem;padding:.6rem 1rem;background:#E8F5E9;border-radius:8px;color:var(--primary);font-weight:600">
+            ✅ Fichier chargé : ${APP.fileName}</div>`;
+
+        if (APP.sheetNames.length > 1) {
+            html += `<div class="card" style="margin-top:1rem"><h3>Feuilles du fichier (${APP.sheetNames.length})</h3>
+                <div class="form-row" style="align-items:center;gap:1rem">
+                    <div class="form-group"><label>Feuille active :</label>
+                        <select id="sheet-select" onchange="loadSheet(this.value)">
+                            ${APP.sheetNames.map(s => `<option value="${s}" ${s === APP.activeSheet ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="font-size:.85rem;color:#666">
+                        ${APP.sheetNames.map(s => {
+                            const ws = APP.workbook.Sheets[s];
+                            const ref = ws['!ref'];
+                            let info = '(vide)';
+                            if (ref) {
+                                const range = XLSX.utils.decode_range(ref);
+                                info = `${range.e.r} lignes, ${range.e.c + 1} colonnes`;
+                            }
+                            return `<span style="margin-right:1rem;${s === APP.activeSheet ? 'font-weight:700;color:var(--primary)' : ''}">${s}: ${info}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        html += `<div class="metrics">
+            <div class="metric"><div class="val">${APP.data.length}</div><div class="label">Lignes</div></div>
+            <div class="metric"><div class="val">${APP.columns.length}</div><div class="label">Colonnes</div></div>
+            <div class="metric"><div class="val">${totalMissing}</div><div class="label">Valeurs manquantes</div></div>
+            <div class="metric"><div class="val">${nDup}</div><div class="label">Doublons</div></div>
+            ${APP.sheetNames.length > 1 ? `<div class="metric"><div class="val">${APP.sheetNames.length}</div><div class="label">Feuilles</div></div>` : ''}
+        </div>`;
+
+        html += `<div class="card"><h3>Aperçu des données</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
+        for (let i = 0; i < Math.min(10, APP.data.length); i++) {
+            html += '<tr>' + APP.columns.map(c => `<td>${APP.data[i][c] ?? '<em style="color:#ccc">vide</em>'}</td>`).join('') + '</tr>';
+        }
+        html += '</table></div></div>';
+
+        html += `<div class="card"><h3>Types des colonnes</h3><div class="table-wrap"><table>
+            <tr><th>Colonne</th><th>Type détecté</th><th>Non-null</th><th>Manquants (%)</th></tr>`;
+        for (const col of APP.columns) {
+            const miss = countMissing(col);
+            const missPct = pct(miss, APP.data.length);
+            const type = isNumericCol(col) ? 'Numérique' : 'Texte';
+            html += `<tr><td><strong>${col}</strong></td><td>${type}</td><td>${APP.data.length - miss}</td>
+                <td style="color:${missPct > 20 ? 'var(--danger)' : missPct > 5 ? 'var(--accent)' : 'var(--primary)'}">${missPct}%</td></tr>`;
+        }
+        html += '</table></div></div>';
+        html += navButtons(null, 2, 'Analyser la qualité →');
+    }
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 2: QUALITY
+// ═══════════════════════════════════════════════════════════════
+function analyzeQuality() {
+    const issues = [];
+    const n = APP.data.length, nc = APP.columns.length, totalCells = n * nc;
+    let totalMissing = 0;
+    const missingPerCol = {};
+    for (const col of APP.columns) {
+        const m = countMissing(col);
+        missingPerCol[col] = m;
+        totalMissing += m;
+    }
+    const missingPct = pct(totalMissing, totalCells);
+
+    if (totalMissing > 0)
+        issues.push({ type: 'missing', severity: missingPct > 20 ? 'critical' : 'warning',
+            message: `${totalMissing} valeurs manquantes (${missingPct}%)`, detail: missingPerCol });
+
+    const nDup = countDuplicates();
+    if (nDup > 0)
+        issues.push({ type: 'duplicates', severity: 'warning', message: `${nDup} ligne(s) en doublon` });
+
+    const emptyCols = APP.columns.filter(c => missingPerCol[c] === n);
+    if (emptyCols.length > 0)
+        issues.push({ type: 'empty_cols', severity: 'critical', message: `${emptyCols.length} colonne(s) entièrement vide(s) : ${emptyCols.join(', ')}` });
+
+    const badNames = APP.columns.filter(c => c.length <= 2 || c.startsWith('Unnamed') || /^col\d+$/i.test(c));
+    if (badNames.length > 0)
+        issues.push({ type: 'bad_names', severity: 'warning', message: `${badNames.length} nom(s) de colonne(s) peu explicite(s) : ${badNames.join(', ')}` });
+
+    for (const col of APP.columns) {
+        const vals = APP.data.map(r => r[col]).filter(v => !isNull(v)).map(v => String(v).trim().toLowerCase());
+        const unique = [...new Set(vals)];
+        const binVals = new Set(['oui','non','yes','no','0','1','true','false','vrai','faux','o','n']);
+        if (unique.length <= 6 && unique.length >= 2) {
+            const inter = unique.filter(v => binVals.has(v));
+            if (inter.length >= 2) {
+                const ouiForms = inter.filter(v => ['oui','yes','1','true','o','vrai'].includes(v));
+                const nonForms = inter.filter(v => ['non','no','0','false','n','faux'].includes(v));
+                if (ouiForms.length > 1 || nonForms.length > 1)
+                    issues.push({ type: 'inconsistent', severity: 'warning', message: `Colonne '${col}' : codage binaire incohérent (${unique.join(', ')})` });
+            }
+        }
+    }
+
+    for (const col of APP.columns) {
+        if (/date|annee|année|mois|year|period/i.test(col)) {
+            const vals = APP.data.map(r => r[col]).filter(v => !isNull(v)).map(v => String(v));
+            const patterns = new Set();
+            for (const v of vals.slice(0, 50)) {
+                if (/\d{2}\/\d{2}\/\d{4}/.test(v)) patterns.add('DD/MM/YYYY');
+                if (/\d{4}-\d{2}-\d{2}/.test(v)) patterns.add('YYYY-MM-DD');
+                if (/\d{2}-\d{2}-\d{4}/.test(v)) patterns.add('DD-MM-YYYY');
+            }
+            if (patterns.size > 1)
+                issues.push({ type: 'date', severity: 'warning', message: `Colonne '${col}' : formats de date mixtes (${[...patterns].join(', ')})` });
+        }
+    }
+
+    for (const col of APP.columns) {
+        if (!isNumericCol(col)) continue;
+        const vals = numericValues(col);
+        if (vals.length < 10) continue;
+        vals.sort((a, b) => a - b);
+        const q1 = vals[Math.floor(vals.length * 0.25)], q3 = vals[Math.floor(vals.length * 0.75)];
+        const iqr = q3 - q1;
+        if (iqr > 0) {
+            const outliers = vals.filter(v => v < q1 - 3 * iqr || v > q3 + 3 * iqr).length;
+            if (outliers > 0)
+                issues.push({ type: 'outliers', severity: 'info', message: `Colonne '${col}' : ${outliers} valeur(s) potentiellement anormale(s)` });
+        }
+    }
+
+    return { n_rows: n, n_cols: nc, totalMissing, missingPct, n_duplicates: nDup, emptyCols, issues, missingPerCol };
+}
+
+function renderStep2() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+    const report = analyzeQuality();
+    APP.qualityReport = report;
+
+    let html = `<div class="page-header"><h2>Étape 2 : Problèmes de qualité détectés</h2><p>Analyse automatique de votre jeu de données</p></div>`;
+    html += `<div class="metrics">
+        <div class="metric"><div class="val">${report.totalMissing} <span style="font-size:.9rem">(${report.missingPct}%)</span></div><div class="label">Valeurs manquantes</div></div>
+        <div class="metric"><div class="val">${report.n_duplicates}</div><div class="label">Doublons</div></div>
+        <div class="metric"><div class="val">${report.emptyCols.length}</div><div class="label">Colonnes vides</div></div>
+        <div class="metric"><div class="val">${report.issues.length}</div><div class="label">Problèmes</div></div>
+    </div>`;
+
+    if (report.issues.length === 0) {
+        html += '<div class="issue info">✅ <strong>Aucun problème majeur détecté.</strong></div>';
+    } else {
+        for (const issue of report.issues) {
+            const icon = issue.severity === 'critical' ? '🔴' : issue.severity === 'warning' ? '🟡' : 'ℹ️';
+            html += `<div class="issue ${issue.severity}">${icon} <strong>${issue.message}</strong></div>`;
+        }
+    }
+
+    if (report.totalMissing > 0) {
+        html += `<div class="card" style="margin-top:1rem"><h3>Valeurs manquantes par colonne</h3>`;
+        const sorted = APP.columns.filter(c => report.missingPerCol[c] > 0).sort((a, b) => report.missingPerCol[b] - report.missingPerCol[a]);
+        for (const col of sorted) {
+            const m = report.missingPerCol[col], p = pct(m, APP.data.length);
+            const color = p > 50 ? 'var(--danger)' : p > 10 ? 'var(--accent)' : 'var(--primary)';
+            html += `<div class="score-bar-row">
+                <span class="score-bar-label">${col}</span>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:${p}%;background:${color}"></div></div>
+                <span class="score-bar-val" style="color:${color}">${m} (${p}%)</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    html += navButtons(1, 3, 'Modifier les données →');
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 3: EDIT DATA
+// ═══════════════════════════════════════════════════════════════
+function renderStep3() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+
+    let html = `<div class="page-header"><h2>Étape 3 : Modifier les données</h2><p>Corrigez directement votre base de données</p></div>`;
+
+    html += `<div class="tabs">
+        <div class="tab active" onclick="showEditTab('edit-cells',this)">Éditer les cellules</div>
+        <div class="tab" onclick="showEditTab('edit-cols',this)">Colonnes</div>
+        <div class="tab" onclick="showEditTab('edit-missing',this)">Valeurs manquantes</div>
+        <div class="tab" onclick="showEditTab('edit-dup',this)">Doublons</div>
+    </div>`;
+
+    // Tab: Edit cells
+    html += `<div id="edit-cells" class="edit-tab">
+        <div class="card"><h3>Modifier les cellules (cliquez sur une valeur pour la modifier)</h3>
+        <div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}<th>Suppr.</th></tr>`;
+    const maxRows = Math.min(50, APP.data.length);
+    for (let i = 0; i < maxRows; i++) {
+        html += '<tr>' + APP.columns.map(c => {
+            const v = APP.data[i][c] ?? '';
+            return `<td><input value="${String(v).replace(/"/g, '&quot;')}" onchange="editCell(${i},'${c.replace(/'/g, "\\'")}',this.value)"></td>`;
+        }).join('') + `<td><button class="btn btn-danger btn-sm" onclick="deleteRow(${i})">✕</button></td></tr>`;
+    }
+    if (APP.data.length > 50) html += `<tr><td colspan="${APP.columns.length + 1}" style="text-align:center;color:#888;padding:.8rem">… ${APP.data.length - 50} lignes supplémentaires non affichées</td></tr>`;
+    html += '</table></div></div></div>';
+
+    // Tab: Columns
+    html += `<div id="edit-cols" class="edit-tab" style="display:none">
+        <div class="card"><h3>Renommer une colonne</h3>
+        <div class="form-row">
+            <div class="form-group"><label>Colonne :</label><select id="rename-col">${APP.columns.map(c => `<option>${c}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Nouveau nom :</label><input id="rename-val"></div>
+        </div>
+        <button class="btn btn-primary" onclick="renameColumn()">Renommer</button></div>
+
+        <div class="card"><h3>Supprimer des colonnes</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem">
+        ${APP.columns.map(c => `<label style="display:flex;align-items:center;gap:.3rem;font-size:.82rem;background:#f5f5f5;padding:.3rem .6rem;border-radius:6px">
+            <input type="checkbox" class="del-col-check" value="${c}"> ${c}</label>`).join('')}
+        </div>
+        <button class="btn btn-danger" onclick="deleteColumns()">Supprimer les colonnes cochées</button></div>
+
+        <div class="card"><h3>Standardiser les noms de colonnes</h3>
+        <p style="font-size:.83rem;color:#666;margin-bottom:.5rem">Convertit en minuscules, remplace espaces et caractères spéciaux par des underscores.</p>
+        <div class="table-wrap"><table><tr><th>Actuel</th><th>Nouveau nom</th></tr>
+        ${APP.columns.map(c => `<tr><td>${c}</td><td>${c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')}</td></tr>`).join('')}
+        </table></div>
+        <button class="btn btn-accent" onclick="standardizeNames()">Appliquer la standardisation</button></div>
+    </div>`;
+
+    // Tab: Missing values
+    const colsWithMissing = APP.columns.filter(c => countMissing(c) > 0);
+    html += `<div id="edit-missing" class="edit-tab" style="display:none"><div class="card"><h3>Traitement des valeurs manquantes</h3>`;
+    if (colsWithMissing.length === 0) {
+        html += '<p style="color:var(--primary);font-weight:600">✅ Aucune valeur manquante.</p>';
+    } else {
+        html += `<div class="form-row">
+            <div class="form-group"><label>Colonne :</label><select id="fill-col">${colsWithMissing.map(c => `<option value="${c}">${c} (${countMissing(c)} manquants)</option>`).join('')}</select></div>
+            <div class="form-group"><label>Méthode :</label><select id="fill-method">
+                <option value="mean">Moyenne</option><option value="median">Médiane</option>
+                <option value="mode">Mode</option><option value="custom">Valeur personnalisée</option>
+                <option value="drop">Supprimer les lignes</option></select></div>
+        </div>
+        <div class="form-group"><label>Valeur personnalisée (si applicable) :</label><input id="fill-custom"></div>
+        <button class="btn btn-primary" onclick="fillMissing()">Appliquer</button>`;
+    }
+    html += '</div></div>';
+
+    // Tab: Duplicates
+    const nDup = countDuplicates();
+    html += `<div id="edit-dup" class="edit-tab" style="display:none"><div class="card">
+        <h3>Doublons : ${nDup} ligne(s)</h3>`;
+    if (nDup > 0) {
+        html += `<p style="margin-bottom:.8rem">Ces lignes sont des copies exactes d'autres lignes.</p>
+            <button class="btn btn-danger" onclick="removeDuplicates()">Supprimer les doublons</button>`;
+    } else {
+        html += '<p style="color:var(--primary);font-weight:600">✅ Aucun doublon détecté.</p>';
+    }
+    html += '</div></div>';
+
+    html += navButtons(2, 4, 'Documenter les variables →');
+    return html;
+}
+
+function showEditTab(id, el) {
+    document.querySelectorAll('.edit-tab').forEach(t => t.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function editCell(rowIdx, col, val) {
+    const old = APP.data[rowIdx][col];
+    if (val === '' || val === 'null') APP.data[rowIdx][col] = null;
+    else if (!isNaN(val) && val.trim() !== '') APP.data[rowIdx][col] = parseFloat(val);
+    else APP.data[rowIdx][col] = val;
+    addHistory('Modifier cellule', `Ligne ${rowIdx}, ${col}: "${old}" → "${val}"`);
+}
+
+function deleteRow(idx) {
+    APP.data.splice(idx, 1);
+    addHistory('Supprimer ligne', `Ligne ${idx}`);
+    renderStep();
+}
+
+function renameColumn() {
+    const old = document.getElementById('rename-col').value;
+    const nw = document.getElementById('rename-val').value.trim();
+    if (!nw || nw === old) return;
+    const idx = APP.columns.indexOf(old);
+    if (idx >= 0) APP.columns[idx] = nw;
+    APP.data.forEach(row => { row[nw] = row[old]; delete row[old]; });
+    if (APP.variableDocs[old]) { APP.variableDocs[nw] = APP.variableDocs[old]; delete APP.variableDocs[old]; }
+    addHistory('Renommer colonne', `${old} → ${nw}`);
+    renderStep();
+}
+
+function deleteColumns() {
+    const checks = document.querySelectorAll('.del-col-check:checked');
+    const toDel = [...checks].map(c => c.value);
+    if (toDel.length === 0) return;
+    APP.columns = APP.columns.filter(c => !toDel.includes(c));
+    APP.data.forEach(row => toDel.forEach(c => delete row[c]));
+    addHistory('Supprimer colonnes', toDel.join(', '));
+    renderStep();
+}
+
+function standardizeNames() {
+    const mapping = {};
+    APP.columns.forEach((c, i) => {
+        const nw = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        mapping[c] = nw;
+    });
+    const newCols = [];
+    for (const old of APP.columns) {
+        const nw = mapping[old];
+        newCols.push(nw);
+        if (nw !== old) APP.data.forEach(row => { row[nw] = row[old]; delete row[old]; });
+    }
+    APP.columns = newCols;
+    addHistory('Standardiser noms', `${APP.columns.length} colonnes`);
+    renderStep();
+}
+
+function fillMissing() {
+    const col = document.getElementById('fill-col').value;
+    const method = document.getElementById('fill-method').value;
+    const custom = document.getElementById('fill-custom').value;
+
+    if (method === 'drop') {
+        const before = APP.data.length;
+        APP.data = APP.data.filter(r => !isNull(r[col]));
+        addHistory('Supprimer lignes (manquants)', `${col}: ${before - APP.data.length} lignes`);
+    } else {
+        let fillVal;
+        const vals = numericValues(col);
+        if (method === 'mean' && vals.length > 0) fillVal = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) / 100;
+        else if (method === 'median' && vals.length > 0) { vals.sort((a, b) => a - b); fillVal = vals[Math.floor(vals.length / 2)]; }
+        else if (method === 'mode') {
+            const freq = {};
+            APP.data.forEach(r => { if (!isNull(r[col])) freq[r[col]] = (freq[r[col]] || 0) + 1; });
+            fillVal = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0];
+        } else if (method === 'custom') fillVal = custom;
+
+        if (fillVal !== undefined) {
+            APP.data.forEach(r => { if (isNull(r[col])) r[col] = fillVal; });
+            addHistory(`Remplir manquants (${method})`, `${col} → ${fillVal}`);
+        }
+    }
+    renderStep();
+}
+
+function removeDuplicates() {
+    const seen = new Set(); const newData = [];
+    for (const row of APP.data) {
+        const key = APP.columns.map(c => String(row[c] ?? '')).join('|');
+        if (!seen.has(key)) { seen.add(key); newData.push(row); }
+    }
+    const removed = APP.data.length - newData.length;
+    APP.data = newData;
+    addHistory('Supprimer doublons', `${removed} lignes`);
+    renderStep();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 4: VARIABLE DOCUMENTATION
+// ═══════════════════════════════════════════════════════════════
+function renderStep4() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+    const nDoc = Object.keys(APP.variableDocs).length;
+    const nTotal = APP.columns.length;
+    const ratio = nTotal > 0 ? nDoc / nTotal : 0;
+
+    let html = `<div class="page-header"><h2>Étape 4 : Documenter les variables</h2><p>Décrivez chaque variable pour améliorer la réutilisabilité</p></div>`;
+    html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${ratio * 100}%;background:var(--primary)"></div></div>
+        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${nDoc}/${nTotal}</strong> variables documentées</p></div>`;
+
+    html += `<div class="card"><h3>Sélectionner une variable</h3>
+        <select id="doc-col-select" onchange="renderDocForm()" style="width:100%;padding:.5rem;font-size:.9rem;border:1px solid #ddd;border-radius:6px">
+        ${APP.columns.map(c => `<option value="${c}" ${APP.variableDocs[c] ? 'style="color:var(--primary)"' : ''}>${c} ${APP.variableDocs[c] ? '✓' : ''}</option>`).join('')}</select></div>`;
+
+    html += `<div id="doc-form-container"></div>`;
+
+    // Summary table
+    if (nDoc > 0) {
+        html += `<div class="card"><h3>Résumé de la documentation</h3><div class="table-wrap"><table>
+            <tr><th>Variable</th><th>Description</th><th>Type</th><th>Unité</th><th>Statut</th></tr>`;
+        for (const col of APP.columns) {
+            const doc = APP.variableDocs[col];
+            html += `<tr><td><strong>${col}</strong></td><td>${doc?.description || '—'}</td><td>${doc?.data_type || '—'}</td>
+                <td>${doc?.unit || '—'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
+        }
+        html += '</table></div></div>';
+    }
+
+    html += navButtons(3, 5, 'Métadonnées →');
+    return html;
+}
+
+function renderDocForm() {
+    const col = document.getElementById('doc-col-select').value;
+    const doc = APP.variableDocs[col] || {};
+    const serie = APP.data.map(r => r[col]).filter(v => !isNull(v));
+    const nMissing = countMissing(col);
+    const nUnique = new Set(serie.map(v => String(v))).size;
+    const isNum = isNumericCol(col);
+
+    let info = `<div class="metrics" style="grid-template-columns:repeat(4,1fr)">
+        <div class="metric"><div class="val" style="font-size:1.2rem">${isNum ? 'Num' : 'Texte'}</div><div class="label">Type détecté</div></div>
+        <div class="metric"><div class="val" style="font-size:1.2rem">${serie.length}</div><div class="label">Non-null</div></div>
+        <div class="metric"><div class="val" style="font-size:1.2rem">${nUnique}</div><div class="label">Uniques</div></div>
+        <div class="metric"><div class="val" style="font-size:1.2rem">${nMissing}</div><div class="label">Manquants</div></div>
+    </div>`;
+
+    const types = ['Numérique continu','Numérique discret','Catégoriel nominal','Catégoriel ordinal','Date/Temps','Texte libre','Binaire','Identifiant'];
+
+    let form = `<div class="card"><h3>Documentation de « ${col} »</h3>${info}
+        <div class="form-group"><label>Description :</label><textarea id="doc-desc" rows="2">${doc.description || ''}</textarea></div>
+        <div class="form-row">
+            <div class="form-group"><label>Type de donnée :</label><select id="doc-type">${types.map(t => `<option ${t === doc.data_type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Unité de mesure :</label><input id="doc-unit" value="${doc.unit || ''}"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Format attendu :</label><input id="doc-format" value="${doc.format || ''}" placeholder="ex: YYYY-MM-DD"></div>
+            <div class="form-group"><label>Valeurs possibles :</label><input id="doc-values" value="${doc.values || ''}" placeholder="ex: 0-100, Oui/Non"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Règle de validation :</label><input id="doc-validation" value="${doc.validation || ''}" placeholder="ex: > 0, non vide"></div>
+            <div class="form-group"><label>Exemple de valeur :</label><input id="doc-example" value="${doc.example || ''}"></div>
+        </div>
+        <div class="form-group"><label>Utilité pour l'analyse / l'IA :</label><input id="doc-utility" value="${doc.utility || ''}"></div>
+        <label style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:.85rem">
+            <input type="checkbox" id="doc-target" ${doc.is_target ? 'checked' : ''}> Variable cible (target) pour l'IA</label>
+        <button class="btn btn-primary" onclick="saveDocForm()">Enregistrer</button>
+    </div>`;
+
+    document.getElementById('doc-form-container').innerHTML = form;
+}
+
+function saveDocForm() {
+    const col = document.getElementById('doc-col-select').value;
+    APP.variableDocs[col] = {
+        description: document.getElementById('doc-desc').value,
+        data_type: document.getElementById('doc-type').value,
+        unit: document.getElementById('doc-unit').value,
+        format: document.getElementById('doc-format').value,
+        values: document.getElementById('doc-values').value,
+        validation: document.getElementById('doc-validation').value,
+        example: document.getElementById('doc-example').value,
+        utility: document.getElementById('doc-utility').value,
+        is_target: document.getElementById('doc-target').checked,
+    };
+    renderStep();
+    setTimeout(() => { document.getElementById('doc-col-select').value = col; renderDocForm(); }, 50);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 5: METADATA
+// ═══════════════════════════════════════════════════════════════
+function renderStep5() {
+    const m = APP.metadata;
+    const licenses = ['','CC-BY 4.0','CC-BY-SA 4.0','CC-BY-NC 4.0','CC0 1.0','ODC-ODbL','Autre'];
+    const fields = [
+        ['title','Titre du jeu de données','text'],['author','Auteur(s)','text'],['organization','Organisation','text'],
+        ['country','Pays','text'],['geographic_area','Zone géographique','text'],['collection_period','Période de collecte','text'],
+        ['description','Description','textarea'],['collection_method','Méthode de collecte','textarea'],
+        ['target_population','Population cible','text'],['license','Licence','select'],
+        ['access_conditions',"Conditions d'accès",'text'],['keywords','Mots-clés (séparés par virgules)','text'],
+        ['contact','Contact','text'],['version','Version','text'],['citation','Citation recommandée','textarea']
+    ];
+    const filled = fields.filter(f => m[f[0]]).length;
+
+    let html = `<div class="page-header"><h2>Étape 5 : Métadonnées du jeu de données</h2><p>Informations générales sur votre jeu de données</p></div>`;
+    html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${pct(filled, fields.length)}%;background:var(--primary)"></div></div>
+        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${filled}/${fields.length}</strong> champs renseignés</p></div>`;
+
+    html += '<div class="card"><h3>Informations générales</h3><div class="form-row">';
+    let colCount = 0;
+    for (const [key, label, type] of fields) {
+        if (type === 'textarea') {
+            if (colCount % 2 !== 0) html += '</div><div class="form-row">';
+            html += `</div><div class="form-group"><label>${label} :</label><textarea id="meta-${key}" rows="2">${m[key] || ''}</textarea></div><div class="form-row">`;
+            colCount = 0;
+        } else if (type === 'select') {
+            html += `<div class="form-group"><label>${label} :</label><select id="meta-${key}">
+                ${licenses.map(l => `<option ${l === m[key] ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
+            colCount++;
+        } else {
+            html += `<div class="form-group"><label>${label} :</label><input id="meta-${key}" value="${m[key] || ''}"></div>`;
+            colCount++;
+        }
+        if (colCount === 2) { html += '</div><div class="form-row">'; colCount = 0; }
+    }
+    html += '</div><button class="btn btn-primary" style="margin-top:.8rem" onclick="saveMetadata()">Enregistrer les métadonnées</button></div>';
+    html += navButtons(4, 6, 'Score FAIR →');
+    return html;
+}
+
+function saveMetadata() {
+    const fields = ['title','author','organization','country','geographic_area','collection_period','description',
+        'collection_method','target_population','license','access_conditions','keywords','contact','version','citation'];
+    for (const f of fields) {
+        const el = document.getElementById('meta-' + f);
+        if (el) APP.metadata[f] = el.value;
+    }
+    alert('Métadonnées enregistrées !');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 6: FAIR SCORE
+// ═══════════════════════════════════════════════════════════════
+function computeFAIR() {
+    const m = APP.metadata, df = APP.data, cols = APP.columns;
+    const d = {};
+    for (const c of cols) { if (APP.variableDocs[c]) d[c] = APP.variableDocs[c]; }
+    const scores = { F: 0, A: 0, I: 0, R: 0 };
+    const details = { F: [], A: [], I: [], R: [] };
+    const maxS = { F: 25, A: 25, I: 25, R: 25 };
+
+    const check = (letter, pts, cond, ok, fail) => {
+        if (cond) { scores[letter] += pts; details[letter].push(['ok', ok]); }
+        else details[letter].push(['missing', fail]);
+    };
+
+    check('F', 5, m.title, 'Titre renseigné', 'Titre manquant');
+    check('F', 5, m.description, 'Description renseignée', 'Description manquante');
+    check('F', 5, m.keywords, 'Mots-clés renseignés', 'Mots-clés manquants');
+    check('F', 5, m.author, 'Auteur renseigné', 'Auteur manquant');
+    check('F', 5, m.version, 'Version renseignée', 'Version manquante');
+
+    check('A', 8, m.license, 'Licence définie', 'Licence manquante');
+    check('A', 7, m.access_conditions, "Conditions d'accès définies", "Conditions d'accès manquantes");
+    check('A', 5, m.contact, 'Contact renseigné', 'Contact manquant');
+    check('A', 5, m.citation, 'Citation recommandée définie', 'Citation recommandée manquante');
+
+    const goodNames = cols.filter(c => c.length > 3 && !c.startsWith('Unnamed')).length;
+    const nameRatio = cols.length > 0 ? goodNames / cols.length : 0;
+    scores.I += Math.round(nameRatio * 8);
+    details.I.push([nameRatio > 0.8 ? 'ok' : 'missing', `Noms de colonnes explicites : ${goodNames}/${cols.length}`]);
+
+    const nNumeric = cols.filter(c => isNumericCol(c)).length;
+    const typeRatio = cols.length > 0 ? nNumeric / cols.length : 0;
+    scores.I += Math.round(typeRatio * 7);
+    details.I.push([typeRatio > 0.5 ? 'ok' : 'missing', `Colonnes typées : ${nNumeric}/${cols.length}`]);
+    scores.I += 5; details.I.push(['ok', 'Format standard (CSV/Excel)']);
+    const docRatio = cols.length > 0 ? Object.keys(d).length / cols.length : 0;
+    scores.I += Math.round(docRatio * 5);
+    details.I.push([docRatio > 0.5 ? 'ok' : 'missing', `Variables documentées : ${Object.keys(d).length}/${cols.length}`]);
+
+    check('R', 6, m.license, 'Licence définie pour réutilisation', 'Licence nécessaire pour la réutilisation');
+    check('R', 5, m.collection_method, 'Méthode de collecte documentée', 'Méthode de collecte manquante');
+    check('R', 4, m.geographic_area, 'Zone géographique renseignée', 'Zone géographique manquante');
+
+    const totalCells = df.length * cols.length;
+    let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
+    const missPct = totalCells > 0 ? totalMiss / totalCells * 100 : 100;
+    if (missPct < 5) { scores.R += 5; details.R.push(['ok', `Complétude élevée (${(100 - missPct).toFixed(1)}%)`]); }
+    else if (missPct < 20) { scores.R += 3; details.R.push(['partial', `Complétude moyenne (${(100 - missPct).toFixed(1)}%)`]); }
+    else details.R.push(['missing', `Complétude faible (${(100 - missPct).toFixed(1)}%)`]);
+
+    scores.R += Math.round(docRatio * 5);
+    details.R.push([docRatio > 0.5 ? 'ok' : 'missing', `Dictionnaire de données : ${Object.keys(d).length}/${cols.length}`]);
+
+    return { scores, details, total: scores.F + scores.A + scores.I + scores.R, max: 100, maxS };
+}
+
+function renderStep6() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+    const fair = computeFAIR();
+    APP.fairScore = fair;
+
+    let html = `<div class="page-header"><h2>Étape 6 : Conformité FAIR</h2><p>Findable · Accessible · Interoperable · Reusable</p></div>`;
+
+    const levelColor = scoreColor(fair.total / 100);
+    html += `<div class="card"><div class="score-display">
+        <div class="score-big" style="color:${levelColor}">${fair.total}</div>
+        <div class="score-max">/100</div>
+        <div class="score-level" style="background:${levelColor};color:#fff">${fair.total <= 39 ? 'Faible' : fair.total <= 69 ? 'Moyen' : 'Élevé'}</div>
+    </div></div>`;
+
+    html += '<div class="fair-row">';
+    for (const [letter, name] of [['F','Findable'],['A','Accessible'],['I','Interoperable'],['R','Reusable']]) {
+        const ratio = fair.scores[letter] / fair.maxS[letter];
+        html += `<div class="fair-item"><span class="fair-letter" style="background:${scoreColor(ratio)}">${letter}</span>
+            <span class="fair-label">${name}<br><strong>${fair.scores[letter]}/${fair.maxS[letter]}</strong></span></div>`;
+    }
+    html += '</div>';
+
+    for (const [letter, name] of [['F','Findable'],['A','Accessible'],['I','Interoperable'],['R','Reusable']]) {
+        html += `<div class="card"><h3>${letter} — ${name} (${fair.scores[letter]}/${fair.maxS[letter]})</h3>`;
+        for (const [status, msg] of fair.details[letter]) {
+            const icon = status === 'ok' ? '✅' : status === 'partial' ? '⚠️' : '❌';
+            html += `<p style="margin:.2rem 0;font-size:.85rem">${icon} ${msg}</p>`;
+        }
+        html += '</div>';
+    }
+
+    html += navButtons(5, 7, 'Score AI Readiness →');
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 7: AI READINESS
+// ═══════════════════════════════════════════════════════════════
+function computeAI() {
+    const df = APP.data, cols = APP.columns, m = APP.metadata;
+    const d = {};
+    for (const c of cols) { if (APP.variableDocs[c]) d[c] = APP.variableDocs[c]; }
+    const dims = {}, details = {};
+    const maxD = { 'Complétude': 20, 'Cohérence': 15, 'Documentation': 15, 'Qualité des variables': 15, 'Variable cible': 10, 'Structure': 15, 'Données sensibles': 10 };
+
+    const totalCells = df.length * cols.length;
+    let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
+    const missPct = totalCells > 0 ? totalMiss / totalCells * 100 : 100;
+    dims['Complétude'] = missPct === 0 ? 20 : missPct <= 2 ? 18 : missPct <= 5 ? 15 : missPct <= 10 ? 12 : missPct <= 20 ? 8 : missPct <= 35 ? 4 : 0;
+    details['Complétude'] = [`Taux de valeurs manquantes : ${missPct.toFixed(1)}%`];
+
+    const nDup = countDuplicates();
+    const dupPct = df.length > 0 ? nDup / df.length * 100 : 0;
+    let s2 = 15;
+    if (dupPct > 20) s2 -= 8; else if (dupPct > 5) s2 -= 4; else if (dupPct > 0) s2 -= 2;
+    dims['Cohérence'] = Math.max(0, s2);
+    details['Cohérence'] = [`Doublons : ${nDup} (${dupPct.toFixed(1)}%)`];
+
+    const docRatio = cols.length > 0 ? Object.keys(d).length / cols.length : 0;
+    let s3 = Math.round(docRatio * 10);
+    if (m.description) s3 += 3;
+    if (m.collection_method) s3 += 2;
+    dims['Documentation'] = Math.min(15, s3);
+    details['Documentation'] = [`Variables documentées : ${Object.keys(d).length}/${cols.length}`];
+
+    const goodNames = cols.filter(c => c.length > 3 && !c.startsWith('Unnamed')).length;
+    const nameRatio = cols.length > 0 ? goodNames / cols.length : 0;
+    const nNumeric = cols.filter(c => isNumericCol(c)).length;
+    const featRatio = cols.length > 0 ? nNumeric / cols.length : 0;
+    dims['Qualité des variables'] = Math.min(15, Math.round(nameRatio * 8) + Math.round(featRatio * 7));
+    details['Qualité des variables'] = [`Noms explicites : ${goodNames}/${cols.length}`, `Features numériques : ${nNumeric}/${cols.length}`];
+
+    const targetKw = ['target','cible','label','classe','class','output','yield','rendement','production'];
+    let hasTarget = cols.some(c => targetKw.some(k => c.toLowerCase().includes(k)));
+    if (!hasTarget) hasTarget = Object.values(d).some(v => v.is_target);
+    dims['Variable cible'] = hasTarget ? 10 : 0;
+    details['Variable cible'] = [`Variable cible identifiée : ${hasTarget ? 'Oui' : 'Non'}`];
+
+    let s6 = 15;
+    const emptyCols = cols.filter(c => countMissing(c) === df.length).length;
+    const emptyRows = df.filter(r => cols.every(c => isNull(r[c]))).length;
+    if (emptyCols > 0) s6 -= 5;
+    if (emptyRows > 0) s6 -= 3;
+    if (df.length < 30) s6 -= 4; else if (df.length < 100) s6 -= 2;
+    dims['Structure'] = Math.max(0, s6);
+    details['Structure'] = [`Colonnes vides : ${emptyCols}, Lignes vides : ${emptyRows}`, `Observations : ${df.length}`];
+
+    const sensitiveKw = ['nom','name','prenom','surname','telephone','phone','email','adresse','address','ssn','cin'];
+    const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
+    let s7 = Math.max(0, 10 - sensitiveCols.length * 3);
+    dims['Données sensibles'] = s7;
+    details['Données sensibles'] = [`Colonnes sensibles : ${sensitiveCols.length > 0 ? sensitiveCols.join(', ') : 'Aucune'}`];
+
+    const total = Object.values(dims).reduce((a, b) => a + b, 0);
+    const level = total <= 39 ? ['Faible', 'var(--danger)'] : total <= 69 ? ['Moyen', 'var(--accent)'] : ['Élevé', 'var(--primary)'];
+
+    return { dims, details, total, max: 100, maxD, level };
+}
+
+function renderStep7() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+    const ai = computeAI();
+    APP.aiScore = ai;
+
+    let html = `<div class="page-header"><h2>Étape 7 : AI Readiness</h2><p>Évaluation de la préparation à l'intelligence artificielle</p></div>`;
+
+    html += `<div class="card"><div class="score-display">
+        <div class="score-big" style="color:${ai.level[1]}">${ai.total}</div>
+        <div class="score-max">/100</div>
+        <div class="score-level" style="background:${ai.level[1]};color:#fff">${ai.level[0]}</div>
+    </div></div>`;
+
+    html += '<div class="card"><h3>Scores par dimension</h3>';
+    for (const [dim, score] of Object.entries(ai.dims)) {
+        const mx = ai.maxD[dim], ratio = mx > 0 ? score / mx : 0;
+        const color = scoreColor(ratio);
+        html += `<div class="score-bar-row">
+            <span class="score-bar-label">${dim}</span>
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${ratio * 100}%;background:${color}"></div></div>
+            <span class="score-bar-val" style="color:${color}">${score}/${mx}</span>
+        </div>`;
+    }
+    html += '</div>';
+
+    for (const [dim, lines] of Object.entries(ai.details)) {
+        html += `<div class="card"><h3>${dim} — ${ai.dims[dim]}/${ai.maxD[dim]}</h3>`;
+        for (const line of lines) html += `<p style="margin:.2rem 0;font-size:.85rem">• ${line}</p>`;
+        html += '</div>';
+    }
+
+    html += navButtons(6, 8, 'Recommandations →');
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 8: RECOMMENDATIONS
+// ═══════════════════════════════════════════════════════════════
+function generateRecos() {
+    const recos = [];
+    const q = APP.qualityReport || analyzeQuality();
+    const m = APP.metadata;
+
+    if (q.missingPct > 20) recos.push(['urgent', 'Compléter les données', `Taux de valeurs manquantes élevé (${q.missingPct}%). Appliquer une stratégie d'imputation ou documenter les raisons.`]);
+    else if (q.missingPct > 5) recos.push(['important', 'Réduire les valeurs manquantes', `${q.missingPct}% de valeurs manquantes. Vérifier les colonnes critiques.`]);
+    if (q.n_duplicates > 0) recos.push(['important', 'Supprimer les doublons', `${q.n_duplicates} ligne(s) en doublon détectée(s).`]);
+    if (q.emptyCols.length > 0) recos.push(['urgent', 'Supprimer les colonnes vides', `${q.emptyCols.length} colonne(s) vide(s) : ${q.emptyCols.join(', ')}`]);
+
+    const missingMeta = ['title','author','description','license','keywords','contact'].filter(f => !m[f]);
+    if (missingMeta.length > 0) recos.push([missingMeta.length > 3 ? 'urgent' : 'important', 'Compléter les métadonnées', `Champs manquants : ${missingMeta.join(', ')}`]);
+
+    const nUndoc = APP.columns.length - APP.columns.filter(c => APP.variableDocs[c]).length;
+    if (nUndoc > 0) recos.push(['important', 'Documenter les variables', `${nUndoc} variable(s) non documentée(s).`]);
+    if (!m.license) recos.push(['urgent', 'Ajouter une licence', 'CC-BY 4.0 est recommandée pour les données ouvertes.']);
+
+    const badNames = APP.columns.filter(c => c.length <= 2 || c.startsWith('Unnamed')).length;
+    if (badNames > 0) recos.push(['important', 'Améliorer les noms de colonnes', `${badNames} colonne(s) avec des noms peu explicites.`]);
+
+    const sensitiveKw = ['nom','name','prenom','telephone','phone','email','adresse','address'];
+    const sensitive = APP.columns.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
+    if (sensitive.length > 0) recos.push(['important', 'Anonymiser les données sensibles', `Colonnes sensibles : ${sensitive.join(', ')}`]);
+
+    recos.push(['improve', 'Déposer sur un entrepôt', 'Déposer le dataset sur Zenodo ou Dataverse pour obtenir un DOI pérenne (principe FAIR).']);
+
+    const order = { urgent: 0, important: 1, improve: 2 };
+    recos.sort((a, b) => order[a[0]] - order[b[0]]);
+    return recos;
+}
+
+function renderStep8() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+    if (!APP.qualityReport) APP.qualityReport = analyzeQuality();
+    const recos = generateRecos();
+    APP.recommendations = recos;
+
+    let html = `<div class="page-header"><h2>Étape 8 : Recommandations</h2><p>Actions concrètes pour améliorer votre jeu de données</p></div>`;
+
+    const nU = recos.filter(r => r[0] === 'urgent').length;
+    const nI = recos.filter(r => r[0] === 'important').length;
+    const nA = recos.filter(r => r[0] === 'improve').length;
+    html += `<div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric" style="border-top-color:var(--danger)"><div class="val" style="color:var(--danger)">${nU}</div><div class="label">Urgentes</div></div>
+        <div class="metric" style="border-top-color:var(--accent)"><div class="val" style="color:var(--accent)">${nI}</div><div class="label">Importantes</div></div>
+        <div class="metric" style="border-top-color:var(--primary)"><div class="val" style="color:var(--primary)">${nA}</div><div class="label">Améliorations</div></div>
+    </div>`;
+
+    for (const [prio, title, desc] of recos) {
+        const icon = prio === 'urgent' ? '🔴' : prio === 'important' ? '🟡' : '🟢';
+        html += `<div class="reco ${prio}"><strong>${icon} ${title}</strong>${desc}</div>`;
+    }
+
+    html += renderChangeLog();
+    html += navButtons(7, 9, 'Exporter →');
+    return html;
+}
+
+function renderChangeLog() {
+    const ini = APP.initialStats;
+    if (!ini) return '';
+    let curMissing = 0;
+    for (const col of APP.columns) curMissing += countMissing(col);
+    const curDup = countDuplicates();
+    const addedCols = APP.columns.filter(c => !ini.columns.includes(c));
+    const removedCols = ini.columns.filter(c => !APP.columns.includes(c));
+
+    let html = `<div class="card" style="margin-top:1.5rem"><h3>📋 Bilan des modifications</h3>`;
+    html += `<h4 style="margin:.8rem 0 .5rem;font-size:.9rem;color:#555">Comparatif avant / après</h4>`;
+    html += `<div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
+    function diffBadge(before, after, lowerIsBetter) {
+        const d = after - before;
+        if (d === 0) return '<span style="color:#888">—</span>';
+        const good = lowerIsBetter ? d < 0 : d > 0;
+        const color = good ? 'var(--primary)' : 'var(--danger)';
+        return `<span style="color:${color};font-weight:700">${d > 0 ? '+' : ''}${d}</span>`;
+    }
+    html += `<tr><td>Lignes</td><td>${ini.rows}</td><td>${APP.data.length}</td><td>${diffBadge(ini.rows, APP.data.length, false)}</td></tr>`;
+    html += `<tr><td>Colonnes</td><td>${ini.cols}</td><td>${APP.columns.length}</td><td>${diffBadge(ini.cols, APP.columns.length, false)}</td></tr>`;
+    html += `<tr><td>Valeurs manquantes</td><td>${ini.missing}</td><td>${curMissing}</td><td>${diffBadge(ini.missing, curMissing, true)}</td></tr>`;
+    html += `<tr><td>Doublons</td><td>${ini.duplicates}</td><td>${curDup}</td><td>${diffBadge(ini.duplicates, curDup, true)}</td></tr>`;
+    html += '</table></div>';
+    if (removedCols.length) html += `<p style="font-size:.85rem;margin-top:.5rem">🗑️ Colonnes supprimées : <strong>${removedCols.join(', ')}</strong></p>`;
+    if (addedCols.length) html += `<p style="font-size:.85rem;margin-top:.3rem">➕ Colonnes ajoutées : <strong>${addedCols.join(', ')}</strong></p>`;
+
+    if (APP.editHistory.length > 0) {
+        html += `<h4 style="margin:1rem 0 .5rem;font-size:.9rem;color:#555">Journal des actions (${APP.editHistory.length})</h4>`;
+        html += `<div class="table-wrap" style="max-height:300px;overflow-y:auto"><table><tr><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
+        for (const h of APP.editHistory) html += `<tr><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
+        html += '</table></div>';
+    } else {
+        html += `<p style="color:#888;margin-top:.5rem;font-style:italic">Aucune modification effectuée.</p>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 9: EXPORT
+// ═══════════════════════════════════════════════════════════════
+function renderStep9() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
+
+    if (!APP.qualityReport) APP.qualityReport = analyzeQuality();
+    if (!APP.fairScore) APP.fairScore = computeFAIR();
+    if (!APP.aiScore) APP.aiScore = computeAI();
+    if (!APP.recommendations.length) APP.recommendations = generateRecos();
+
+    let html = `<div class="page-header"><h2>Étape 9 : Exporter la version finale</h2><p>Téléchargez votre dossier complet</p></div>`;
+
+    html += `<div class="metrics">
+        <div class="metric"><div class="val">${APP.data.length}</div><div class="label">Lignes</div></div>
+        <div class="metric"><div class="val">${APP.columns.length}</div><div class="label">Colonnes</div></div>
+        <div class="metric"><div class="val" style="color:${scoreColor(APP.fairScore.total/100)}">${APP.fairScore.total}/100</div><div class="label">Score FAIR</div></div>
+        <div class="metric"><div class="val" style="color:${APP.aiScore.level[1]}">${APP.aiScore.total}/100</div><div class="label">AI Readiness</div></div>
+    </div>`;
+
+    const fmtLabel = APP.inputFormat === 'xlsx' ? 'Excel' : APP.inputFormat === 'json' ? 'JSON' : 'CSV';
+    const fmtExt = APP.inputFormat === 'xlsx' ? '.xlsx' : APP.inputFormat === 'json' ? '.json' : '.csv';
+
+    html += `<div class="card"><h3>Contenu du dossier d'export</h3>
+        <p style="margin-bottom:.8rem;font-size:.9rem">Le fichier corrigé sera exporté au <strong>même format que l'original (${fmtLabel})</strong>.</p>
+        ${APP.inputFormat === 'xlsx' ? `<div style="margin-bottom:.8rem"><label style="cursor:pointer;font-size:.88rem"><input type="checkbox" id="export-styling" style="margin-right:.4rem">Appliquer la mise en forme Excel (en-têtes colorés, colonnes ajustées)</label></div>` : ''}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.5rem">
+            <div class="issue info">📄 Données corrigées (${fmtLabel})</div>
+            <div class="issue info">📋 Métadonnées (JSON)</div>
+            <div class="issue info">📖 Dictionnaire de données (CSV)</div>
+            <div class="issue info">🔍 Rapport qualité (JSON)</div>
+            <div class="issue info">📊 Score FAIR (JSON)</div>
+            <div class="issue info">🤖 Score AI Readiness (JSON)</div>
+            <div class="issue info">💡 Recommandations (JSON)</div>
+            <div class="issue info">📝 Historique des modifications (JSON)</div>
+            <div class="issue info">📝 Rapport des modifications (Word)</div>
+        </div></div>`;
+
+    html += `<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-primary" style="font-size:1.1rem;padding:.8rem 2rem" onclick="exportZip()">📦 Télécharger le dossier complet (ZIP)</button>
+        <button class="btn btn-secondary" onclick="exportData()">📄 Données corrigées (${fmtLabel})</button>
+        <button class="btn btn-secondary" onclick="exportWord()">📝 Rapport des modifications (Word)</button>
+    </div>`;
+
+    html += navButtons(8, null);
+    return html;
+}
+
+function dataToCSV() {
+    return Papa.unparse(APP.data, { columns: APP.columns });
+}
+
+function buildExcelBuffer(withStyle) {
+    const ws = XLSX.utils.json_to_sheet(APP.data, { header: APP.columns });
+    if (withStyle) {
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const colWidths = APP.columns.map(c => {
+            let max = c.length;
+            for (const row of APP.data) {
+                const v = row[c];
+                if (v != null) max = Math.max(max, String(v).length);
+            }
+            return { wch: Math.min(max + 2, 40) };
+        });
+        ws['!cols'] = colWidths;
+        for (let C = range.s.c; C <= range.e.c; C++) {
+            const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+            if (!ws[addr]) continue;
+            ws[addr].s = {
+                font: { bold: true, color: { rgb: 'FFFFFF' } },
+                fill: { fgColor: { rgb: '1B5E20' } },
+                alignment: { horizontal: 'center' },
+                border: { bottom: { style: 'thin', color: { rgb: '000000' } } }
+            };
+        }
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Données');
+    return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+}
+
+function exportData() {
+    if (APP.inputFormat === 'xlsx') {
+        const el = document.getElementById('export-styling');
+        const styled = el ? el.checked : false;
+        const buf = buildExcelBuffer(styled);
+        const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, 'donnees_corrigees.xlsx');
+    } else if (APP.inputFormat === 'json') {
+        const blob = new Blob([JSON.stringify(APP.data, null, 2)], { type: 'application/json;charset=utf-8;' });
+        saveAs(blob, 'donnees_corrigees.json');
+    } else {
+        const blob = new Blob([dataToCSV()], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, 'donnees_corrigees.csv');
+    }
+}
+
+function buildWordReport() {
+    const ini = APP.initialStats || {};
+    const m = APP.metadata;
+    let curMissing = 0;
+    for (const col of APP.columns) curMissing += countMissing(col);
+    const curDup = countDuplicates();
+    const addedCols = APP.columns.filter(c => !ini.columns?.includes(c));
+    const removedCols = (ini.columns || []).filter(c => !APP.columns.includes(c));
+    const date = new Date().toLocaleDateString('fr-FR');
+    const time = new Date().toLocaleTimeString('fr-FR');
+
+    let doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><title>Rapport des modifications</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:'Calibri',sans-serif;color:#333;margin:2cm}
+h1{color:#1B5E20;font-size:20pt;border-bottom:2pt solid #4CAF50;padding-bottom:6pt}
+h2{color:#2E7D32;font-size:14pt;margin-top:18pt}
+h3{color:#555;font-size:12pt;margin-top:12pt}
+table{width:100%;border-collapse:collapse;margin:8pt 0}
+th{background:#1B5E20;color:#fff;padding:6pt 8pt;text-align:left;font-size:10pt}
+td{padding:5pt 8pt;border:1pt solid #ccc;font-size:10pt}
+tr:nth-child(even){background:#F5F5F5}
+p{font-size:11pt;line-height:1.5;margin:4pt 0}
+.subtitle{color:#666;font-style:italic;font-size:11pt}
+.highlight{background:#E8F5E9;padding:4pt 8pt;border-left:4pt solid #4CAF50;margin:8pt 0}
+</style></head><body>`;
+
+    doc += `<h1>Rapport des modifications — AgriData Ready</h1>`;
+    doc += `<p class="subtitle">From Raw Data to FAIR & AI-Ready Data</p>`;
+    doc += `<p><strong>Fichier traité :</strong> ${APP.fileName}</p>`;
+    doc += `<p><strong>Date :</strong> ${date} à ${time}</p>`;
+    if (m.author) doc += `<p><strong>Auteur :</strong> ${m.author}</p>`;
+
+    doc += `<h2>1. Description du fichier initial</h2>`;
+    doc += `<p>Le fichier <strong>${APP.fileName}</strong> contenait initialement :</p>`;
+    doc += `<ul>
+        <li><strong>${ini.rows || '?'}</strong> lignes</li>
+        <li><strong>${ini.cols || '?'}</strong> colonnes : ${(ini.columns || []).join(', ')}</li>
+        <li><strong>${ini.missing ?? '?'}</strong> valeurs manquantes</li>
+        <li><strong>${ini.duplicates ?? '?'}</strong> doublons</li>
+    </ul>`;
+
+    doc += `<h2>2. Comparatif avant / après</h2>`;
+    doc += `<table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
+    function evol(before, after, lowerIsBetter) {
+        const d = after - before;
+        if (d === 0) return '=';
+        const good = lowerIsBetter ? d < 0 : d > 0;
+        return (d > 0 ? '+' : '') + d + (good ? ' ✓' : ' ✗');
+    }
+    doc += `<tr><td>Lignes</td><td>${ini.rows}</td><td>${APP.data.length}</td><td>${evol(ini.rows, APP.data.length, false)}</td></tr>`;
+    doc += `<tr><td>Colonnes</td><td>${ini.cols}</td><td>${APP.columns.length}</td><td>${evol(ini.cols, APP.columns.length, false)}</td></tr>`;
+    doc += `<tr><td>Valeurs manquantes</td><td>${ini.missing}</td><td>${curMissing}</td><td>${evol(ini.missing, curMissing, true)}</td></tr>`;
+    doc += `<tr><td>Doublons</td><td>${ini.duplicates}</td><td>${curDup}</td><td>${evol(ini.duplicates, curDup, true)}</td></tr>`;
+    doc += `</table>`;
+    if (removedCols.length) doc += `<p>Colonnes supprimées : <strong>${removedCols.join(', ')}</strong></p>`;
+    if (addedCols.length) doc += `<p>Colonnes ajoutées : <strong>${addedCols.join(', ')}</strong></p>`;
+
+    doc += `<h2>3. Détail des actions effectuées</h2>`;
+    if (APP.editHistory.length === 0) {
+        doc += `<p><em>Aucune modification n'a été effectuée sur le fichier.</em></p>`;
+    } else {
+        doc += `<p>Au total, <strong>${APP.editHistory.length} action(s)</strong> ont été réalisées sur le fichier :</p>`;
+        doc += `<table><tr><th>N°</th><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
+        APP.editHistory.forEach((h, i) => {
+            doc += `<tr><td>${i + 1}</td><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
+        });
+        doc += `</table>`;
+
+        const actionSummary = {};
+        for (const h of APP.editHistory) {
+            actionSummary[h.action] = (actionSummary[h.action] || 0) + 1;
+        }
+        doc += `<h3>Résumé par type d'action</h3><ul>`;
+        for (const [action, count] of Object.entries(actionSummary)) {
+            doc += `<li>${action} : <strong>${count} fois</strong></li>`;
+        }
+        doc += `</ul>`;
+    }
+
+    doc += `<h2>4. État final du jeu de données</h2>`;
+    doc += `<div class="highlight"><p>Le fichier corrigé contient <strong>${APP.data.length} lignes</strong> et <strong>${APP.columns.length} colonnes</strong>.</p>`;
+    doc += `<p>Colonnes finales : ${APP.columns.join(', ')}</p></div>`;
+
+    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AgriData Ready — From Raw Data to FAIR & AI-Ready Data</p>`;
+    doc += `</body></html>`;
+    return doc;
+}
+
+function exportWord() {
+    const blob = new Blob(['﻿' + buildWordReport()], { type: 'application/msword;charset=utf-8;' });
+    saveAs(blob, 'rapport_modifications.doc');
+}
+
+function exportZip() {
+    const zip = new JSZip();
+    if (APP.inputFormat === 'xlsx') {
+        const el = document.getElementById('export-styling');
+        const styled = el ? el.checked : false;
+        zip.file('donnees_corrigees.xlsx', buildExcelBuffer(styled));
+    } else if (APP.inputFormat === 'json') {
+        zip.file('donnees_corrigees.json', JSON.stringify(APP.data, null, 2));
+    } else {
+        zip.file('donnees_corrigees.csv', dataToCSV());
+    }
+    zip.file('metadonnees.json', JSON.stringify(APP.metadata, null, 2));
+
+    const dictRows = APP.columns.map(c => {
+        const d = APP.variableDocs[c] || {};
+        return { variable: c, ...d };
+    });
+    zip.file('dictionnaire_donnees.csv', Papa.unparse(dictRows));
+    zip.file('dictionnaire_donnees.json', JSON.stringify(APP.variableDocs, null, 2));
+
+    const qr = { ...APP.qualityReport };
+    qr.issues = qr.issues.map(i => ({ type: i.type, severity: i.severity, message: i.message }));
+    zip.file('rapport_qualite.json', JSON.stringify(qr, null, 2));
+    zip.file('score_fair.json', JSON.stringify({ total: APP.fairScore.total, scores: APP.fairScore.scores }, null, 2));
+    zip.file('score_ai_readiness.json', JSON.stringify({ total: APP.aiScore.total, dims: APP.aiScore.dims, level: APP.aiScore.level[0] }, null, 2));
+    zip.file('recommandations.json', JSON.stringify(APP.recommendations.map(([p, t, d]) => ({ priority: p, title: t, description: d })), null, 2));
+    zip.file('historique_modifications.json', JSON.stringify(APP.editHistory, null, 2));
+    zip.file('rapport_modifications.doc', '﻿' + buildWordReport());
+
+    zip.generateAsync({ type: 'blob' }).then(blob => {
+        saveAs(blob, `agridata_ready_${new Date().toISOString().slice(0,10)}.zip`);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════════════════════════════
+function renderStep() {
+    const container = document.getElementById('main-content');
+    const renderers = {
+        1: renderStep1, 2: renderStep2, 3: renderStep3, 4: renderStep4,
+        5: renderStep5, 6: renderStep6, 7: renderStep7, 8: renderStep8, 9: renderStep9
+    };
+    container.innerHTML = renderers[APP.step]();
+    updateFileInfo();
+
+    // Post-render hooks
+    if (APP.step === 4 && APP.data) setTimeout(() => renderDocForm(), 50);
+
+    // Drag and drop for step 1
+    if (APP.step === 1) {
+        const zone = document.getElementById('upload-zone');
+        if (zone) {
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+        }
+    }
+}
+
+// Init
+renderNav();
+renderStep();
+</script>
+</body>
+</html>
