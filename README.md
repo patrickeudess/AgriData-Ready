@@ -1,8 +1,8 @@
-# 🌾 AgriData Ready
+# 🌍 AfriData Ready
 
 **From Raw Data to FAIR & AI-Ready Data**
 
-Application web interactive qui guide l'utilisateur étape par étape pour transformer des données brutes en données propres, documentées, conformes aux principes FAIR et prêtes pour l'intelligence artificielle.
+Application web interactive qui guide l'utilisateur étape par étape pour transformer des données brutes — dans **tous les domaines** — en données propres, documentées, conformes aux principes FAIR et prêtes pour l'intelligence artificielle.
 
 ## Fonctionnalités
 

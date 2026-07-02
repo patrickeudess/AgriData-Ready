@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgriData Ready — From Raw Data to FAIR & AI-Ready Data</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+<title>AfriData Ready — From Raw Data to FAIR & AI-Ready Data</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 <script src="libs/papaparse.min.js"></script>
 <script src="libs/xlsx.full.min.js"></script>
 <script src="libs/jszip.min.js"></script>
@@ -145,7 +145,7 @@ body{flex-direction:column}
 <body>
 
 <nav class="sidebar">
-    <h1>🌾 AgriData Ready</h1>
+    <h1>🌍 AfriData Ready</h1>
     <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
     <div id="nav-items"></div>
     <div class="file-info" id="file-info" style="display:none">
@@ -1436,7 +1436,7 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
 .highlight{background:#E8F5E9;padding:4pt 8pt;border-left:4pt solid #4CAF50;margin:8pt 0}
 </style></head><body>`;
 
-    doc += `<h1>Rapport des modifications — AgriData Ready</h1>`;
+    doc += `<h1>Rapport des modifications — AfriData Ready</h1>`;
     doc += `<p class="subtitle">From Raw Data to FAIR & AI-Ready Data</p>`;
     doc += `<p><strong>Fichier traité :</strong> ${APP.fileName}</p>`;
     doc += `<p><strong>Date :</strong> ${date} à ${time}</p>`;
@@ -1493,7 +1493,7 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
     doc += `<div class="highlight"><p>Le fichier corrigé contient <strong>${APP.data.length} lignes</strong> et <strong>${APP.columns.length} colonnes</strong>.</p>`;
     doc += `<p>Colonnes finales : ${APP.columns.join(', ')}</p></div>`;
 
-    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AgriData Ready — From Raw Data to FAIR & AI-Ready Data</p>`;
+    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AfriData Ready — From Raw Data to FAIR & AI-Ready Data</p>`;
     doc += `</body></html>`;
     return doc;
 }
@@ -1561,7 +1561,7 @@ function exportZip() {
     zip.file('rapport_modifications.doc', '﻿' + buildWordReport());
 
     zip.generateAsync({ type: 'blob' }).then(blob => {
-        saveAs(blob, `agridata_ready_${new Date().toISOString().slice(0,10)}.zip`);
+        saveAs(blob, `afridata_ready_${new Date().toISOString().slice(0,10)}.zip`);
     });
 }
 
