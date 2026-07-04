@@ -206,7 +206,11 @@ const APP = {
     editCount: 0,
     editPage: 0,
     aqiScore: null,
-    baseline: null
+    baseline: null,
+    mode: null,          // null (accueil) | 'quick' | 'project'
+    projectId: null,
+    projectName: '',
+    lastSaved: null
 };
 const ROWS_PER_PAGE = 100;
 
@@ -241,12 +245,31 @@ function renderNav() {
 
     const aux = document.getElementById('aux-nav');
     if (aux) {
-        const auxItems = [['analysis', '📊', 'Analyse des données', !APP.data], ['referentiel', '📖', 'Référentiel utilisé', false]];
-        aux.innerHTML = auxItems.map(([id, icon, label, dis]) => {
+        const auxItems = [
+            ['welcome', '🏠', 'Accueil', false],
+            ['projects', '📂', 'Mes projets', false],
+            ['analysis', '📊', 'Analyse des données', !APP.data],
+            ['referentiel', '📖', 'Référentiel utilisé', false]
+        ];
+        let h = auxItems.map(([id, icon, label, dis]) => {
             let cls = 'nav-item'; if (id === APP.step) cls += ' active';
             return `<div class="${cls}" onclick="${dis ? '' : `goStep('${id}')`}" style="${dis ? 'opacity:.4;cursor:default' : ''}">
                 <span class="num">${icon}</span><span>${label}</span></div>`;
         }).join('');
+
+        // Panneau projet / sauvegarde
+        if (APP.mode === 'project' && APP.projectId) {
+            h += `<div style="margin-top:.8rem;padding:.6rem .8rem;background:rgba(255,255,255,.12);border-radius:8px;font-size:.78rem">
+                <p style="margin:0 0 .3rem"><strong>📂 ${String(APP.projectName).replace(/</g, '&lt;')}</strong></p>
+                <p id="save-indicator" style="margin:0 0 .5rem;opacity:.8">${APP.lastSaved ? '💾 Sauvegardé à ' + APP.lastSaved : 'Non sauvegardé'}</p>
+                <button class="btn btn-sm" style="background:#fff;color:#1B5E20;width:100%" onclick="saveProject(false)">💾 Enregistrer maintenant</button>
+            </div>`;
+        } else if (APP.mode === 'quick' && APP.data) {
+            h += `<div style="margin-top:.8rem">
+                <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;width:100%;border:1px dashed rgba(255,255,255,.5)" onclick="saveAsProject()">💾 Enregistrer ce travail comme projet</button>
+            </div>`;
+        }
+        aux.innerHTML = h;
     }
 }
 
@@ -259,6 +282,7 @@ function toggleSidebar(force) {
 }
 
 function goStep(n) {
+    if (APP.mode === null && typeof n === 'number') APP.mode = 'quick';
     APP.step = n;
     renderNav();
     renderStep();
@@ -266,6 +290,7 @@ function goStep(n) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     const main = document.getElementById('main-content');
     if (main) main.scrollTop = 0;
+    if (APP.mode === 'project' && APP.projectId && typeof n === 'number') saveProject(true);
 }
 
 function updateFileInfo() {
@@ -364,6 +389,7 @@ function onDataLoaded() {
     updateFileInfo();
     renderNav();
     renderStep();
+    scheduleAutosave();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -412,6 +438,7 @@ function addHistory(action, detail, justification) {
     APP.aiScore = null;
     APP.aqiScore = null;
     updateFileInfo();
+    scheduleAutosave();
 }
 function pct(a, b) { return b > 0 ? Math.round(a / b * 1000) / 10 : 0; }
 function scoreColor(ratio) { return ratio < 0.4 ? 'var(--danger)' : ratio < 0.7 ? 'var(--accent)' : 'var(--primary)'; }
@@ -1024,6 +1051,7 @@ function saveDocForm() {
         utility: document.getElementById('doc-utility').value,
         is_target: document.getElementById('doc-target').checked,
     };
+    scheduleAutosave();
     renderStep();
     setTimeout(() => { document.getElementById('doc-col-select').value = col; renderDocForm(); }, 50);
 }
@@ -1077,6 +1105,7 @@ function saveMetadata() {
         const el = document.getElementById('meta-' + f);
         if (el) APP.metadata[f] = el.value;
     }
+    scheduleAutosave();
     alert('Métadonnées enregistrées !');
 }
 
@@ -2291,6 +2320,219 @@ function renderReferentiel() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// MODE PROJET : persistance locale (IndexedDB, 100% sur l'appareil)
+// ═══════════════════════════════════════════════════════════════
+const DB_NAME = 'afridata_projects', DB_STORE = 'projects';
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: 'id' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function dbPut(project) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(project);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+}
+
+async function dbGetAll() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).getAll();
+        req.onsuccess = () => { db.close(); resolve(req.result || []); };
+        req.onerror = () => { db.close(); reject(req.error); };
+    });
+}
+
+async function dbGet(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(id);
+        req.onsuccess = () => { db.close(); resolve(req.result); };
+        req.onerror = () => { db.close(); reject(req.error); };
+    });
+}
+
+async function dbDelete(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).delete(id);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+}
+
+// Instantané complet de l'état de travail (workbook exclu : trop lourd, reconstruit à l'import)
+function serializeState() {
+    return {
+        step: typeof APP.step === 'number' ? APP.step : 1,
+        data: APP.data, originalData: APP.originalData,
+        initialStats: APP.initialStats, baseline: APP.baseline,
+        inputFormat: APP.inputFormat, columns: APP.columns, fileName: APP.fileName,
+        variableDocs: APP.variableDocs, metadata: APP.metadata,
+        editHistory: APP.editHistory, editCount: APP.editCount,
+        sheetNames: APP.sheetNames, activeSheet: APP.activeSheet
+    };
+}
+
+function restoreState(s) {
+    APP.data = s.data; APP.originalData = s.originalData;
+    APP.initialStats = s.initialStats; APP.baseline = s.baseline;
+    APP.inputFormat = s.inputFormat || 'csv'; APP.columns = s.columns || []; APP.fileName = s.fileName || '';
+    APP.variableDocs = s.variableDocs || {}; APP.metadata = s.metadata || {};
+    APP.editHistory = s.editHistory || []; APP.editCount = s.editCount || 0;
+    APP.sheetNames = s.sheetNames || []; APP.activeSheet = s.activeSheet || '';
+    APP.workbook = null;
+    APP.qualityReport = null; APP.fairScore = null; APP.aiScore = null; APP.aqiScore = null;
+    APP.editPage = 0;
+    APP.step = s.step || 1;
+}
+
+let _autosaveTimer = null;
+function scheduleAutosave() {
+    if (APP.mode !== 'project' || !APP.projectId) return;
+    clearTimeout(_autosaveTimer);
+    _autosaveTimer = setTimeout(() => saveProject(true), 2000);
+}
+
+async function saveProject(silent) {
+    if (!APP.projectId) return;
+    const existing = await dbGet(APP.projectId) || {};
+    await dbPut({
+        id: APP.projectId,
+        name: APP.projectName || existing.name || 'Projet sans nom',
+        description: existing.description || '',
+        createdAt: existing.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        state: serializeState()
+    });
+    APP.lastSaved = new Date().toLocaleTimeString('fr-FR');
+    const el = document.getElementById('save-indicator');
+    if (el) el.textContent = '💾 Sauvegardé à ' + APP.lastSaved;
+    if (!silent) renderNav();
+}
+
+async function createProject(name, description, fromCurrentWork) {
+    const id = 'prj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    APP.projectId = id;
+    APP.projectName = name || 'Projet sans nom';
+    APP.mode = 'project';
+    await dbPut({
+        id, name: APP.projectName, description: description || '',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        state: fromCurrentWork ? serializeState() : null
+    });
+    APP.lastSaved = new Date().toLocaleTimeString('fr-FR');
+    if (!fromCurrentWork) { APP.step = 1; }
+    renderNav(); renderStep();
+}
+
+async function openProject(id) {
+    const p = await dbGet(id);
+    if (!p) { alert('Projet introuvable.'); return; }
+    APP.mode = 'project';
+    APP.projectId = p.id;
+    APP.projectName = p.name;
+    if (p.state && p.state.data) restoreState(p.state);
+    else APP.step = 1;
+    APP.lastSaved = new Date(p.updatedAt).toLocaleTimeString('fr-FR');
+    renderNav(); renderStep();
+    window.scrollTo({ top: 0 });
+}
+
+async function deleteProject(id, name) {
+    if (!confirm(`Supprimer définitivement le projet « ${name} » ?`)) return;
+    await dbDelete(id);
+    if (APP.projectId === id) { APP.projectId = null; APP.projectName = ''; APP.mode = null; }
+    goStep('projects');
+}
+
+function saveAsProject() {
+    const name = prompt('Nom du projet :', APP.metadata.title || APP.fileName || 'Mon projet');
+    if (name === null) return;
+    createProject(name, '', true);
+}
+
+function startQuick() {
+    APP.mode = 'quick';
+    APP.step = 1;
+    renderNav(); renderStep();
+}
+
+// ── Écran d'accueil : choix du mode ──
+function renderWelcome() {
+    return `<div class="page-header"><h2>🌍 Bienvenue dans AfriData Ready</h2><p>From Raw Data to FAIR &amp; AI-Ready Data : choisissez votre mode de travail</p></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;max-width:900px;margin:0 auto">
+        <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="startQuick()">
+            <div style="font-size:3rem">🚀</div>
+            <h3 style="border:none;justify-content:center;display:flex">Démarrage rapide</h3>
+            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Importer un fichier, le traiter, exporter les résultats. Simple et direct, sans sauvegarde.</p>
+            <button class="btn btn-primary">Commencer →</button>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="goStep('projects')">
+            <div style="font-size:3rem">📂</div>
+            <h3 style="border:none;justify-content:center;display:flex">Projet AfriData Ready</h3>
+            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Travailler sur plusieurs jours : sauvegarde automatique sur votre ordinateur, reprise exacte là où vous vous êtes arrêté.</p>
+            <button class="btn btn-accent">Mes projets →</button>
+        </div>
+    </div>
+    <p style="text-align:center;color:#999;font-size:.82rem;margin-top:1.5rem">🔒 Dans les deux modes, vos données restent exclusivement sur votre ordinateur : aucun envoi sur Internet.</p>`;
+}
+
+// ── Page : liste des projets ──
+function renderProjects() {
+    // Le contenu réel est chargé de façon asynchrone
+    setTimeout(loadProjectsList, 30);
+    return `<div class="page-header"><h2>📂 Mes projets</h2><p>Vos projets sont stockés localement dans ce navigateur</p></div>
+    <div class="card"><h3>➕ Nouveau projet</h3>
+        <div class="form-row">
+            <div class="form-group"><label>Nom du projet :</label><input id="new-prj-name" placeholder="ex : Enquête ménages 2026"></div>
+            <div class="form-group"><label>Description (optionnel) :</label><input id="new-prj-desc" placeholder="Courte description"></div>
+        </div>
+        <button class="btn btn-primary" onclick="createProject(document.getElementById('new-prj-name').value, document.getElementById('new-prj-desc').value, false)">Créer le projet</button>
+    </div>
+    <div id="projects-list"><div class="card"><p style="color:#888">Chargement…</p></div></div>
+    <div class="nav-buttons"><div><button class="btn btn-secondary" onclick="APP.mode=null;APP.step='welcome';renderNav();renderStep()">← Accueil</button></div><div></div></div>`;
+}
+
+async function loadProjectsList() {
+    const el = document.getElementById('projects-list');
+    if (!el) return;
+    let projects = [];
+    try { projects = await dbGetAll(); } catch (e) { el.innerHTML = `<div class="card"><p style="color:var(--danger)">Stockage local indisponible : ${e.message}</p></div>`; return; }
+    projects.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    if (!projects.length) { el.innerHTML = '<div class="card"><p style="color:#888">Aucun projet pour le moment. Créez-en un ci-dessus, ou commencez en Démarrage rapide puis cliquez « Enregistrer comme projet ».</p></div>'; return; }
+    let html = '<div class="card"><h3>Projets existants</h3><div class="table-wrap"><table><tr><th>Nom</th><th>Description</th><th>Données</th><th>Dernière modification</th><th></th></tr>';
+    for (const p of projects) {
+        const rows = p.state && p.state.data ? `${p.state.data.length} lignes` : '<span style="color:#aaa">vide</span>';
+        const upd = p.updatedAt ? new Date(p.updatedAt).toLocaleString('fr-FR') : '';
+        const safeName = String(p.name).replace(/</g, '&lt;').replace(/'/g, "\\'");
+        html += `<tr>
+            <td><strong>${String(p.name).replace(/</g, '&lt;')}</strong></td>
+            <td style="color:#666">${String(p.description || '').replace(/</g, '&lt;')}</td>
+            <td>${rows}</td><td>${upd}</td>
+            <td style="white-space:nowrap">
+                <button class="btn btn-primary btn-sm" onclick="openProject('${p.id}')">Ouvrir</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}','${safeName}')">✕</button>
+            </td></tr>`;
+    }
+    html += '</table></div></div>';
+    el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // RENDER ENGINE
 // ═══════════════════════════════════════════════════════════════
 function renderStep() {
@@ -2298,7 +2540,8 @@ function renderStep() {
     const renderers = {
         1: renderStep1, 2: renderStep2, 3: renderStep3, 4: renderStep4,
         5: renderStep5, 6: renderStep6, 7: renderStep7, 8: renderStep8, 9: renderStep9,
-        analysis: renderAnalysis, referentiel: renderReferentiel
+        analysis: renderAnalysis, referentiel: renderReferentiel,
+        welcome: renderWelcome, projects: renderProjects
     };
     container.innerHTML = renderers[APP.step]();
     updateFileInfo();
@@ -2317,7 +2560,8 @@ function renderStep() {
     }
 }
 
-// Init
+// Init : écran d'accueil (choix du mode)
+APP.step = 'welcome';
 renderNav();
 renderStep();
 </script>
