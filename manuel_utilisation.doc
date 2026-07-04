@@ -1,0 +1,131 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><title>Manuel d'utilisation — AfriData Ready</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:'Calibri',sans-serif;color:#333;margin:2.2cm;line-height:1.5}
+h1{color:#1B5E20;font-size:24pt;text-align:center;margin-bottom:4pt}
+h2{color:#2E7D32;font-size:15pt;margin-top:20pt;border-bottom:1.5pt solid #4CAF50;padding-bottom:3pt}
+h3{color:#1B5E20;font-size:12.5pt;margin-top:12pt}
+p{font-size:11pt;margin:5pt 0}
+ul,ol{font-size:11pt;margin:5pt 0 5pt 18pt}
+li{margin:3pt 0}
+table{width:100%;border-collapse:collapse;margin:8pt 0}
+th{background:#1B5E20;color:#fff;padding:6pt 8pt;text-align:left;font-size:10.5pt}
+td{padding:5pt 8pt;border:1pt solid #ccc;font-size:10.5pt;vertical-align:top}
+tr:nth-child(even){background:#F5F5F5}
+.subtitle{color:#666;font-style:italic;font-size:12pt;text-align:center;margin-bottom:16pt}
+.box{background:#E8F5E9;padding:8pt 12pt;border-left:4pt solid #4CAF50;margin:8pt 0}
+.tip{background:#FFF8E1;padding:8pt 12pt;border-left:4pt solid #FF6F00;margin:8pt 0}
+.step{background:#1B5E20;color:#fff;padding:2pt 9pt;border-radius:10pt;font-weight:bold;font-size:10.5pt}
+.center{text-align:center}
+.small{font-size:9.5pt;color:#888}
+</style></head><body>
+
+<h1>🌍 AfriData Ready</h1>
+<p class="subtitle">Manuel d'utilisation — From Raw Data to FAIR &amp; AI-Ready Data</p>
+
+<div class="box">
+<p><strong>Qu'est-ce qu'AfriData Ready ?</strong></p>
+<p>AfriData Ready est une application web gratuite qui vous accompagne, étape par étape, pour transformer vos données brutes — dans <strong>tous les domaines</strong> — en données propres, documentées, conformes aux principes <strong>FAIR</strong> et prêtes pour l'<strong>intelligence artificielle</strong>. Aucune installation, aucun compte : tout se passe dans votre navigateur, et vos données ne quittent jamais votre ordinateur.</p>
+</div>
+
+<h2>1. Accéder à l'application</h2>
+<ol>
+<li>Ouvrez votre navigateur (Chrome, Edge, Firefox…).</li>
+<li>Rendez-vous à l'adresse : <strong>https://patrickeudess.github.io/AgriData-Ready/</strong></li>
+<li>L'application se charge immédiatement, prête à l'emploi.</li>
+</ol>
+<div class="tip"><p>💡 <strong>Astuce :</strong> vos données restent 100 % sur votre machine. Rien n'est envoyé sur Internet. Vous pouvez donc l'utiliser en toute confidentialité.</p></div>
+
+<h2>2. Vue d'ensemble : les 9 étapes</h2>
+<p>Le menu de gauche affiche les 9 étapes. Vous avancez avec les boutons <strong>« Suivant → »</strong> et revenez avec <strong>« ← Retour »</strong>. Une coche verte indique une étape terminée.</p>
+<table>
+<tr><th style="width:70px">Étape</th><th>Objectif</th></tr>
+<tr><td><span class="step">1</span> Importer</td><td>Charger votre fichier de données (CSV, Excel ou JSON).</td></tr>
+<tr><td><span class="step">2</span> Qualité</td><td>Détecter automatiquement les problèmes, voir les statistiques et les valeurs aberrantes.</td></tr>
+<tr><td><span class="step">3</span> Modifier</td><td>Corriger directement les données (cellules, colonnes, valeurs manquantes, doublons).</td></tr>
+<tr><td><span class="step">4</span> Documenter</td><td>Décrire chaque variable (type, unité, signification…).</td></tr>
+<tr><td><span class="step">5</span> Métadonnées</td><td>Renseigner le titre, l'auteur, la licence, la zone géographique, etc.</td></tr>
+<tr><td><span class="step">6</span> Score FAIR</td><td>Évaluer la conformité aux principes Findable, Accessible, Interoperable, Reusable.</td></tr>
+<tr><td><span class="step">7</span> AI Readiness</td><td>Évaluer la maturité des données pour l'intelligence artificielle.</td></tr>
+<tr><td><span class="step">8</span> Recommandations</td><td>Obtenir des actions concrètes + le bilan des modifications effectuées.</td></tr>
+<tr><td><span class="step">9</span> Exporter</td><td>Télécharger le dossier complet (données corrigées + rapports).</td></tr>
+</table>
+
+<h2>3. Étape 1 — Importer les données</h2>
+<ol>
+<li>Cliquez sur la zone <strong>« Glissez-déposez un fichier ici »</strong>, ou glissez votre fichier dessus.</li>
+<li>Formats acceptés : <strong>CSV</strong> (.csv), <strong>Excel</strong> (.xlsx, .xls), <strong>JSON</strong> (.json).</li>
+<li>Une fois chargé, un aperçu des données et un résumé (lignes, colonnes, valeurs manquantes, doublons) s'affichent.</li>
+</ol>
+<div class="box"><p>📑 <strong>Fichier Excel à plusieurs feuilles :</strong> un sélecteur apparaît pour choisir la feuille à traiter. Le nombre de lignes et de colonnes de chaque feuille est indiqué.</p></div>
+
+<h2>4. Étape 2 — Analyse de la qualité</h2>
+<p>Cette étape comporte <strong>trois onglets</strong> :</p>
+<h3>🔍 Problèmes</h3>
+<p>Liste des anomalies détectées : valeurs manquantes, doublons, colonnes vides, noms de colonnes peu clairs, codage incohérent, formats de date mixtes. Un graphique montre le taux de valeurs manquantes par colonne.</p>
+<h3>📊 Statistiques descriptives</h3>
+<p>Pour chaque colonne numérique : moyenne, médiane, écart-type, minimum, quartiles (Q1, Q3), maximum. Pour chaque colonne catégorielle : nombre de valeurs uniques et valeurs les plus fréquentes.</p>
+<h3>⚠️ Valeurs aberrantes</h3>
+<p>Détecte les valeurs anormales (méthode statistique de l'écart interquartile). Pour chaque colonne concernée, l'application indique la plage normale, des exemples de valeurs aberrantes et <strong>4 solutions</strong> : corriger manuellement, remplacer par la médiane, supprimer les lignes, ou documenter et conserver.</p>
+
+<h2>5. Étape 3 — Modifier les données</h2>
+<p>Quatre onglets pour corriger vos données :</p>
+<ul>
+<li><strong>Éditer les cellules :</strong> cliquez sur une valeur pour la modifier. Les données sont affichées par pages de 100 lignes — utilisez <strong>« Précédent / Suivant »</strong> pour parcourir l'ensemble. Le bouton ✕ supprime une ligne.</li>
+<li><strong>Colonnes :</strong> renommer, supprimer ou standardiser les noms de colonnes (minuscules, sans espaces ni accents).</li>
+<li><strong>Valeurs manquantes :</strong> remplacer par la moyenne, la médiane, le mode, une valeur personnalisée, ou supprimer les lignes concernées.</li>
+<li><strong>Doublons :</strong> supprimer en un clic les lignes en double.</li>
+</ul>
+<div class="tip"><p>💡 Chaque modification est enregistrée automatiquement dans un <strong>journal</strong> (visible à l'étape 8 et dans le rapport final).</p></div>
+
+<h2>6. Étape 4 — Documenter les variables</h2>
+<p>Pour chaque colonne, renseignez : une description, le type de donnée, l'unité de mesure, le format, les valeurs possibles et d'éventuelles règles de validation. Une bonne documentation améliore vos scores FAIR et AI Readiness.</p>
+
+<h2>7. Étape 5 — Métadonnées du jeu de données</h2>
+<p>Complétez les informations générales : titre, description, mots-clés, auteur, version, licence, conditions d'accès, contact, citation, méthode de collecte, zone géographique, population cible, etc.</p>
+
+<h2>8. Étapes 6 &amp; 7 — Scores FAIR et AI Readiness</h2>
+<p>L'application calcule automatiquement deux scores sur 100 :</p>
+<ul>
+<li><strong>Score FAIR :</strong> détaillé selon les 4 principes (Findable, Accessible, Interoperable, Reusable).</li>
+<li><strong>Score AI Readiness :</strong> selon 7 dimensions (complétude, cohérence, documentation, qualité des variables, variable cible, structure, données sensibles).</li>
+</ul>
+<p>Chaque score s'accompagne du détail des points obtenus et des points à améliorer.</p>
+
+<h2>9. Étape 8 — Recommandations et bilan</h2>
+<p>Vous obtenez une liste d'actions hiérarchisées (🔴 urgentes, 🟡 importantes, 🟢 améliorations) et un <strong>bilan des modifications</strong> : un tableau comparatif avant/après (lignes, colonnes, valeurs manquantes, doublons) et le journal complet des actions réalisées.</p>
+
+<h2>10. Étape 9 — Exporter la version finale</h2>
+<p>Cliquez sur <strong>« 📦 Télécharger le dossier complet (ZIP) »</strong>. Le dossier contient :</p>
+<table>
+<tr><th>Fichier</th><th>Contenu</th></tr>
+<tr><td>Données corrigées</td><td>Au <strong>même format que votre fichier d'origine</strong> (CSV, Excel ou JSON).</td></tr>
+<tr><td>Métadonnées (Excel)</td><td>Toutes les informations générales du jeu de données.</td></tr>
+<tr><td>Dictionnaire de données (Excel)</td><td>La documentation de chaque variable.</td></tr>
+<tr><td>Rapport qualité (Excel)</td><td>Les problèmes détectés.</td></tr>
+<tr><td>Score FAIR (Excel)</td><td>Le détail du score FAIR.</td></tr>
+<tr><td>Score AI Readiness (Excel)</td><td>Le détail du score AI Readiness.</td></tr>
+<tr><td>Recommandations (Excel)</td><td>La liste des actions à mener.</td></tr>
+<tr><td>Historique des modifications (Excel)</td><td>Le journal de toutes vos actions.</td></tr>
+<tr><td>Rapport des modifications (Word)</td><td>Un document décrivant ce qui a été fait sur le fichier de base.</td></tr>
+</table>
+<p>Vous pouvez aussi télécharger séparément les <strong>données corrigées seules</strong> ou le <strong>rapport Word</strong>.</p>
+<div class="box"><p>📄 <strong>Fichier Excel :</strong> si votre fichier d'origine était un Excel, une case permet d'ajouter une mise en forme (en-têtes colorés, colonnes ajustées).</p></div>
+
+<h2>11. Questions fréquentes</h2>
+<h3>Mes données sont-elles envoyées quelque part ?</h3>
+<p>Non. Tout le traitement se fait dans votre navigateur. Aucune donnée n'est transmise sur Internet.</p>
+<h3>Dois-je installer un logiciel ?</h3>
+<p>Non. Il suffit d'un navigateur web récent et d'une connexion pour ouvrir la page la première fois.</p>
+<h3>Quelle taille de fichier puis-je traiter ?</h3>
+<p>L'application convient aux jeux de données courants (jusqu'à plusieurs milliers de lignes). Pour de très gros volumes, privilégiez un fichier allégé.</p>
+<h3>Puis-je reprendre plus tard ?</h3>
+<p>Le travail n'est pas sauvegardé automatiquement : terminez votre session en une fois et exportez le dossier final avant de fermer l'onglet.</p>
+
+<br>
+<hr>
+<p class="center small">AfriData Ready — From Raw Data to FAIR &amp; AI-Ready Data<br>
+Mémoire DU Données — UCAD/EBAD — Patrick-Eudess Zatty ALLA — 2026</p>
+
+</body></html>

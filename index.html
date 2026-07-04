@@ -129,6 +129,9 @@ td input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 2
 .upload-zone .icon{font-size:3rem;margin-bottom:.5rem;display:block}
 .upload-zone input{display:none}
 
+/* Mobile topbar (hidden on desktop) */
+.topbar{display:none}
+
 /* Responsive */
 @media(max-width:900px){
 .sidebar{width:200px}
@@ -136,15 +139,34 @@ td input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 2
 .form-row{grid-template-columns:1fr}
 }
 @media(max-width:600px){
-.sidebar{position:relative;width:100%}
-.main{margin-left:0}
 body{flex-direction:column}
+.topbar{display:flex;position:fixed;top:0;left:0;right:0;z-index:200;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#1B5E20,#2E7D32);color:#fff;padding:.6rem .9rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.topbar h1{font-size:1.05rem;margin:0}
+.topbar .burger{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.4rem;padding:.3rem .7rem;border-radius:8px;cursor:pointer}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:320px;transform:translateX(-105%);transition:transform .25s ease;z-index:300;box-shadow:4px 0 20px rgba(0,0,0,.3)}
+.sidebar.open{transform:translateX(0)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:250}
+.sidebar-overlay.show{display:block}
+.main{margin-left:0;padding:4.2rem .8rem 3rem}
+.sidebar .nav-item{padding:.85rem .8rem;font-size:.95rem}
+.btn{min-height:44px}
+input,select,textarea{min-height:42px;font-size:16px}
+textarea{min-height:64px}
+.metrics{grid-template-columns:repeat(2,1fr)}
+.page-header{padding:1rem}
+.page-header h2{font-size:1.15rem}
 }
 </style>
 </head>
 <body>
 
-<nav class="sidebar">
+<header class="topbar">
+    <h1>🌍 AfriData Ready</h1>
+    <button class="burger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+</header>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
+<nav class="sidebar" id="sidebar">
     <h1>🌍 AfriData Ready</h1>
     <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
     <div id="nav-items"></div>
@@ -228,10 +250,22 @@ function renderNav() {
     }
 }
 
+function toggleSidebar(force) {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebar-overlay');
+    const open = force !== undefined ? force : !sb.classList.contains('open');
+    sb.classList.toggle('open', open);
+    ov.classList.toggle('show', open);
+}
+
 function goStep(n) {
     APP.step = n;
     renderNav();
     renderStep();
+    toggleSidebar(false);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    const main = document.getElementById('main-content');
+    if (main) main.scrollTop = 0;
 }
 
 function updateFileInfo() {
