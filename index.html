@@ -148,6 +148,7 @@ body{flex-direction:column}
     <h1>🌍 AfriData Ready</h1>
     <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
     <div id="nav-items"></div>
+    <div id="aux-nav" style="margin-top:1rem;padding-top:.8rem;border-top:1px solid rgba(255,255,255,.2)"></div>
     <div class="file-info" id="file-info" style="display:none">
         <p><strong>Fichier :</strong> <span id="info-filename"></span></p>
         <p><strong>Lignes :</strong> <span id="info-rows"></span></p>
@@ -181,7 +182,9 @@ const APP = {
     recommendations: [],
     editHistory: [],
     editCount: 0,
-    editPage: 0
+    editPage: 0,
+    aqiScore: null,
+    baseline: null
 };
 const ROWS_PER_PAGE = 100;
 
@@ -213,6 +216,16 @@ function renderNav() {
             <span>${name}</span>
         </div>`;
     }).join('');
+
+    const aux = document.getElementById('aux-nav');
+    if (aux) {
+        const auxItems = [['analysis', '📊', 'Analyse des données', !APP.data], ['referentiel', '📖', 'Référentiel utilisé', false]];
+        aux.innerHTML = auxItems.map(([id, icon, label, dis]) => {
+            let cls = 'nav-item'; if (id === APP.step) cls += ' active';
+            return `<div class="${cls}" onclick="${dis ? '' : `goStep('${id}')`}" style="${dis ? 'opacity:.4;cursor:default' : ''}">
+                <span class="num">${icon}</span><span>${label}</span></div>`;
+        }).join('');
+    }
 }
 
 function goStep(n) {
@@ -310,6 +323,10 @@ function onDataLoaded() {
         missing: initMissing,
         duplicates: countDuplicates()
     };
+    // Baseline scores captured at import (before any edit/documentation)
+    const bFair = computeFAIR().total, bAi = computeAI().total, bAqi = computeAQI().total;
+    APP.baseline = { docs: 0, fair: bFair, ai: bAi, aqi: bAqi };
+    APP.aqiScore = null;
     updateFileInfo();
     renderNav();
     renderStep();
@@ -344,12 +361,22 @@ function isNumericCol(col) {
 function numericValues(col) {
     return APP.data.map(r => r[col]).filter(v => !isNull(v) && !isNaN(parseFloat(v))).map(v => parseFloat(v));
 }
-function addHistory(action, detail) {
-    APP.editHistory.push({ time: new Date().toLocaleTimeString(), action, detail });
+function addHistory(action, detail, justification) {
+    const now = new Date();
+    const stepName = typeof APP.step === 'number' ? (STEPS[APP.step - 1] || '') : String(APP.step);
+    APP.editHistory.push({
+        date: now.toLocaleDateString('fr-FR'),
+        time: now.toLocaleTimeString(),
+        step: stepName,
+        user: APP.metadata.author || '—',
+        action, detail,
+        justification: justification || ''
+    });
     APP.editCount++;
     APP.qualityReport = null;
     APP.fairScore = null;
     APP.aiScore = null;
+    APP.aqiScore = null;
     updateFileInfo();
 }
 function pct(a, b) { return b > 0 ? Math.round(a / b * 1000) / 10 : 0; }
@@ -1268,6 +1295,7 @@ function renderStep8() {
     }
 
     html += renderChangeLog();
+    html += `<div style="text-align:center;margin:1rem 0"><button class="btn btn-accent" onclick="goStep('analysis')">📊 Voir l'analyse visuelle & l'AQI →</button></div>`;
     html += navButtons(7, 9, 'Exporter →');
     return html;
 }
@@ -1321,39 +1349,49 @@ function renderStep9() {
     if (!APP.fairScore) APP.fairScore = computeFAIR();
     if (!APP.aiScore) APP.aiScore = computeAI();
     if (!APP.recommendations.length) APP.recommendations = generateRecos();
+    APP.aqiScore = computeAQI();
+    const aqi = APP.aqiScore;
 
-    let html = `<div class="page-header"><h2>Étape 9 : Exporter la version finale</h2><p>Téléchargez votre dossier complet</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 9 : Exporter le Data Product</h2><p>Téléchargez votre jeu de données documenté, certifié et conforme</p></div>`;
 
     html += `<div class="metrics">
-        <div class="metric"><div class="val">${APP.data.length}</div><div class="label">Lignes</div></div>
-        <div class="metric"><div class="val">${APP.columns.length}</div><div class="label">Colonnes</div></div>
+        <div class="metric" style="border-top-color:${aqi.level[1]}"><div class="val" style="color:${aqi.level[1]}">${aqi.total}/100</div><div class="label">AQI · ${aqi.level[0]}</div></div>
         <div class="metric"><div class="val" style="color:${scoreColor(APP.fairScore.total/100)}">${APP.fairScore.total}/100</div><div class="label">Score FAIR</div></div>
         <div class="metric"><div class="val" style="color:${APP.aiScore.level[1]}">${APP.aiScore.total}/100</div><div class="label">AI Readiness</div></div>
+        <div class="metric"><div class="val">${APP.data.length}×${APP.columns.length}</div><div class="label">Lignes × Colonnes</div></div>
     </div>`;
 
     const fmtLabel = APP.inputFormat === 'xlsx' ? 'Excel' : APP.inputFormat === 'json' ? 'JSON' : 'CSV';
-    const fmtExt = APP.inputFormat === 'xlsx' ? '.xlsx' : APP.inputFormat === 'json' ? '.json' : '.csv';
 
-    html += `<div class="card"><h3>Contenu du dossier d'export</h3>
-        <p style="margin-bottom:.8rem;font-size:.9rem">Le fichier corrigé sera exporté au <strong>même format que l'original (${fmtLabel})</strong>.</p>
+    html += `<div class="card"><h3>Contenu du Data Product (ZIP)</h3>
+        <p style="margin-bottom:.8rem;font-size:.9rem">Les données corrigées gardent le <strong>même format que l'original (${fmtLabel})</strong>.</p>
         ${APP.inputFormat === 'xlsx' ? `<div style="margin-bottom:.8rem"><label style="cursor:pointer;font-size:.88rem"><input type="checkbox" id="export-styling" style="margin-right:.4rem">Appliquer la mise en forme Excel (en-têtes colorés, colonnes ajustées)</label></div>` : ''}
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.5rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.5rem">
             <div class="issue info">📄 Données corrigées (${fmtLabel})</div>
-            <div class="issue info">📋 Métadonnées (Excel)</div>
+            <div class="issue info">🗂️ Données originales (CSV)</div>
             <div class="issue info">📖 Dictionnaire de données (Excel)</div>
+            <div class="issue info">📋 Métadonnées (Excel + JSON)</div>
+            <div class="issue info">🌐 metadata.yaml</div>
+            <div class="issue info">🔖 metadata_datacite.xml (DOI/DCAT)</div>
             <div class="issue info">🔍 Rapport qualité (Excel)</div>
             <div class="issue info">📊 Score FAIR (Excel)</div>
             <div class="issue info">🤖 Score AI Readiness (Excel)</div>
+            <div class="issue info">🏅 Rapport AQI (Excel + HTML)</div>
             <div class="issue info">💡 Recommandations (Excel)</div>
-            <div class="issue info">📝 Historique des modifications (Excel)</div>
+            <div class="issue info">🧬 Journal / Data Lineage (Excel)</div>
             <div class="issue info">📝 Rapport des modifications (Word)</div>
+            <div class="issue info">📘 README.md + CITATION.cff</div>
+            <div class="issue info">🎖️ Certificat AQI (HTML → PDF)</div>
         </div></div>`;
 
     html += `<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem">
-        <button class="btn btn-primary" style="font-size:1.1rem;padding:.8rem 2rem" onclick="exportZip()">📦 Télécharger le dossier complet (ZIP)</button>
+        <button class="btn btn-primary" style="font-size:1.1rem;padding:.8rem 2rem" onclick="exportZip()">📦 Télécharger le Data Product (ZIP)</button>
         <button class="btn btn-secondary" onclick="exportData()">📄 Données corrigées (${fmtLabel})</button>
-        <button class="btn btn-secondary" onclick="exportWord()">📝 Rapport des modifications (Word)</button>
+        <button class="btn btn-secondary" onclick="exportCertificate()">🎖️ Certificat AQI (PDF)</button>
+        <button class="btn btn-secondary" onclick="exportWord()">📝 Rapport (Word)</button>
     </div>`;
+
+    html += `<div class="issue warning" style="margin-top:1rem;font-size:.85rem">⚠️ Les scores AQI, FAIR et AI Readiness sont des <strong>évaluations internes</strong> inspirées de standards internationaux — pas une certification officielle. Voir <a href="#" onclick="goStep('referentiel');return false;">Référentiel utilisé</a>.</div>`;
 
     html += navButtons(8, null);
     return html;
@@ -1511,6 +1549,174 @@ function rowsToExcel(rows, sheetName) {
     return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
 }
 
+function xmlEscape(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+// ── DataCite XML (mapping vers Dublin Core, pour DOI / CKAN) ──
+function buildDataCiteXML() {
+    const m = APP.metadata;
+    const kw = (m.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<resource xmlns="http://datacite.org/schema/kernel-4" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <identifier identifierType="DOI">10.0000/PENDING</identifier>
+  <creators><creator><creatorName>${xmlEscape(m.author || 'Inconnu')}</creatorName></creator></creators>
+  <titles><title xml:lang="fr">${xmlEscape(m.title || APP.fileName)}</title></titles>
+  <publisher>${xmlEscape(m.organization || 'AfriData Ready')}</publisher>
+  <publicationYear>${new Date().getFullYear()}</publicationYear>
+  <resourceType resourceTypeGeneral="Dataset">Dataset</resourceType>
+  <subjects>${kw.map(k => `<subject>${xmlEscape(k)}</subject>`).join('')}</subjects>
+  <language>fr</language>
+  <rightsList><rights>${xmlEscape(m.license || 'Non spécifié')}</rights></rightsList>
+  <descriptions><description descriptionType="Abstract">${xmlEscape(m.description || '')}</description></descriptions>
+  <geoLocations><geoLocation><geoLocationPlace>${xmlEscape(m.geographic_area || m.country || '')}</geoLocationPlace></geoLocation></geoLocations>
+  <!-- Dublin Core mapping -->
+  <dc:creator>${xmlEscape(m.author || '')}</dc:creator>
+  <dc:title>${xmlEscape(m.title || APP.fileName)}</dc:title>
+  <dc:subject>${xmlEscape(kw.join('; '))}</dc:subject>
+  <dc:description>${xmlEscape(m.description || '')}</dc:description>
+  <dc:publisher>${xmlEscape(m.organization || '')}</dc:publisher>
+  <dc:date>${new Date().toISOString().slice(0, 10)}</dc:date>
+  <dc:type>Dataset</dc:type>
+  <dc:format>${APP.inputFormat}</dc:format>
+  <dc:language>fr</dc:language>
+  <dc:rights>${xmlEscape(m.license || '')}</dc:rights>
+  <dc:coverage>${xmlEscape(m.geographic_area || '')}</dc:coverage>
+</resource>`;
+}
+
+// ── metadata.yaml ──
+function buildYAML() {
+    const m = APP.metadata, a = APP.aqiScore || computeAQI();
+    const esc = s => `"${String(s == null ? '' : s).replace(/"/g, '\\"')}"`;
+    return `# metadata.yaml — AfriData Ready
+title: ${esc(m.title || APP.fileName)}
+author: ${esc(m.author || '')}
+organization: ${esc(m.organization || '')}
+description: ${esc(m.description || '')}
+keywords: [${(m.keywords || '').split(',').map(k => esc(k.trim())).filter(x => x !== '""').join(', ')}]
+license: ${esc(m.license || '')}
+version: ${esc(m.version || '1.0')}
+language: "fr"
+geographic_area: ${esc(m.geographic_area || '')}
+collection_method: ${esc(m.collection_method || '')}
+rows: ${APP.data.length}
+columns: ${APP.columns.length}
+scores:
+  aqi: ${a.total}
+  fair: ${APP.fairScore ? APP.fairScore.total : 0}
+  ai_readiness: ${APP.aiScore ? APP.aiScore.total : 0}
+generated_by: "AfriData Ready"
+generated_at: ${esc(new Date().toISOString())}
+`;
+}
+
+// ── README.md auto-généré ──
+function buildReadme() {
+    const m = APP.metadata, a = APP.aqiScore || computeAQI();
+    return `# ${m.title || APP.fileName}
+
+${m.description || '_Aucune description fournie._'}
+
+## Informations
+- **Auteur :** ${m.author || '—'}
+- **Organisation :** ${m.organization || '—'}
+- **Licence :** ${m.license || '—'}
+- **Version :** ${m.version || '1.0'}
+- **Zone géographique :** ${m.geographic_area || '—'}
+- **Lignes × colonnes :** ${APP.data.length} × ${APP.columns.length}
+
+## Qualité (évaluation interne AfriData Ready)
+| Indicateur | Score |
+|---|---|
+| AfriData Quality Index (AQI) | **${a.total}/100 — ${a.level[0]}** |
+| FAIR | ${APP.fairScore ? APP.fairScore.total : 0}/100 |
+| AI Readiness | ${APP.aiScore ? APP.aiScore.total : 0}/100 |
+
+## Contenu du package
+- \`donnees_corrigees\` — données nettoyées
+- \`dictionnaire_donnees\` — documentation des variables
+- \`metadata.yaml\`, \`metadata_datacite.xml\` — métadonnées
+- \`rapport_aqi\`, \`rapport_qualite\`, \`score_fair\`, \`score_ai_readiness\`
+- \`journal_modifications\` — data lineage
+- \`CITATION.cff\`, \`certificat_afridata.html\`
+
+> _Les évaluations sont inspirées de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD) mais constituent une évaluation interne automatisée, non une certification officielle._
+
+*Généré par AfriData Ready — ${new Date().toLocaleDateString('fr-FR')}*
+`;
+}
+
+// ── CITATION.cff ──
+function buildCitation() {
+    const m = APP.metadata;
+    const author = (m.author || 'Inconnu').trim();
+    return `cff-version: 1.2.0
+message: "Si vous utilisez ce jeu de données, merci de le citer comme suit."
+title: "${(m.title || APP.fileName).replace(/"/g, "'")}"
+authors:
+  - name: "${author.replace(/"/g, "'")}"
+version: "${m.version || '1.0'}"
+date-released: "${new Date().toISOString().slice(0, 10)}"
+license: "${m.license || 'Non spécifié'}"
+`;
+}
+
+// ── Rapport AQI (HTML) ──
+function buildAQIReport() {
+    const a = APP.aqiScore || computeAQI();
+    const rows = [['Qualité intrinsèque', 30, a.dims.intrinseque], ['Documentation & métadonnées', 20, a.dims.documentation], ['FAIR', 20, a.dims.fair], ['AI Readiness', 20, a.dims.ai], ['Sécurité & confidentialité', 10, a.dims.securite]];
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport AQI</title>
+<style>body{font-family:Segoe UI,sans-serif;max-width:900px;margin:0 auto;padding:2rem;color:#333}h1{color:#1B5E20}table{width:100%;border-collapse:collapse;margin:1rem 0}th{background:#1B5E20;color:#fff;padding:.6rem;text-align:left}td{padding:.5rem;border-bottom:1px solid #ddd}.big{font-size:3rem;font-weight:800;color:${a.level[1]}}</style></head><body>
+<h1>🏅 AfriData Quality Index</h1>
+<p class="big">${a.total}/100 — ${a.level[0]}</p>
+<table><tr><th>Dimension</th><th>Poids</th><th>Score /100</th></tr>
+${rows.map(([n, w, s]) => `<tr><td>${n}</td><td>${w}%</td><td>${Math.round(s)}</td></tr>`).join('')}</table>
+<h2>Recommandations</h2><ul>${a.recos.map(([d, t]) => `<li><strong>${d} :</strong> ${t}</li>`).join('') || '<li>Aucune — excellente qualité.</li>'}</ul>
+<hr><p style="font-size:.8rem;color:#888">Évaluation interne inspirée de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD). Ne constitue pas une certification officielle. Généré le ${new Date().toLocaleDateString('fr-FR')}.</p>
+</body></html>`;
+}
+
+// ── Certificat (HTML imprimable en PDF) ──
+function buildCertificate() {
+    const a = APP.aqiScore || computeAQI();
+    const m = APP.metadata;
+    const docCount = APP.columns.filter(c => APP.variableDocs[c]).length;
+    const metaCount = ['title', 'author', 'description', 'license', 'keywords', 'version', 'contact', 'collection_method', 'geographic_area', 'citation'].filter(k => m[k]).length;
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Certificat AfriData Ready</title>
+<style>@page{size:A4 landscape;margin:0}body{font-family:Georgia,serif;margin:0;color:#1B3A1E}
+.cert{width:100%;min-height:100vh;box-sizing:border-box;padding:3rem;border:14px double #1B5E20;text-align:center;background:linear-gradient(135deg,#fff,#F1F8E9)}
+h1{font-size:2.6rem;color:#1B5E20;margin:.2rem}.sub{font-style:italic;color:#666}
+.score{font-size:4.5rem;font-weight:800;color:${a.level[1]};margin:.4rem}
+.level{display:inline-block;background:${a.level[1]};color:#fff;padding:.3rem 1.4rem;border-radius:20px;font-size:1.3rem}
+table{margin:1.4rem auto;border-collapse:collapse}td{padding:.4rem 1.6rem;font-size:1.05rem}
+.disc{font-size:.72rem;color:#777;max-width:760px;margin:1.4rem auto 0;font-style:italic}
+.btn{margin:1rem;padding:.6rem 1.6rem;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer}
+@media print{.btn{display:none}}</style></head><body>
+<div class="cert">
+<div class="btn-wrap"><button class="btn" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
+<h1>🌍 AfriData Ready</h1>
+<p class="sub">Certificat de qualité des données — évaluation indicative</p>
+<p style="margin-top:1.4rem;font-size:1.1rem">Jeu de données</p>
+<h2 style="margin:.2rem;color:#2E7D32">${xmlEscape(m.title || APP.fileName)}</h2>
+<div class="score">${a.total}<span style="font-size:1.5rem">/100</span></div>
+<div class="level">Niveau : ${a.level[0]}</div>
+<table>
+<tr><td>Score FAIR</td><td><strong>${APP.fairScore ? APP.fairScore.total : 0}/100</strong></td></tr>
+<tr><td>Score AI Readiness</td><td><strong>${APP.aiScore ? APP.aiScore.total : 0}/100</strong></td></tr>
+<tr><td>Corrections effectuées</td><td><strong>${APP.editCount}</strong></td></tr>
+<tr><td>Métadonnées renseignées</td><td><strong>${metaCount}/10</strong></td></tr>
+<tr><td>Variables documentées</td><td><strong>${docCount}/${APP.columns.length}</strong></td></tr>
+</table>
+<p style="font-size:.95rem">Délivré le ${new Date().toLocaleDateString('fr-FR')}${m.author ? ' · ' + xmlEscape(m.author) : ''}</p>
+<p class="disc">Ce rapport constitue une évaluation indicative générée automatiquement par AfriData Ready à partir de critères inspirés de standards internationaux (ISO 8000, ISO/IEC 25012, ISO/IEC 11179, Dublin Core, DataCite, FAIR, RGPD). Il ne constitue pas une certification officielle délivrée par un organisme accrédité.</p>
+</div></body></html>`;
+}
+
+function exportCertificate() {
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(buildCertificate()); w.document.close(); }
+    else { const blob = new Blob([buildCertificate()], { type: 'text/html' }); saveAs(blob, 'certificat_afridata.html'); }
+}
+
 function exportZip() {
     const zip = new JSZip();
     if (APP.inputFormat === 'xlsx') {
@@ -1554,15 +1760,389 @@ function exportZip() {
     const recoRows = APP.recommendations.map(([p, t, d]) => ({ Priorité: p, Recommandation: t, Description: d }));
     zip.file('recommandations.xlsx', rowsToExcel(recoRows, 'Recommandations'));
 
-    // Historique des modifications → Excel
-    const histRows = APP.editHistory.map(h => ({ Heure: h.time, Action: h.action, Détail: h.detail }));
-    zip.file('historique_modifications.xlsx', rowsToExcel(histRows.length ? histRows : [{ Action: 'Aucune modification' }], 'Historique'));
+    // Journal des modifications (Data Lineage) → Excel
+    const histRows = APP.editHistory.map(h => ({ Date: h.date || '', Heure: h.time, Étape: h.step || '', Utilisateur: h.user || '', Action: h.action, Détail: h.detail, Justification: h.justification || '' }));
+    zip.file('journal_modifications.xlsx', rowsToExcel(histRows.length ? histRows : [{ Action: 'Aucune modification' }], 'Lineage'));
 
+    // AQI
+    const aqi = APP.aqiScore || computeAQI();
+    const aqiRows = [['Qualité intrinsèque', 30, aqi.dims.intrinseque], ['Documentation & métadonnées', 20, aqi.dims.documentation], ['FAIR', 20, aqi.dims.fair], ['AI Readiness', 20, aqi.dims.ai], ['Sécurité & confidentialité', 10, aqi.dims.securite]]
+        .map(([n, w, s]) => ({ Dimension: n, Poids: w + '%', Score: Math.round(s) }));
+    aqiRows.push({ Dimension: 'AQI GLOBAL', Poids: '100%', Score: aqi.total + '/100 (' + aqi.level[0] + ')' });
+    zip.file('rapport_aqi.xlsx', rowsToExcel(aqiRows, 'AQI'));
+    zip.file('rapport_aqi.html', buildAQIReport());
+
+    // Données originales
+    if (APP.originalData) zip.file('donnees_originales.csv', Papa.unparse(APP.originalData));
+
+    // Data Product : métadonnées normatives, README, citation, certificat
+    zip.file('metadonnees.json', JSON.stringify(APP.metadata, null, 2));
+    zip.file('metadata.yaml', buildYAML());
+    zip.file('metadata_datacite.xml', buildDataCiteXML());
+    zip.file('README.md', buildReadme());
+    zip.file('CITATION.cff', buildCitation());
+    zip.file('certificat_afridata.html', buildCertificate());
     zip.file('rapport_modifications.doc', '﻿' + buildWordReport());
 
     zip.generateAsync({ type: 'blob' }).then(blob => {
         saveAs(blob, `afridata_ready_${new Date().toISOString().slice(0,10)}.zip`);
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AfriData Quality Index (AQI)
+// Moyenne pondérée inspirée d'ISO 8000 / ISO 25012 / ISO 11179 /
+// Dublin Core / DataCite / FAIR / RGPD — évaluation interne.
+// ═══════════════════════════════════════════════════════════════
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+const AQI_WEIGHTS = { intrinseque: 0.30, documentation: 0.20, fair: 0.20, ai: 0.20, securite: 0.10 };
+
+function pearson(a, b) {
+    const n = a.length;
+    if (n < 3) return NaN;
+    let sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0;
+    for (let i = 0; i < n; i++) { sx += a[i]; sy += b[i]; sxy += a[i] * b[i]; sx2 += a[i] * a[i]; sy2 += b[i] * b[i]; }
+    const num = n * sxy - sx * sy;
+    const den = Math.sqrt((n * sx2 - sx * sx) * (n * sy2 - sy * sy));
+    return den === 0 ? NaN : num / den;
+}
+
+function computeAQI() {
+    const df = APP.data, cols = APP.columns;
+    const q = APP.qualityReport || analyzeQuality();
+    const fair = APP.fairScore || computeFAIR();
+    const ai = APP.aiScore || computeAI();
+    const m = APP.metadata;
+    const d = {}; for (const c of cols) if (APP.variableDocs[c]) d[c] = APP.variableDocs[c];
+    const n = df.length, nc = cols.length, totalCells = (n * nc) || 1;
+
+    // 1. Qualité intrinsèque (ISO 8000 / 25012)
+    let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
+    const completeness = 100 * (1 - totalMiss / totalCells);
+    const uniqueness = 100 * (1 - (n > 0 ? countDuplicates() / n : 0));
+    const emptyCols = cols.filter(c => countMissing(c) === n).length;
+    const badNames = cols.filter(c => c.length <= 2 || c.startsWith('Unnamed') || /^col\d+$/i.test(c)).length;
+    const validity = clamp(100 * (1 - (emptyCols + badNames) / (2 * (nc || 1))), 0, 100);
+    const consistIssues = (q.issues || []).filter(i => i.type === 'inconsistent' || i.type === 'date').length;
+    const consistency = clamp(100 - consistIssues * 15, 0, 100);
+    const intrinseque = (completeness + uniqueness + validity + consistency) / 4;
+
+    // 2. Documentation et métadonnées (ISO 11179 / Dublin Core / DataCite)
+    const docRatio = nc > 0 ? Object.keys(d).length / nc : 0;
+    const metaKeys = ['title', 'author', 'description', 'license', 'keywords', 'version', 'contact', 'collection_method', 'geographic_area', 'citation'];
+    const metaRatio = metaKeys.filter(k => m[k]).length / metaKeys.length;
+    const documentation = 100 * (0.6 * docRatio + 0.4 * metaRatio);
+
+    // 3 & 4. FAIR + AI Readiness (réutilisés)
+    const fairScore = fair.total;
+    const aiScore = ai.total;
+
+    // 5. Sécurité et confidentialité (RGPD / ISO 25012)
+    const sensitiveKw = ['nom', 'name', 'prenom', 'surname', 'telephone', 'phone', 'email', 'adresse', 'address', 'ssn', 'cin', 'passport', 'ip'];
+    const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
+    let securite = 100 - sensitiveCols.length * 15;
+    if (APP.editHistory.length > 0) securite += 5; // bonus traçabilité (lineage)
+    securite = clamp(securite, 0, 100);
+
+    const dims = { intrinseque, documentation, fair: fairScore, ai: aiScore, securite };
+    const total = Math.round(
+        AQI_WEIGHTS.intrinseque * intrinseque +
+        AQI_WEIGHTS.documentation * documentation +
+        AQI_WEIGHTS.fair * fairScore +
+        AQI_WEIGHTS.ai * aiScore +
+        AQI_WEIGHTS.securite * securite
+    );
+    const level = total < 40 ? ['Faible', '#C62828'] : total < 60 ? ['Moyen', '#F57F17'] : total < 80 ? ['Bon', '#2E7D32'] : ['Excellent', '#1B5E20'];
+
+    const subs = { completeness, uniqueness, validity, consistency, docRatio: docRatio * 100, metaRatio: metaRatio * 100, sensitiveCols };
+    const recos = [];
+    if (intrinseque < 70) recos.push(['Qualité intrinsèque', 'Réduire les valeurs manquantes/doublons et corriger les formats incohérents (étapes 2-3).']);
+    if (documentation < 70) recos.push(['Documentation', 'Compléter le dictionnaire des variables et les métadonnées clés (étapes 4-5).']);
+    if (fairScore < 70) recos.push(['FAIR', 'Ajouter licence, mots-clés, contact et citation pour améliorer le score FAIR (étape 6).']);
+    if (aiScore < 70) recos.push(['AI Readiness', 'Identifier une variable cible et améliorer la structure/documentation (étape 7).']);
+    if (securite < 80 && sensitiveCols.length) recos.push(['Sécurité', `Anonymiser ou pseudonymiser les colonnes sensibles : ${sensitiveCols.join(', ')}.`]);
+
+    return { total, dims, weights: AQI_WEIGHTS, level, subs, recos };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOOLKIT GRAPHIQUE — SVG pur (aucune dépendance, 100% local)
+// ═══════════════════════════════════════════════════════════════
+const CHART_COLORS = ['#1B5E20', '#4CAF50', '#FF6F00', '#1565C0', '#6A1B9A', '#00838F', '#C62828', '#558B2F'];
+
+function svgGauge(value, label) {
+    const v = clamp(value, 0, 100), angle = -90 + (v / 100) * 180;
+    const cx = 150, cy = 150, r = 110;
+    const color = v < 40 ? '#C62828' : v < 60 ? '#F57F17' : v < 80 ? '#2E7D32' : '#1B5E20';
+    function arc(a0, a1, col) {
+        const p0 = [cx + r * Math.cos(a0 * Math.PI / 180), cy + r * Math.sin(a0 * Math.PI / 180)];
+        const p1 = [cx + r * Math.cos(a1 * Math.PI / 180), cy + r * Math.sin(a1 * Math.PI / 180)];
+        const large = (a1 - a0) > 180 ? 1 : 0;
+        return `<path d="M${p0[0]} ${p0[1]} A${r} ${r} 0 ${large} 1 ${p1[0]} ${p1[1]}" fill="none" stroke="${col}" stroke-width="22" stroke-linecap="round"/>`;
+    }
+    const nx = cx + (r - 5) * Math.cos(angle * Math.PI / 180), ny = cy + (r - 5) * Math.sin(angle * Math.PI / 180);
+    return `<svg viewBox="0 0 300 190" style="max-width:320px;width:100%">
+        ${arc(-90, 90, '#E0E0E0')}
+        ${arc(-90, angle, color)}
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#333" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="7" fill="#333"/>
+        <text x="${cx}" y="${cy - 30}" text-anchor="middle" font-size="40" font-weight="800" fill="${color}">${Math.round(v)}</text>
+        <text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="13" fill="#888">/ 100</text>
+        <text x="${cx}" y="${cy + 30}" text-anchor="middle" font-size="14" font-weight="700" fill="${color}">${label || ''}</text>
+    </svg>`;
+}
+
+function svgRadar(dimsObj) {
+    const entries = Object.entries(dimsObj);
+    const N = entries.length, cx = 170, cy = 160, R = 110;
+    let grid = '';
+    for (let g = 1; g <= 4; g++) {
+        const rr = R * g / 4;
+        const pts = entries.map((_, i) => {
+            const a = -Math.PI / 2 + i * 2 * Math.PI / N;
+            return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`;
+        }).join(' ');
+        grid += `<polygon points="${pts}" fill="none" stroke="#e0e0e0" stroke-width="1"/>`;
+    }
+    let axes = '', labels = '';
+    entries.forEach(([name, val], i) => {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / N;
+        const ex = cx + R * Math.cos(a), ey = cy + R * Math.sin(a);
+        axes += `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#e0e0e0"/>`;
+        const lx = cx + (R + 22) * Math.cos(a), ly = cy + (R + 22) * Math.sin(a);
+        labels += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10.5" fill="#555">${name}</text>`;
+    });
+    const poly = entries.map(([_, val], i) => {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / N, rr = R * clamp(val, 0, 100) / 100;
+        return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`;
+    }).join(' ');
+    return `<svg viewBox="0 0 340 330" style="max-width:380px;width:100%">
+        ${grid}${axes}
+        <polygon points="${poly}" fill="rgba(76,175,80,.35)" stroke="#1B5E20" stroke-width="2"/>
+        ${labels}
+    </svg>`;
+}
+
+function svgBarCompare(rows) {
+    const bh = 26, gap = 20, w = 460, left = 150, top = 20;
+    const h = top + rows.length * (bh * 2 + gap);
+    let s = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:640px">`;
+    rows.forEach((r, i) => {
+        const y = top + i * (bh * 2 + gap);
+        const mx = r.max || Math.max(r.before, r.after, 1);
+        const wb = (w - left - 60) * clamp(r.before / mx, 0, 1);
+        const wa = (w - left - 60) * clamp(r.after / mx, 0, 1);
+        s += `<text x="0" y="${y + bh}" font-size="12" font-weight="600" fill="#333">${r.label}</text>`;
+        s += `<rect x="${left}" y="${y}" width="${wb}" height="${bh - 4}" fill="#BDBDBD" rx="3"/><text x="${left + wb + 5}" y="${y + bh - 8}" font-size="11" fill="#888">${r.before}${r.suffix || ''}</text>`;
+        s += `<rect x="${left}" y="${y + bh}" width="${wa}" height="${bh - 4}" fill="${r.good === false ? '#C62828' : '#4CAF50'}" rx="3"/><text x="${left + wa + 5}" y="${y + bh * 2 - 8}" font-size="11" font-weight="700" fill="#2E7D32">${r.after}${r.suffix || ''}</text>`;
+    });
+    s += `<text x="${left}" y="${h - 2}" font-size="10" fill="#aaa">■ Avant (gris) &nbsp; ■ Après (vert)</text></svg>`;
+    return s;
+}
+
+function svgHistogram(values, title) {
+    if (!values.length) return '';
+    const min = Math.min(...values), max = Math.max(...values);
+    const bins = Math.min(12, Math.max(5, Math.ceil(Math.sqrt(values.length))));
+    const bw = (max - min) / bins || 1;
+    const counts = new Array(bins).fill(0);
+    values.forEach(v => { let b = Math.floor((v - min) / bw); if (b >= bins) b = bins - 1; if (b < 0) b = 0; counts[b]++; });
+    const cmax = Math.max(...counts), W = 300, H = 160, pad = 28;
+    let bars = '';
+    counts.forEach((c, i) => {
+        const bh = (H - pad - 14) * (c / cmax);
+        const x = pad + i * (W - pad - 6) / bins;
+        bars += `<rect x="${x}" y="${H - 14 - bh}" width="${(W - pad - 6) / bins - 2}" height="${bh}" fill="#4CAF50" rx="1.5"/>`;
+    });
+    return `<div style="display:inline-block;margin:.4rem;text-align:center"><div style="font-size:.8rem;font-weight:600;color:#2E7D32">${title}</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:300px;max-width:100%">
+        <line x1="${pad}" y1="${H - 14}" x2="${W}" y2="${H - 14}" stroke="#ccc"/>
+        ${bars}
+        <text x="${pad}" y="${H - 2}" font-size="9" fill="#999">${(+min.toFixed(2))}</text>
+        <text x="${W}" y="${H - 2}" text-anchor="end" font-size="9" fill="#999">${(+max.toFixed(2))}</text>
+    </svg></div>`;
+}
+
+function svgBoxplot(col) {
+    const vals = numericValues(col).sort((a, b) => a - b);
+    if (vals.length < 4) return '';
+    const qt = p => vals[Math.floor((vals.length - 1) * p)];
+    const q1 = qt(0.25), med = qt(0.5), q3 = qt(0.75), iqr = q3 - q1;
+    const lo = q1 - 1.5 * iqr, hi = q3 + 1.5 * iqr;
+    const wmin = Math.max(vals[0], lo), wmax = Math.min(vals[vals.length - 1], hi);
+    const outliers = vals.filter(v => v < lo || v > hi);
+    const dmin = vals[0], dmax = vals[vals.length - 1], span = (dmax - dmin) || 1;
+    const W = 300, H = 90, pad = 10, y = 40;
+    const sx = v => pad + (W - 2 * pad) * (v - dmin) / span;
+    let out = outliers.slice(0, 40).map(v => `<circle cx="${sx(v)}" cy="${y}" r="2.5" fill="#C62828"/>`).join('');
+    return `<div style="display:inline-block;margin:.4rem;text-align:center"><div style="font-size:.8rem;font-weight:600;color:#2E7D32">${col}${outliers.length ? ` — ${outliers.length} outlier(s)` : ''}</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:300px;max-width:100%">
+        <line x1="${sx(wmin)}" y1="${y}" x2="${sx(q1)}" y2="${y}" stroke="#555"/>
+        <line x1="${sx(q3)}" y1="${y}" x2="${sx(wmax)}" y2="${y}" stroke="#555"/>
+        <line x1="${sx(wmin)}" y1="${y - 8}" x2="${sx(wmin)}" y2="${y + 8}" stroke="#555"/>
+        <line x1="${sx(wmax)}" y1="${y - 8}" x2="${sx(wmax)}" y2="${y + 8}" stroke="#555"/>
+        <rect x="${sx(q1)}" y="${y - 14}" width="${sx(q3) - sx(q1)}" height="28" fill="rgba(76,175,80,.35)" stroke="#1B5E20"/>
+        <line x1="${sx(med)}" y1="${y - 14}" x2="${sx(med)}" y2="${y + 14}" stroke="#1B5E20" stroke-width="2"/>
+        ${out}
+        <text x="${pad}" y="${H - 4}" font-size="9" fill="#999">${(+dmin.toFixed(2))}</text>
+        <text x="${W - pad}" y="${H - 4}" text-anchor="end" font-size="9" fill="#999">${(+dmax.toFixed(2))}</text>
+    </svg></div>`;
+}
+
+function svgScatter(colX, colY) {
+    const pts = APP.data.map(r => [parseFloat(r[colX]), parseFloat(r[colY])]).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+    if (pts.length < 3) return '';
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const xmin = Math.min(...xs), xmax = Math.max(...xs), ymin = Math.min(...ys), ymax = Math.max(...ys);
+    const W = 320, H = 240, pad = 34;
+    const sx = v => pad + (W - pad - 8) * (v - xmin) / ((xmax - xmin) || 1);
+    const sy = v => (H - pad) - (H - pad - 8) * (v - ymin) / ((ymax - ymin) || 1);
+    const r = pearson(xs, ys);
+    const dots = pts.slice(0, 800).map(p => `<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="2.5" fill="rgba(27,94,32,.55)"/>`).join('');
+    return `<div style="display:inline-block;margin:.4rem;text-align:center"><div style="font-size:.8rem;font-weight:600;color:#2E7D32">${colX} vs ${colY} ${isNaN(r) ? '' : `(r=${r.toFixed(2)})`}</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:320px;max-width:100%">
+        <line x1="${pad}" y1="${H - pad}" x2="${W}" y2="${H - pad}" stroke="#ccc"/>
+        <line x1="${pad}" y1="8" x2="${pad}" y2="${H - pad}" stroke="#ccc"/>
+        ${dots}
+        <text x="${pad}" y="${H - 4}" font-size="9" fill="#999">${colX}</text>
+        <text x="6" y="16" font-size="9" fill="#999">${colY}</text>
+    </svg></div>`;
+}
+
+function svgCorrMatrix(numCols) {
+    if (numCols.length < 2) return '<p style="color:#888">Pas assez de colonnes numériques (min. 2).</p>';
+    const cols = numCols.slice(0, 10);
+    const data = cols.map(c => APP.data.map(r => parseFloat(r[c])));
+    const N = cols.length, cell = Math.min(46, Math.floor(380 / N)), off = 90, top = 90;
+    let s = `<svg viewBox="0 0 ${off + N * cell + 10} ${top + N * cell + 10}" style="width:100%;max-width:560px">`;
+    cols.forEach((c, j) => {
+        s += `<text x="${off - 5}" y="${top + j * cell + cell / 2 + 3}" text-anchor="end" font-size="9" fill="#555">${c.slice(0, 12)}</text>`;
+        s += `<text x="${off + j * cell + cell / 2}" y="${top - 5}" text-anchor="start" font-size="9" fill="#555" transform="rotate(-45 ${off + j * cell + cell / 2} ${top - 5})">${c.slice(0, 12)}</text>`;
+    });
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+        const pairs = data[i].map((v, k) => [v, data[j][k]]).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+        const r = i === j ? 1 : pearson(pairs.map(p => p[0]), pairs.map(p => p[1]));
+        const rr = isNaN(r) ? 0 : r;
+        const col = rr >= 0 ? `rgba(27,94,32,${Math.abs(rr)})` : `rgba(198,40,40,${Math.abs(rr)})`;
+        s += `<rect x="${off + j * cell}" y="${top + i * cell}" width="${cell - 1}" height="${cell - 1}" fill="${col}"/>`;
+        if (cell > 30) s += `<text x="${off + j * cell + cell / 2}" y="${top + i * cell + cell / 2 + 3}" text-anchor="middle" font-size="8.5" fill="${Math.abs(rr) > 0.5 ? '#fff' : '#333'}">${isNaN(r) ? '—' : rr.toFixed(1)}</text>`;
+    }
+    s += '</svg>';
+    return s;
+}
+
+function svgMissingHeatmap() {
+    const cols = APP.columns, n = APP.data.length;
+    const maxRows = 60, rows = Math.min(n, maxRows);
+    const cw = Math.min(34, Math.floor(560 / cols.length)), ch = Math.max(2, Math.floor(220 / rows)), top = 80;
+    let s = `<svg viewBox="0 0 ${cols.length * cw + 10} ${top + rows * ch + 10}" style="width:100%;max-width:640px">`;
+    cols.forEach((c, j) => {
+        s += `<text x="${j * cw + cw / 2}" y="${top - 5}" text-anchor="start" font-size="9" fill="#555" transform="rotate(-45 ${j * cw + cw / 2} ${top - 5})">${c.slice(0, 14)}</text>`;
+    });
+    for (let i = 0; i < rows; i++) {
+        const ri = Math.floor(i * n / rows);
+        cols.forEach((c, j) => {
+            const miss = isNull(APP.data[ri][c]);
+            s += `<rect x="${j * cw}" y="${top + i * ch}" width="${cw - 1}" height="${ch}" fill="${miss ? '#C62828' : '#E8F5E9'}"/>`;
+        });
+    }
+    s += `<text x="0" y="${top + rows * ch + 8}" font-size="9" fill="#aaa">■ manquant (rouge) &nbsp; ■ présent (vert) — échantillon de ${rows} lignes</text></svg>`;
+    return s;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE : ANALYSE DES DONNÉES (dashboard EDA + AQI)
+// ═══════════════════════════════════════════════════════════════
+function renderAnalysis() {
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier (étape 1).</p></div>';
+    APP.qualityReport = analyzeQuality();
+    APP.fairScore = computeFAIR();
+    APP.aiScore = computeAI();
+    const aqi = computeAQI();
+    APP.aqiScore = aqi;
+    const ini = APP.initialStats || {}, base = APP.baseline || {};
+    const numCols = APP.columns.filter(c => isNumericCol(c));
+    let curMiss = 0; APP.columns.forEach(c => curMiss += countMissing(c));
+    const docCount = APP.columns.filter(c => APP.variableDocs[c]).length;
+
+    let html = `<div class="page-header"><h2>📊 Analyse des données</h2><p>Tableau de bord des améliorations et AfriData Quality Index</p></div>`;
+
+    // AQI
+    html += `<div class="card"><h3>🏅 AfriData Quality Index (AQI)</h3>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-around;gap:1rem">
+            <div style="text-align:center">${svgGauge(aqi.total, aqi.level[0])}</div>
+            <div style="text-align:center">${svgRadar({ 'Qualité': aqi.dims.intrinseque, 'Documentation': aqi.dims.documentation, 'FAIR': aqi.dims.fair, 'AI Ready': aqi.dims.ai, 'Sécurité': aqi.dims.securite })}</div>
+        </div>
+        <div class="table-wrap"><table><tr><th>Dimension</th><th>Poids</th><th>Score /100</th></tr>
+            <tr><td>Qualité intrinsèque <span style="color:#888">(ISO 8000/25012)</span></td><td>30%</td><td>${Math.round(aqi.dims.intrinseque)}</td></tr>
+            <tr><td>Documentation & métadonnées <span style="color:#888">(ISO 11179, Dublin Core)</span></td><td>20%</td><td>${Math.round(aqi.dims.documentation)}</td></tr>
+            <tr><td>FAIR</td><td>20%</td><td>${Math.round(aqi.dims.fair)}</td></tr>
+            <tr><td>AI Readiness</td><td>20%</td><td>${Math.round(aqi.dims.ai)}</td></tr>
+            <tr><td>Sécurité & confidentialité <span style="color:#888">(RGPD)</span></td><td>10%</td><td>${Math.round(aqi.dims.securite)}</td></tr>
+            <tr style="background:#E8F5E9;font-weight:700"><td>AQI global</td><td>100%</td><td style="color:${aqi.level[1]}">${aqi.total} — ${aqi.level[0]}</td></tr>
+        </table></div>`;
+    if (aqi.recos.length) {
+        html += `<h4 style="margin-top:.8rem;font-size:.9rem;color:#555">Recommandations personnalisées</h4>`;
+        for (const [dim, txt] of aqi.recos) html += `<div class="issue warning" style="margin:.3rem 0">🟡 <strong>${dim} :</strong> ${txt}</div>`;
+    }
+    html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Évaluation interne inspirée de standards internationaux — ne constitue pas une certification officielle.</p></div>`;
+
+    // Before / After
+    html += `<div class="card"><h3>📈 Comparaison Avant / Après</h3>${svgBarCompare([
+        { label: 'Valeurs manquantes', before: ini.missing ?? 0, after: curMiss, good: false, max: Math.max(ini.missing || 1, curMiss, 1) },
+        { label: 'Doublons', before: ini.duplicates ?? 0, after: countDuplicates(), good: false, max: Math.max(ini.duplicates || 1, 1) },
+        { label: 'Variables documentées', before: base.docs ?? 0, after: docCount, good: true, max: APP.columns.length },
+        { label: 'Score FAIR', before: base.fair ?? 0, after: APP.fairScore.total, good: true, max: 100, suffix: '/100' },
+        { label: 'Score AI Readiness', before: base.ai ?? 0, after: APP.aiScore.total, good: true, max: 100, suffix: '/100' },
+        { label: 'AQI', before: base.aqi ?? 0, after: aqi.total, good: true, max: 100, suffix: '/100' }
+    ])}</div>`;
+
+    // Missing heatmap
+    html += `<div class="card"><h3>🗺️ Carte thermique des valeurs manquantes</h3>${svgMissingHeatmap()}</div>`;
+
+    // Distributions
+    if (numCols.length) {
+        html += `<div class="card"><h3>📊 Distributions (histogrammes)</h3><div style="text-align:center">`;
+        for (const c of numCols.slice(0, 6)) html += svgHistogram(numericValues(c), c);
+        html += `</div></div>`;
+        html += `<div class="card"><h3>📦 Boxplots (valeurs aberrantes)</h3><div style="text-align:center">`;
+        for (const c of numCols.slice(0, 6)) html += svgBoxplot(c);
+        html += `</div></div>`;
+        html += `<div class="card"><h3>🔗 Matrice de corrélation</h3>${svgCorrMatrix(numCols)}</div>`;
+        if (numCols.length >= 2) {
+            html += `<div class="card"><h3>✦ Nuage de points</h3><div style="text-align:center">${svgScatter(numCols[0], numCols[1])}`;
+            if (numCols.length >= 3) html += svgScatter(numCols[0], numCols[2]);
+            html += `</div></div>`;
+        }
+    } else {
+        html += `<div class="card"><p style="color:#888">Aucune colonne numérique — histogrammes, boxplots et corrélations non disponibles.</p></div>`;
+    }
+
+    html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(8)">← Recommandations</button></div>
+        <div><button class="btn btn-primary" onclick="goStep(9)">Exporter →</button></div></div>`;
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE : RÉFÉRENTIEL UTILISÉ
+// ═══════════════════════════════════════════════════════════════
+function renderReferentiel() {
+    let html = `<div class="page-header"><h2>📖 Référentiel utilisé</h2><p>Standards internationaux mobilisés par AfriData Ready</p></div>`;
+    const stds = [
+        ['ISO 8000', 'Qualité des données', 'Dimensions de qualité et gouvernance (complétude, exactitude, cohérence).'],
+        ['ISO/IEC 25012', 'Modèle de qualité des données', 'Caractéristiques de qualité inhérentes et dépendantes du système.'],
+        ['ISO/IEC 11179', 'Registre de métadonnées', 'Structure du dictionnaire de données et description des variables.'],
+        ['Dublin Core', 'Métadonnées descriptives', 'Éléments standards de description (titre, auteur, sujet, date…).'],
+        ['DataCite', 'Citation & DOI', 'Schéma de métadonnées pour l\'attribution de DOI et la citation.'],
+        ['DCAT', 'Interopérabilité des catalogues', 'Description des jeux de données pour les portails ouverts (CKAN…).'],
+        ['Principes FAIR', 'Findable, Accessible, Interoperable, Reusable', 'Bonnes pratiques de gestion des données de recherche (Wilkinson 2016).'],
+        ['RGPD / ISO 25012', 'Protection des données', 'Détection des données personnelles (PII) et traçabilité.']
+    ];
+    html += `<div class="card"><div class="table-wrap"><table><tr><th>Standard</th><th>Domaine</th><th>Utilisation dans AfriData Ready</th></tr>`;
+    for (const [s, dom, use] of stds) html += `<tr><td><strong>${s}</strong></td><td>${dom}</td><td>${use}</td></tr>`;
+    html += `</table></div></div>`;
+    html += `<div class="issue warning" style="font-size:.9rem"><strong>⚠️ Avertissement important :</strong> Les évaluations produites par AfriData Ready (scores AQI, FAIR, AI Readiness) sont <strong>inspirées</strong> de ces standards internationaux mais constituent une <strong>évaluation interne automatisée</strong>. Elles ne constituent en aucun cas une certification officielle délivrée par un organisme accrédité.</div>`;
+    return html;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1572,7 +2152,8 @@ function renderStep() {
     const container = document.getElementById('main-content');
     const renderers = {
         1: renderStep1, 2: renderStep2, 3: renderStep3, 4: renderStep4,
-        5: renderStep5, 6: renderStep6, 7: renderStep7, 8: renderStep8, 9: renderStep9
+        5: renderStep5, 6: renderStep6, 7: renderStep7, 8: renderStep8, 9: renderStep9,
+        analysis: renderAnalysis, referentiel: renderReferentiel
     };
     container.innerHTML = renderers[APP.step]();
     updateFileInfo();
