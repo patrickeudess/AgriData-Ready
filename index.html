@@ -2050,6 +2050,116 @@ function svgMissingHeatmap() {
     return s;
 }
 
+// ── Interprétations automatiques (phrases explicatives) ──
+function interpBox(lines) {
+    if (!lines || !lines.length) return '';
+    return `<div style="background:#E3F2FD;border-left:4px solid #1565C0;border-radius:8px;padding:.7rem 1rem;margin-top:.8rem;font-size:.86rem;line-height:1.5">
+        <strong style="color:#1565C0">💡 Analyse &amp; interprétation</strong><br>${lines.map(l => '• ' + l).join('<br>')}</div>`;
+}
+
+function interpAQI(aqi) {
+    const L = [];
+    L.push(`L'AQI global est de <strong>${aqi.total}/100</strong>, ce qui correspond à un niveau <strong>${aqi.level[0].toLowerCase()}</strong> de maturité du jeu de données.`);
+    const dimNames = { intrinseque: 'la qualité intrinsèque', documentation: 'la documentation', fair: 'le score FAIR', ai: "l'AI Readiness", securite: 'la sécurité' };
+    const entries = Object.entries(aqi.dims);
+    const best = entries.reduce((a, b) => b[1] > a[1] ? b : a);
+    const worst = entries.reduce((a, b) => b[1] < a[1] ? b : a);
+    L.push(`Le point fort est <strong>${dimNames[best[0]]}</strong> (${Math.round(best[1])}/100) ; l'axe à améliorer en priorité est <strong>${dimNames[worst[0]]}</strong> (${Math.round(worst[1])}/100).`);
+    if (aqi.total >= 80) L.push('Le jeu de données est prêt à être publié et exploité pour l\'analyse ou l\'IA.');
+    else if (aqi.total >= 60) L.push('Le jeu de données est de bonne qualité ; quelques améliorations le rendraient pleinement exploitable.');
+    else L.push('Des améliorations sont recommandées avant toute exploitation ou publication.');
+    return L;
+}
+
+function interpBeforeAfter(ini, curMiss, docCount, aqi, base) {
+    const L = [];
+    const missDelta = (ini.missing ?? 0) - curMiss;
+    if (missDelta > 0) L.push(`<strong>${missDelta}</strong> valeur(s) manquante(s) ont été traitées (${ini.missing} → ${curMiss}).`);
+    else if ((ini.missing ?? 0) > 0) L.push(`Il reste <strong>${curMiss}</strong> valeur(s) manquante(s) : envisagez une imputation ou une suppression (étape 3).`);
+    else L.push('Aucune valeur manquante — complétude parfaite.');
+    const dupDelta = (ini.duplicates ?? 0) - countDuplicates();
+    if (dupDelta > 0) L.push(`<strong>${dupDelta}</strong> doublon(s) supprimé(s).`);
+    if (docCount > (base.docs ?? 0)) L.push(`<strong>${docCount}</strong> variable(s) désormais documentée(s).`);
+    const aqiDelta = aqi.total - (base.aqi ?? 0);
+    if (aqiDelta > 0) L.push(`Grâce à ces corrections, l'AQI a progressé de <strong>+${aqiDelta} points</strong> (${base.aqi ?? 0} → ${aqi.total}).`);
+    else if (aqiDelta === 0) L.push('L\'AQI est inchangé : documentez les variables et complétez les métadonnées pour le faire progresser.');
+    return L;
+}
+
+function interpMissing(report) {
+    const L = [];
+    const cols = APP.columns.filter(c => report.missingPerCol[c] > 0).sort((a, b) => report.missingPerCol[b] - report.missingPerCol[a]);
+    if (!cols.length) return ['Aucune valeur manquante : la carte est entièrement verte, le jeu de données est complet.'];
+    const top = cols[0], topPct = pct(report.missingPerCol[top], APP.data.length);
+    L.push(`La colonne la plus incomplète est <strong>${top}</strong> (${topPct}% de valeurs manquantes).`);
+    if (report.emptyCols.length) L.push(`<strong>${report.emptyCols.length}</strong> colonne(s) entièrement vide(s) : ${report.emptyCols.join(', ')} — à supprimer.`);
+    L.push(`Au total, ${cols.length} colonne(s) présentent des trous. Les zones rouges alignées verticalement indiquent une variable problématique ; alignées horizontalement, une ligne à vérifier.`);
+    return L;
+}
+
+function interpHistograms(numCols) {
+    const L = [];
+    for (const c of numCols.slice(0, 6)) {
+        const v = numericValues(c);
+        if (v.length < 4) continue;
+        v.sort((a, b) => a - b);
+        const mean = v.reduce((s, x) => s + x, 0) / v.length;
+        const median = v[Math.floor(v.length / 2)];
+        const skew = mean > median * 1.1 ? 'étalée vers la droite (asymétrie positive : quelques grandes valeurs)' : mean < median * 0.9 ? 'étalée vers la gauche (asymétrie négative)' : 'globalement symétrique';
+        L.push(`<strong>${c}</strong> : distribution ${skew} (moyenne ${mean.toFixed(1)}, médiane ${median.toFixed(1)}).`);
+    }
+    L.push('Une distribution très asymétrique peut justifier une transformation (log) avant modélisation.');
+    return L;
+}
+
+function interpBoxplots(numCols) {
+    const L = [];
+    let anyOut = false;
+    for (const c of numCols.slice(0, 6)) {
+        const v = numericValues(c).sort((a, b) => a - b);
+        if (v.length < 4) continue;
+        const q1 = v[Math.floor((v.length - 1) * 0.25)], q3 = v[Math.floor((v.length - 1) * 0.75)], iqr = q3 - q1;
+        const out = v.filter(x => x < q1 - 1.5 * iqr || x > q3 + 1.5 * iqr).length;
+        if (out > 0) { anyOut = true; L.push(`<strong>${c}</strong> : ${out} valeur(s) aberrante(s) au-delà des moustaches (points rouges).`); }
+    }
+    if (!anyOut) L.push('Aucune valeur aberrante détectée : les points restent dans les moustaches (règle 1,5×IQR).');
+    else L.push('Vérifiez si ces valeurs sont des erreurs de saisie (à corriger) ou des observations réelles (à conserver et documenter).');
+    return L;
+}
+
+function interpCorr(numCols) {
+    const cols = numCols.slice(0, 10), L = [];
+    let strong = [];
+    for (let i = 0; i < cols.length; i++) for (let j = i + 1; j < cols.length; j++) {
+        const pairs = APP.data.map(r => [parseFloat(r[cols[i]]), parseFloat(r[cols[j]])]).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+        const r = pearson(pairs.map(p => p[0]), pairs.map(p => p[1]));
+        if (!isNaN(r) && Math.abs(r) >= 0.5) strong.push([cols[i], cols[j], r]);
+    }
+    strong.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
+    if (strong.length) {
+        for (const [a, b, r] of strong.slice(0, 3)) L.push(`<strong>${a}</strong> et <strong>${b}</strong> sont ${r > 0 ? 'positivement' : 'négativement'} corrélées (r = ${r.toFixed(2)}) : ${r > 0 ? 'elles augmentent ensemble' : "l'une augmente quand l'autre diminue"}.`);
+        L.push('Des variables très corrélées (|r|>0,8) peuvent être redondantes pour un modèle (multicolinéarité).');
+    } else {
+        L.push('Aucune corrélation forte (|r|≥0,5) entre les variables : elles apportent chacune une information distincte.');
+    }
+    L.push('Vert = corrélation positive, rouge = négative ; plus la couleur est intense, plus le lien est fort.');
+    return L;
+}
+
+function interpScatter(numCols) {
+    const L = [];
+    const pairs = [[numCols[0], numCols[1]]];
+    if (numCols.length >= 3) pairs.push([numCols[0], numCols[2]]);
+    for (const [x, y] of pairs) {
+        const pts = APP.data.map(r => [parseFloat(r[x]), parseFloat(r[y])]).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+        const r = pearson(pts.map(p => p[0]), pts.map(p => p[1]));
+        if (isNaN(r)) continue;
+        const force = Math.abs(r) >= 0.7 ? 'forte' : Math.abs(r) >= 0.4 ? 'modérée' : 'faible';
+        L.push(`<strong>${x}</strong> vs <strong>${y}</strong> : relation ${force} (r = ${r.toFixed(2)}). ${Math.abs(r) >= 0.4 ? 'Une tendance ' + (r > 0 ? 'croissante' : 'décroissante') + ' se dégage.' : 'Les points sont dispersés, sans tendance nette.'}`);
+    }
+    return L;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PAGE : ANALYSE DES DONNÉES (dashboard EDA + AQI)
 // ═══════════════════════════════════════════════════════════════
@@ -2085,6 +2195,7 @@ function renderAnalysis() {
         html += `<h4 style="margin-top:.8rem;font-size:.9rem;color:#555">Recommandations personnalisées</h4>`;
         for (const [dim, txt] of aqi.recos) html += `<div class="issue warning" style="margin:.3rem 0">🟡 <strong>${dim} :</strong> ${txt}</div>`;
     }
+    html += interpBox(interpAQI(aqi));
     html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Évaluation interne inspirée de standards internationaux — ne constitue pas une certification officielle.</p></div>`;
 
     // Before / After
@@ -2095,24 +2206,24 @@ function renderAnalysis() {
         { label: 'Score FAIR', before: base.fair ?? 0, after: APP.fairScore.total, good: true, max: 100, suffix: '/100' },
         { label: 'Score AI Readiness', before: base.ai ?? 0, after: APP.aiScore.total, good: true, max: 100, suffix: '/100' },
         { label: 'AQI', before: base.aqi ?? 0, after: aqi.total, good: true, max: 100, suffix: '/100' }
-    ])}</div>`;
+    ])}${interpBox(interpBeforeAfter(ini, curMiss, docCount, aqi, base))}</div>`;
 
     // Missing heatmap
-    html += `<div class="card"><h3>🗺️ Carte thermique des valeurs manquantes</h3>${svgMissingHeatmap()}</div>`;
+    html += `<div class="card"><h3>🗺️ Carte thermique des valeurs manquantes</h3>${svgMissingHeatmap()}${interpBox(interpMissing(APP.qualityReport))}</div>`;
 
     // Distributions
     if (numCols.length) {
         html += `<div class="card"><h3>📊 Distributions (histogrammes)</h3><div style="text-align:center">`;
         for (const c of numCols.slice(0, 6)) html += svgHistogram(numericValues(c), c);
-        html += `</div></div>`;
+        html += `</div>${interpBox(interpHistograms(numCols))}</div>`;
         html += `<div class="card"><h3>📦 Boxplots (valeurs aberrantes)</h3><div style="text-align:center">`;
         for (const c of numCols.slice(0, 6)) html += svgBoxplot(c);
-        html += `</div></div>`;
-        html += `<div class="card"><h3>🔗 Matrice de corrélation</h3>${svgCorrMatrix(numCols)}</div>`;
+        html += `</div>${interpBox(interpBoxplots(numCols))}</div>`;
+        html += `<div class="card"><h3>🔗 Matrice de corrélation</h3>${svgCorrMatrix(numCols)}${interpBox(interpCorr(numCols))}</div>`;
         if (numCols.length >= 2) {
             html += `<div class="card"><h3>✦ Nuage de points</h3><div style="text-align:center">${svgScatter(numCols[0], numCols[1])}`;
             if (numCols.length >= 3) html += svgScatter(numCols[0], numCols[2]);
-            html += `</div></div>`;
+            html += `</div>${interpBox(interpScatter(numCols))}</div>`;
         }
     } else {
         html += `<div class="card"><p style="color:#888">Aucune colonne numérique — histogrammes, boxplots et corrélations non disponibles.</p></div>`;
