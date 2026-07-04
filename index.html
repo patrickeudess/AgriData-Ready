@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AfriData Ready — From Raw Data to FAIR & AI-Ready Data</title>
+<title>AfriData Ready : From Raw Data to FAIR & AI-Ready Data</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 <script src="libs/papaparse.min.js"></script>
 <script src="libs/xlsx.full.min.js"></script>
@@ -368,7 +368,7 @@ function addHistory(action, detail, justification) {
         date: now.toLocaleDateString('fr-FR'),
         time: now.toLocaleTimeString(),
         step: stepName,
-        user: APP.metadata.author || '—',
+        user: APP.metadata.author || '-',
         action, detail,
         justification: justification || ''
     });
@@ -397,7 +397,7 @@ function renderStep1() {
     html += `<div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
         <span class="icon">📂</span>
         <h3>Glissez-déposez un fichier ici</h3>
-        <p style="color:#888;margin-top:.3rem">ou cliquez pour sélectionner — CSV, Excel (.xlsx), JSON</p>
+        <p style="color:#888;margin-top:.3rem">ou cliquez pour sélectionner : CSV, Excel (.xlsx), JSON</p>
         <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" onchange="if(this.files[0])handleFile(this.files[0])">
     </div>`;
 
@@ -646,13 +646,13 @@ function renderStep2() {
     if (nOutlierCols === 0) {
         html += '<div class="issue info">✅ <strong>Aucune valeur aberrante détectée.</strong></div>';
     } else {
-        html += `<p style="margin-bottom:1rem;font-size:.88rem;color:#555">Méthode : règle des 1.5×IQR — valeurs hors de [Q1 − 1.5×IQR, Q3 + 1.5×IQR]</p>`;
+        html += `<p style="margin-bottom:1rem;font-size:.88rem;color:#555">Méthode : règle des 1.5×IQR : valeurs hors de [Q1 − 1.5×IQR, Q3 + 1.5×IQR]</p>`;
         for (const [col, od] of Object.entries(report.outlierDetails)) {
             const s = (report.descStats || {})[col];
-            html += `<div class="card"><h3>📌 ${col} — ${od.count} valeur(s) aberrante(s)</h3>`;
+            html += `<div class="card"><h3>📌 ${col} : ${od.count} valeur(s) aberrante(s)</h3>`;
             if (s) {
                 html += `<p style="font-size:.85rem;margin-bottom:.6rem">
-                    Plage normale : [<strong>${od.lo}</strong> — <strong>${od.hi}</strong>] &nbsp;|&nbsp;
+                    Plage normale : [<strong>${od.lo}</strong> : <strong>${od.hi}</strong>] &nbsp;|&nbsp;
                     Q1 = ${od.q1} &nbsp;·&nbsp; Q3 = ${od.q3} &nbsp;·&nbsp; IQR = ${od.iqr} &nbsp;·&nbsp;
                     Min = ${s.min} &nbsp;·&nbsp; Max = ${s.max}
                 </p>`;
@@ -927,8 +927,8 @@ function renderStep4() {
             <tr><th>Variable</th><th>Description</th><th>Type</th><th>Unité</th><th>Statut</th></tr>`;
         for (const col of APP.columns) {
             const doc = APP.variableDocs[col];
-            html += `<tr><td><strong>${col}</strong></td><td>${doc?.description || '—'}</td><td>${doc?.data_type || '—'}</td>
-                <td>${doc?.unit || '—'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
+            html += `<tr><td><strong>${col}</strong></td><td>${doc?.description || '-'}</td><td>${doc?.data_type || '-'}</td>
+                <td>${doc?.unit || '-'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
         }
         html += '</table></div></div>';
     }
@@ -1127,7 +1127,7 @@ function renderStep6() {
     html += '</div>';
 
     for (const [letter, name] of [['F','Findable'],['A','Accessible'],['I','Interoperable'],['R','Reusable']]) {
-        html += `<div class="card"><h3>${letter} — ${name} (${fair.scores[letter]}/${fair.maxS[letter]})</h3>`;
+        html += `<div class="card"><h3>${letter} : ${name} (${fair.scores[letter]}/${fair.maxS[letter]})</h3>`;
         for (const [status, msg] of fair.details[letter]) {
             const icon = status === 'ok' ? '✅' : status === 'partial' ? '⚠️' : '❌';
             html += `<p style="margin:.2rem 0;font-size:.85rem">${icon} ${msg}</p>`;
@@ -1229,7 +1229,7 @@ function renderStep7() {
     html += '</div>';
 
     for (const [dim, lines] of Object.entries(ai.details)) {
-        html += `<div class="card"><h3>${dim} — ${ai.dims[dim]}/${ai.maxD[dim]}</h3>`;
+        html += `<div class="card"><h3>${dim} : ${ai.dims[dim]}/${ai.maxD[dim]}</h3>`;
         for (const line of lines) html += `<p style="margin:.2rem 0;font-size:.85rem">• ${line}</p>`;
         html += '</div>';
     }
@@ -1314,7 +1314,7 @@ function renderChangeLog() {
     html += `<div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
     function diffBadge(before, after, lowerIsBetter) {
         const d = after - before;
-        if (d === 0) return '<span style="color:#888">—</span>';
+        if (d === 0) return '<span style="color:#888">-</span>';
         const good = lowerIsBetter ? d < 0 : d > 0;
         const color = good ? 'var(--primary)' : 'var(--danger)';
         return `<span style="color:${color};font-weight:700">${d > 0 ? '+' : ''}${d}</span>`;
@@ -1391,7 +1391,7 @@ function renderStep9() {
         <button class="btn btn-secondary" onclick="exportWord()">📝 Rapport (Word)</button>
     </div>`;
 
-    html += `<div class="issue warning" style="margin-top:1rem;font-size:.85rem">⚠️ Les scores AQI, FAIR et AI Readiness sont des <strong>évaluations internes</strong> inspirées de standards internationaux — pas une certification officielle. Voir <a href="#" onclick="goStep('referentiel');return false;">Référentiel utilisé</a>.</div>`;
+    html += `<div class="issue warning" style="margin-top:1rem;font-size:.85rem">⚠️ Les scores AQI, FAIR et AI Readiness sont des <strong>évaluations internes</strong> inspirées de standards internationaux : pas une certification officielle. Voir <a href="#" onclick="goStep('referentiel');return false;">Référentiel utilisé</a>.</div>`;
 
     html += navButtons(8, null);
     return html;
@@ -1474,7 +1474,7 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
 .highlight{background:#E8F5E9;padding:4pt 8pt;border-left:4pt solid #4CAF50;margin:8pt 0}
 </style></head><body>`;
 
-    doc += `<h1>Rapport des modifications — AfriData Ready</h1>`;
+    doc += `<h1>Rapport des modifications : AfriData Ready</h1>`;
     doc += `<p class="subtitle">From Raw Data to FAIR & AI-Ready Data</p>`;
     doc += `<p><strong>Fichier traité :</strong> ${APP.fileName}</p>`;
     doc += `<p><strong>Date :</strong> ${date} à ${time}</p>`;
@@ -1531,7 +1531,7 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
     doc += `<div class="highlight"><p>Le fichier corrigé contient <strong>${APP.data.length} lignes</strong> et <strong>${APP.columns.length} colonnes</strong>.</p>`;
     doc += `<p>Colonnes finales : ${APP.columns.join(', ')}</p></div>`;
 
-    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AfriData Ready — From Raw Data to FAIR & AI-Ready Data</p>`;
+    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AfriData Ready : From Raw Data to FAIR & AI-Ready Data</p>`;
     doc += `</body></html>`;
     return doc;
 }
@@ -1587,7 +1587,7 @@ function buildDataCiteXML() {
 function buildYAML() {
     const m = APP.metadata, a = APP.aqiScore || computeAQI();
     const esc = s => `"${String(s == null ? '' : s).replace(/"/g, '\\"')}"`;
-    return `# metadata.yaml — AfriData Ready
+    return `# metadata.yaml : AfriData Ready
 title: ${esc(m.title || APP.fileName)}
 author: ${esc(m.author || '')}
 organization: ${esc(m.organization || '')}
@@ -1617,31 +1617,31 @@ function buildReadme() {
 ${m.description || '_Aucune description fournie._'}
 
 ## Informations
-- **Auteur :** ${m.author || '—'}
-- **Organisation :** ${m.organization || '—'}
-- **Licence :** ${m.license || '—'}
+- **Auteur :** ${m.author || '-'}
+- **Organisation :** ${m.organization || '-'}
+- **Licence :** ${m.license || '-'}
 - **Version :** ${m.version || '1.0'}
-- **Zone géographique :** ${m.geographic_area || '—'}
+- **Zone géographique :** ${m.geographic_area || '-'}
 - **Lignes × colonnes :** ${APP.data.length} × ${APP.columns.length}
 
 ## Qualité (évaluation interne AfriData Ready)
 | Indicateur | Score |
 |---|---|
-| AfriData Quality Index (AQI) | **${a.total}/100 — ${a.level[0]}** |
+| AfriData Quality Index (AQI) | **${a.total}/100 : ${a.level[0]}** |
 | FAIR | ${APP.fairScore ? APP.fairScore.total : 0}/100 |
 | AI Readiness | ${APP.aiScore ? APP.aiScore.total : 0}/100 |
 
 ## Contenu du package
-- \`donnees_corrigees\` — données nettoyées
-- \`dictionnaire_donnees\` — documentation des variables
-- \`metadata.yaml\`, \`metadata_datacite.xml\` — métadonnées
+- \`donnees_corrigees\` : données nettoyées
+- \`dictionnaire_donnees\` : documentation des variables
+- \`metadata.yaml\`, \`metadata_datacite.xml\` : métadonnées
 - \`rapport_aqi\`, \`rapport_qualite\`, \`score_fair\`, \`score_ai_readiness\`
-- \`journal_modifications\` — data lineage
+- \`journal_modifications\` : data lineage
 - \`CITATION.cff\`, \`certificat_afridata.html\`
 
 > _Les évaluations sont inspirées de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD) mais constituent une évaluation interne automatisée, non une certification officielle._
 
-*Généré par AfriData Ready — ${new Date().toLocaleDateString('fr-FR')}*
+*Généré par AfriData Ready : ${new Date().toLocaleDateString('fr-FR')}*
 `;
 }
 
@@ -1667,10 +1667,10 @@ function buildAQIReport() {
     return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport AQI</title>
 <style>body{font-family:Segoe UI,sans-serif;max-width:900px;margin:0 auto;padding:2rem;color:#333}h1{color:#1B5E20}table{width:100%;border-collapse:collapse;margin:1rem 0}th{background:#1B5E20;color:#fff;padding:.6rem;text-align:left}td{padding:.5rem;border-bottom:1px solid #ddd}.big{font-size:3rem;font-weight:800;color:${a.level[1]}}</style></head><body>
 <h1>🏅 AfriData Quality Index</h1>
-<p class="big">${a.total}/100 — ${a.level[0]}</p>
+<p class="big">${a.total}/100 : ${a.level[0]}</p>
 <table><tr><th>Dimension</th><th>Poids</th><th>Score /100</th></tr>
 ${rows.map(([n, w, s]) => `<tr><td>${n}</td><td>${w}%</td><td>${Math.round(s)}</td></tr>`).join('')}</table>
-<h2>Recommandations</h2><ul>${a.recos.map(([d, t]) => `<li><strong>${d} :</strong> ${t}</li>`).join('') || '<li>Aucune — excellente qualité.</li>'}</ul>
+<h2>Recommandations</h2><ul>${a.recos.map(([d, t]) => `<li><strong>${d} :</strong> ${t}</li>`).join('') || '<li>Aucune : excellente qualité.</li>'}</ul>
 <hr><p style="font-size:.8rem;color:#888">Évaluation interne inspirée de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD). Ne constitue pas une certification officielle. Généré le ${new Date().toLocaleDateString('fr-FR')}.</p>
 </body></html>`;
 }
@@ -1694,7 +1694,7 @@ table{margin:1.4rem auto;border-collapse:collapse}td{padding:.4rem 1.6rem;font-s
 <div class="cert">
 <div class="btn-wrap"><button class="btn" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
 <h1>🌍 AfriData Ready</h1>
-<p class="sub">Certificat de qualité des données — évaluation indicative</p>
+<p class="sub">Certificat de qualité des données : évaluation indicative</p>
 <p style="margin-top:1.4rem;font-size:1.1rem">Jeu de données</p>
 <h2 style="margin:.2rem;color:#2E7D32">${xmlEscape(m.title || APP.fileName)}</h2>
 <div class="score">${a.total}<span style="font-size:1.5rem">/100</span></div>
@@ -1792,7 +1792,7 @@ function exportZip() {
 // ═══════════════════════════════════════════════════════════════
 // AfriData Quality Index (AQI)
 // Moyenne pondérée inspirée d'ISO 8000 / ISO 25012 / ISO 11179 /
-// Dublin Core / DataCite / FAIR / RGPD — évaluation interne.
+// Dublin Core / DataCite / FAIR / RGPD : évaluation interne.
 // ═══════════════════════════════════════════════════════════════
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 const AQI_WEIGHTS = { intrinseque: 0.30, documentation: 0.20, fair: 0.20, ai: 0.20, securite: 0.10 };
@@ -1866,7 +1866,7 @@ function computeAQI() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TOOLKIT GRAPHIQUE — SVG pur (aucune dépendance, 100% local)
+// TOOLKIT GRAPHIQUE : SVG pur (aucune dépendance, 100% local)
 // ═══════════════════════════════════════════════════════════════
 const CHART_COLORS = ['#1B5E20', '#4CAF50', '#FF6F00', '#1565C0', '#6A1B9A', '#00838F', '#C62828', '#558B2F'];
 
@@ -1975,7 +1975,7 @@ function svgBoxplot(col) {
     const W = 300, H = 90, pad = 10, y = 40;
     const sx = v => pad + (W - 2 * pad) * (v - dmin) / span;
     let out = outliers.slice(0, 40).map(v => `<circle cx="${sx(v)}" cy="${y}" r="2.5" fill="#C62828"/>`).join('');
-    return `<div style="display:inline-block;margin:.4rem;text-align:center"><div style="font-size:.8rem;font-weight:600;color:#2E7D32">${col}${outliers.length ? ` — ${outliers.length} outlier(s)` : ''}</div>
+    return `<div style="display:inline-block;margin:.4rem;text-align:center"><div style="font-size:.8rem;font-weight:600;color:#2E7D32">${col}${outliers.length ? ` : ${outliers.length} outlier(s)` : ''}</div>
     <svg viewBox="0 0 ${W} ${H}" style="width:300px;max-width:100%">
         <line x1="${sx(wmin)}" y1="${y}" x2="${sx(q1)}" y2="${y}" stroke="#555"/>
         <line x1="${sx(q3)}" y1="${y}" x2="${sx(wmax)}" y2="${y}" stroke="#555"/>
@@ -2025,7 +2025,7 @@ function svgCorrMatrix(numCols) {
         const rr = isNaN(r) ? 0 : r;
         const col = rr >= 0 ? `rgba(27,94,32,${Math.abs(rr)})` : `rgba(198,40,40,${Math.abs(rr)})`;
         s += `<rect x="${off + j * cell}" y="${top + i * cell}" width="${cell - 1}" height="${cell - 1}" fill="${col}"/>`;
-        if (cell > 30) s += `<text x="${off + j * cell + cell / 2}" y="${top + i * cell + cell / 2 + 3}" text-anchor="middle" font-size="8.5" fill="${Math.abs(rr) > 0.5 ? '#fff' : '#333'}">${isNaN(r) ? '—' : rr.toFixed(1)}</text>`;
+        if (cell > 30) s += `<text x="${off + j * cell + cell / 2}" y="${top + i * cell + cell / 2 + 3}" text-anchor="middle" font-size="8.5" fill="${Math.abs(rr) > 0.5 ? '#fff' : '#333'}">${isNaN(r) ? '-' : rr.toFixed(1)}</text>`;
     }
     s += '</svg>';
     return s;
@@ -2046,7 +2046,7 @@ function svgMissingHeatmap() {
             s += `<rect x="${j * cw}" y="${top + i * ch}" width="${cw - 1}" height="${ch}" fill="${miss ? '#C62828' : '#E8F5E9'}"/>`;
         });
     }
-    s += `<text x="0" y="${top + rows * ch + 8}" font-size="9" fill="#aaa">■ manquant (rouge) &nbsp; ■ présent (vert) — échantillon de ${rows} lignes</text></svg>`;
+    s += `<text x="0" y="${top + rows * ch + 8}" font-size="9" fill="#aaa">■ manquant (rouge) &nbsp; ■ présent (vert) : échantillon de ${rows} lignes</text></svg>`;
     return s;
 }
 
@@ -2076,7 +2076,7 @@ function interpBeforeAfter(ini, curMiss, docCount, aqi, base) {
     const missDelta = (ini.missing ?? 0) - curMiss;
     if (missDelta > 0) L.push(`<strong>${missDelta}</strong> valeur(s) manquante(s) ont été traitées (${ini.missing} → ${curMiss}).`);
     else if ((ini.missing ?? 0) > 0) L.push(`Il reste <strong>${curMiss}</strong> valeur(s) manquante(s) : envisagez une imputation ou une suppression (étape 3).`);
-    else L.push('Aucune valeur manquante — complétude parfaite.');
+    else L.push('Aucune valeur manquante : complétude parfaite.');
     const dupDelta = (ini.duplicates ?? 0) - countDuplicates();
     if (dupDelta > 0) L.push(`<strong>${dupDelta}</strong> doublon(s) supprimé(s).`);
     if (docCount > (base.docs ?? 0)) L.push(`<strong>${docCount}</strong> variable(s) désormais documentée(s).`);
@@ -2092,7 +2092,7 @@ function interpMissing(report) {
     if (!cols.length) return ['Aucune valeur manquante : la carte est entièrement verte, le jeu de données est complet.'];
     const top = cols[0], topPct = pct(report.missingPerCol[top], APP.data.length);
     L.push(`La colonne la plus incomplète est <strong>${top}</strong> (${topPct}% de valeurs manquantes).`);
-    if (report.emptyCols.length) L.push(`<strong>${report.emptyCols.length}</strong> colonne(s) entièrement vide(s) : ${report.emptyCols.join(', ')} — à supprimer.`);
+    if (report.emptyCols.length) L.push(`<strong>${report.emptyCols.length}</strong> colonne(s) entièrement vide(s) : ${report.emptyCols.join(', ')} : à supprimer.`);
     L.push(`Au total, ${cols.length} colonne(s) présentent des trous. Les zones rouges alignées verticalement indiquent une variable problématique ; alignées horizontalement, une ligne à vérifier.`);
     return L;
 }
@@ -2189,14 +2189,14 @@ function renderAnalysis() {
             <tr><td>FAIR</td><td>20%</td><td>${Math.round(aqi.dims.fair)}</td></tr>
             <tr><td>AI Readiness</td><td>20%</td><td>${Math.round(aqi.dims.ai)}</td></tr>
             <tr><td>Sécurité & confidentialité <span style="color:#888">(RGPD)</span></td><td>10%</td><td>${Math.round(aqi.dims.securite)}</td></tr>
-            <tr style="background:#E8F5E9;font-weight:700"><td>AQI global</td><td>100%</td><td style="color:${aqi.level[1]}">${aqi.total} — ${aqi.level[0]}</td></tr>
+            <tr style="background:#E8F5E9;font-weight:700"><td>AQI global</td><td>100%</td><td style="color:${aqi.level[1]}">${aqi.total} : ${aqi.level[0]}</td></tr>
         </table></div>`;
     if (aqi.recos.length) {
         html += `<h4 style="margin-top:.8rem;font-size:.9rem;color:#555">Recommandations personnalisées</h4>`;
         for (const [dim, txt] of aqi.recos) html += `<div class="issue warning" style="margin:.3rem 0">🟡 <strong>${dim} :</strong> ${txt}</div>`;
     }
     html += interpBox(interpAQI(aqi));
-    html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Évaluation interne inspirée de standards internationaux — ne constitue pas une certification officielle.</p></div>`;
+    html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Évaluation interne inspirée de standards internationaux : ne constitue pas une certification officielle.</p></div>`;
 
     // Before / After
     html += `<div class="card"><h3>📈 Comparaison Avant / Après</h3>${svgBarCompare([
@@ -2226,7 +2226,7 @@ function renderAnalysis() {
             html += `</div>${interpBox(interpScatter(numCols))}</div>`;
         }
     } else {
-        html += `<div class="card"><p style="color:#888">Aucune colonne numérique — histogrammes, boxplots et corrélations non disponibles.</p></div>`;
+        html += `<div class="card"><p style="color:#888">Aucune colonne numérique : histogrammes, boxplots et corrélations non disponibles.</p></div>`;
     }
 
     html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(8)">← Recommandations</button></div>
