@@ -2465,6 +2465,35 @@ function saveAsProject() {
     createProject(name, '', true);
 }
 
+// ── Export / import de projet (fichier .afridata, transférable) ──
+async function exportProjectFile(id) {
+    const p = await dbGet(id);
+    if (!p) { alert('Projet introuvable.'); return; }
+    const payload = { format: 'afridata-project', version: 1, exportedAt: new Date().toISOString(), project: p };
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json;charset=utf-8;' });
+    const safe = String(p.name || 'projet').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'projet';
+    saveAs(blob, `${safe}.afridata`);
+}
+
+function importProjectFile(file) {
+    const reader = new FileReader();
+    reader.onload = async e => {
+        try {
+            const payload = JSON.parse(e.target.result);
+            if (payload.format !== 'afridata-project' || !payload.project) throw new Error('Ce fichier n\'est pas un projet AfriData Ready valide.');
+            const p = payload.project;
+            // Nouvel identifiant pour éviter d'écraser un projet existant
+            p.id = 'prj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            p.name = (p.name || 'Projet importé') + ' (importé)';
+            p.updatedAt = new Date().toISOString();
+            await dbPut(p);
+            alert(`Projet « ${p.name} » importé avec succès.`);
+            loadProjectsList();
+        } catch (err) { alert('Import impossible : ' + err.message); }
+    };
+    reader.readAsText(file);
+}
+
 function startQuick() {
     APP.mode = 'quick';
     APP.step = 1;
@@ -2502,6 +2531,8 @@ function renderProjects() {
             <div class="form-group"><label>Description (optionnel) :</label><input id="new-prj-desc" placeholder="Courte description"></div>
         </div>
         <button class="btn btn-primary" onclick="createProject(document.getElementById('new-prj-name').value, document.getElementById('new-prj-desc').value, false)">Créer le projet</button>
+        <button class="btn btn-secondary" style="margin-left:.6rem" onclick="document.getElementById('import-prj-input').click()">📥 Importer un projet (.afridata)</button>
+        <input type="file" id="import-prj-input" accept=".afridata,application/json" style="display:none" onchange="if(this.files[0])importProjectFile(this.files[0]);this.value=''">
     </div>
     <div id="projects-list"><div class="card"><p style="color:#888">Chargement…</p></div></div>
     <div class="nav-buttons"><div><button class="btn btn-secondary" onclick="APP.mode=null;APP.step='welcome';renderNav();renderStep()">← Accueil</button></div><div></div></div>`;
@@ -2525,6 +2556,7 @@ async function loadProjectsList() {
             <td>${rows}</td><td>${upd}</td>
             <td style="white-space:nowrap">
                 <button class="btn btn-primary btn-sm" onclick="openProject('${p.id}')">Ouvrir</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportProjectFile('${p.id}')" title="Exporter en fichier .afridata">📤</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}','${safeName}')">✕</button>
             </td></tr>`;
     }
