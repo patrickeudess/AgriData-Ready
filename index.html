@@ -1074,7 +1074,7 @@ function renderStep5() {
         ['description','Description','textarea'],['collection_method','Méthode de collecte','textarea'],
         ['target_population','Population cible','text'],['license','Licence','select'],
         ['access_conditions',"Conditions d'accès",'text'],['keywords','Mots-clés (séparés par virgules)','text'],
-        ['contact','Contact','text'],['version','Version','text'],['citation','Citation recommandée','textarea']
+        ['contact','Contact','text'],['version','Version','text'],['doi','DOI (si disponible)','text'],['citation','Citation recommandée','textarea']
     ];
     const filled = fields.filter(f => m[f[0]]).length;
 
@@ -1106,7 +1106,7 @@ function renderStep5() {
 
 function saveMetadata() {
     const fields = ['title','author','organization','country','geographic_area','collection_period','description',
-        'collection_method','target_population','license','access_conditions','keywords','contact','version','citation'];
+        'collection_method','target_population','license','access_conditions','keywords','contact','version','doi','citation'];
     for (const f of fields) {
         const el = document.getElementById('meta-' + f);
         if (el) APP.metadata[f] = el.value;
@@ -1126,51 +1126,69 @@ function computeFAIR() {
     const details = { F: [], A: [], I: [], R: [] };
     const maxS = { F: 25, A: 25, I: 25, R: 25 };
 
-    const check = (letter, pts, cond, ok, fail) => {
-        if (cond) { scores[letter] += pts; details[letter].push(['ok', ok]); }
-        else details[letter].push(['missing', fail]);
+    // fix = {field, step} : action concrète pour atteindre le critère
+    const check = (letter, pts, cond, ok, fail, fix) => {
+        if (cond) { scores[letter] += pts; details[letter].push(['ok', ok, null]); }
+        else details[letter].push(['missing', fail, fix]);
     };
 
-    check('F', 5, m.title, 'Titre renseigné', 'Titre manquant');
-    check('F', 5, m.description, 'Description renseignée', 'Description manquante');
-    check('F', 5, m.keywords, 'Mots-clés renseignés', 'Mots-clés manquants');
-    check('F', 5, m.author, 'Auteur renseigné', 'Auteur manquant');
-    check('F', 5, m.version, 'Version renseignée', 'Version manquante');
+    check('F', 5, m.title, 'Titre renseigné', 'Titre manquant', { field: 'title', step: 4 });
+    check('F', 5, m.description, 'Description renseignée', 'Description manquante', { field: 'description', step: 4 });
+    check('F', 5, m.keywords, 'Mots-clés renseignés', 'Mots-clés manquants', { field: 'keywords', step: 4 });
+    check('F', 5, m.author, 'Auteur renseigné', 'Auteur manquant', { field: 'author', step: 4 });
+    check('F', 5, m.version, 'Version renseignée', 'Version manquante', { field: 'version', step: 4, auto: 'version' });
 
-    check('A', 8, m.license, 'Licence définie', 'Licence manquante');
-    check('A', 7, m.access_conditions, "Conditions d'accès définies", "Conditions d'accès manquantes");
-    check('A', 5, m.contact, 'Contact renseigné', 'Contact manquant');
-    check('A', 5, m.citation, 'Citation recommandée définie', 'Citation recommandée manquante');
+    check('A', 8, m.license, 'Licence définie', 'Licence manquante', { field: 'license', step: 4, auto: 'license' });
+    check('A', 7, m.access_conditions, "Conditions d'accès définies", "Conditions d'accès manquantes", { field: 'access_conditions', step: 4, auto: 'access' });
+    check('A', 5, m.contact, 'Contact renseigné', 'Contact manquant', { field: 'contact', step: 4 });
+    check('A', 5, m.citation, 'Citation recommandée définie', 'Citation recommandée manquante', { field: 'citation', step: 4, auto: 'citation' });
 
     const goodNames = cols.filter(c => c.length > 3 && !c.startsWith('Unnamed')).length;
     const nameRatio = cols.length > 0 ? goodNames / cols.length : 0;
     scores.I += Math.round(nameRatio * 8);
-    details.I.push([nameRatio > 0.8 ? 'ok' : 'missing', `Noms de colonnes explicites : ${goodNames}/${cols.length}`]);
+    details.I.push([nameRatio > 0.8 ? 'ok' : 'missing', `Noms de colonnes explicites : ${goodNames}/${cols.length}`, nameRatio > 0.8 ? null : { step: 2 }]);
 
     const nNumeric = cols.filter(c => isNumericCol(c)).length;
     const typeRatio = cols.length > 0 ? nNumeric / cols.length : 0;
     scores.I += Math.round(typeRatio * 7);
-    details.I.push([typeRatio > 0.5 ? 'ok' : 'missing', `Colonnes typées : ${nNumeric}/${cols.length}`]);
-    scores.I += 5; details.I.push(['ok', 'Format standard (CSV/Excel)']);
+    details.I.push([typeRatio > 0.5 ? 'ok' : 'missing', `Colonnes typées : ${nNumeric}/${cols.length}`, null]);
+    scores.I += 5; details.I.push(['ok', 'Format standard (CSV/Excel)', null]);
     const docRatio = cols.length > 0 ? Object.keys(d).length / cols.length : 0;
     scores.I += Math.round(docRatio * 5);
-    details.I.push([docRatio > 0.5 ? 'ok' : 'missing', `Variables documentées : ${Object.keys(d).length}/${cols.length}`]);
+    details.I.push([docRatio > 0.5 ? 'ok' : 'missing', `Variables documentées : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
 
-    check('R', 6, m.license, 'Licence définie pour réutilisation', 'Licence nécessaire pour la réutilisation');
-    check('R', 5, m.collection_method, 'Méthode de collecte documentée', 'Méthode de collecte manquante');
-    check('R', 4, m.geographic_area, 'Zone géographique renseignée', 'Zone géographique manquante');
+    check('R', 6, m.license, 'Licence définie pour réutilisation', 'Licence nécessaire pour la réutilisation', { field: 'license', step: 4, auto: 'license' });
+    check('R', 5, m.collection_method, 'Méthode de collecte documentée', 'Méthode de collecte manquante', { field: 'collection_method', step: 4 });
+    check('R', 4, m.geographic_area, 'Zone géographique renseignée', 'Zone géographique manquante', { field: 'geographic_area', step: 4 });
 
     const totalCells = df.length * cols.length;
     let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
     const missPct = totalCells > 0 ? totalMiss / totalCells * 100 : 100;
-    if (missPct < 5) { scores.R += 5; details.R.push(['ok', `Complétude élevée (${(100 - missPct).toFixed(1)}%)`]); }
-    else if (missPct < 20) { scores.R += 3; details.R.push(['partial', `Complétude moyenne (${(100 - missPct).toFixed(1)}%)`]); }
-    else details.R.push(['missing', `Complétude faible (${(100 - missPct).toFixed(1)}%)`]);
+    if (missPct < 5) { scores.R += 5; details.R.push(['ok', `Complétude élevée (${(100 - missPct).toFixed(1)}%)`, null]); }
+    else if (missPct < 20) { scores.R += 3; details.R.push(['partial', `Complétude moyenne (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]); }
+    else details.R.push(['missing', `Complétude faible (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]);
 
     scores.R += Math.round(docRatio * 5);
-    details.R.push([docRatio > 0.5 ? 'ok' : 'missing', `Dictionnaire de données : ${Object.keys(d).length}/${cols.length}`]);
+    details.R.push([docRatio > 0.5 ? 'ok' : 'missing', `Dictionnaire de données : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
 
     return { scores, details, total: scores.F + scores.A + scores.I + scores.R, max: 100, maxS };
+}
+
+// Renseigne automatiquement un champ FAIR déductible, puis recalcule
+function fairAutoFix(kind) {
+    const m = { ...APP.metadata };
+    if (kind === 'license') m.license = m.license || 'CC-BY 4.0';
+    else if (kind === 'version') m.version = m.version || '1.0';
+    else if (kind === 'access') m.access_conditions = m.access_conditions || 'Accès ouvert';
+    else if (kind === 'citation') {
+        const author = m.author || 'Auteur', year = new Date().getFullYear(), title = m.title || APP.fileName;
+        m.citation = m.citation || `${author} (${year}). ${title}. Version ${m.version || '1.0'}.`;
+    }
+    APP.metadata = m;
+    addHistory('FAIR : champ renseigné automatiquement', kind, 'Valeur par défaut proposée, modifiable à l\'étape 4');
+    if (typeof pushAqiHistory === 'function') pushAqiHistory('FAIR');
+    APP._assistCache = null;
+    renderNav(); renderStep();
 }
 
 function renderStep6() {
@@ -1195,14 +1213,47 @@ function renderStep6() {
     }
     html += '</div>';
 
+    // Actions rapides globales pour les champs déductibles automatiquement
+    const autoable = [];
+    if (!APP.metadata.license) autoable.push(['license', 'Licence CC-BY 4.0']);
+    if (!APP.metadata.version) autoable.push(['version', 'Version 1.0']);
+    if (!APP.metadata.access_conditions) autoable.push(['access', "Conditions d'accès : ouvert"]);
+    if (!APP.metadata.citation && (APP.metadata.author || APP.metadata.title)) autoable.push(['citation', 'Citation recommandée']);
+    if (autoable.length) {
+        html += `<div class="card" style="border-left:4px solid var(--primary-light)"><h3>⚡ Atteindre plus vite les critères</h3>
+            <p style="font-size:.85rem;color:#666;margin-bottom:.6rem">Ces critères peuvent être renseignés automatiquement (valeurs par défaut modifiables ensuite à l'étape 4) :</p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem">`;
+        for (const [k, lbl] of autoable) html += `<button class="btn btn-primary btn-sm" onclick="fairAutoFix('${k}')">✅ ${lbl}</button>`;
+        html += `</div></div>`;
+    }
+
     for (const [letter, name] of [['F','Findable'],['A','Accessible'],['I','Interoperable'],['R','Reusable']]) {
         html += `<div class="card"><h3>${letter} : ${name} (${fair.scores[letter]}/${fair.maxS[letter]})</h3>`;
-        for (const [status, msg] of fair.details[letter]) {
+        for (const [status, msg, fix] of fair.details[letter]) {
             const icon = status === 'ok' ? '✅' : status === 'partial' ? '⚠️' : '❌';
-            html += `<p style="margin:.2rem 0;font-size:.85rem">${icon} ${msg}</p>`;
+            html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.35rem 0">
+                <span style="flex:1;min-width:200px;font-size:.85rem">${icon} ${msg}</span>`;
+            if (fix && status !== 'ok') {
+                if (fix.auto) html += `<button class="btn btn-primary btn-sm" onclick="${fix.auto === 'doc' ? "applyAssistAction('doc')" : `fairAutoFix('${fix.auto}')`}">✅ Corriger auto</button>`;
+                html += `<button class="btn btn-secondary btn-sm" onclick="goStep(${fix.step})">✏️ ${fix.step === 4 ? 'Renseigner' : fix.step === 2 ? 'Corriger' : 'Documenter'}</button>`;
+            }
+            html += `</div>`;
         }
         html += '</div>';
     }
+
+    // Critères FAIR réellement externes (impossibles hors publication)
+    html += `<div class="card" style="background:#FFF8E1;border-left:4px solid var(--accent)">
+        <h3>🌐 Critères nécessitant une publication (hors application)</h3>
+        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">Certains principes FAIR — <strong>identifiant pérenne (DOI)</strong>, <strong>accès via un protocole standard</strong> et <strong>indexation dans un catalogue</strong> — ne peuvent pas être satisfaits par un outil local : ils exigent le dépôt du jeu de données sur un entrepôt.</p>
+        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">✅ <strong>Bonne nouvelle :</strong> AfriData Ready génère déjà le fichier <strong>metadata_datacite.xml</strong> (à l'export) qui permet d'obtenir un DOI. Pour finaliser :</p>
+        <ul style="font-size:.83rem;color:#555;margin-left:1.1rem">
+            <li>Déposez le dossier ZIP sur <strong>Zenodo</strong>, <strong>Dataverse</strong> ou <strong>OSF</strong> (gratuit) → vous obtenez un DOI pérenne et une URL d'accès stable.</li>
+            <li>Ces plateformes indexent automatiquement vos données dans des catalogues (moissonnage DCAT/OAI-PMH).</li>
+            <li>Reportez ensuite le DOI obtenu dans les métadonnées (étape 4).</li>
+        </ul>
+        <p style="font-size:.8rem;color:#999;margin-top:.5rem;font-style:italic">Le score FAIR de l'application se concentre donc volontairement sur ce qui est réalisable localement ; le dépôt final complète les derniers critères.</p>
+    </div>`;
 
     html += navButtons(4, 6, 'AI Readiness →');
     return html;
@@ -1669,7 +1720,7 @@ function buildDataCiteXML() {
     const kw = (m.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
     return `<?xml version="1.0" encoding="UTF-8"?>
 <resource xmlns="http://datacite.org/schema/kernel-4" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <identifier identifierType="DOI">10.0000/PENDING</identifier>
+  <identifier identifierType="DOI">${xmlEscape(m.doi || '10.0000/PENDING')}</identifier>
   <creators><creator><creatorName>${xmlEscape(m.author || 'Inconnu')}</creatorName></creator></creators>
   <titles><title xml:lang="fr">${xmlEscape(m.title || APP.fileName)}</title></titles>
   <publisher>${xmlEscape(m.organization || 'AfriData Ready')}</publisher>
