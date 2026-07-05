@@ -212,6 +212,7 @@ const APP = {
     projectName: '',
     lastSaved: null,
     aqiHistory: [],      // progression de l'AQI [{label, score}]
+    anonymizedCols: [],  // colonnes sensibles pseudonymisées (gouvernance)
     _assistCache: null
 };
 const AQI_TARGET = 90;
@@ -220,12 +221,12 @@ const ROWS_PER_PAGE = 100;
 const STEPS = [
     'Importer les données',
     'Qualité des données',
-    'Modifier les données',
     'Documenter les variables',
     'Métadonnées',
     'Score FAIR',
-    'Score AI Readiness',
-    'Recommandations',
+    'AI Readiness',
+    'Gouvernance',
+    'Tableau de bord AQI',
     'Exporter'
 ];
 
@@ -633,7 +634,7 @@ function renderStep2() {
     APP.qualityReport = report;
     const nOutlierCols = Object.keys(report.outlierDetails || {}).length;
 
-    let html = `<div class="page-header"><h2>Étape 2 : Analyse de la qualité</h2><p>Analyse automatique de votre jeu de données</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 2 : Qualité des données</h2><p>Diagnostiquer, comprendre, puis corriger — automatiquement ou à la main</p></div>`;
     html += `<div class="metrics">
         <div class="metric"><div class="val">${report.totalMissing} <span style="font-size:.9rem">(${report.missingPct}%)</span></div><div class="label">Valeurs manquantes</div></div>
         <div class="metric"><div class="val">${report.n_duplicates}</div><div class="label">Doublons</div></div>
@@ -642,7 +643,7 @@ function renderStep2() {
         <div class="metric"><div class="val">${report.issues.length}</div><div class="label">Problèmes totaux</div></div>
     </div>`;
 
-    html += `<div class="tabs">
+    html += `<div class="tab-scope"><div class="tabs">
         <div class="tab active" onclick="showEditTab('q-issues',this)">🔍 Problèmes (${report.issues.length})</div>
         <div class="tab" onclick="showEditTab('q-stats',this)">📊 Statistiques descriptives</div>
         <div class="tab" onclick="showEditTab('q-outliers',this)">⚠️ Valeurs aberrantes (${nOutlierCols})</div>
@@ -733,11 +734,11 @@ function renderStep2() {
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem">
                 <div style="background:#FFF8E1;border-radius:8px;padding:.7rem;border-left:4px solid var(--accent)">
                     <strong>🔧 Corriger manuellement</strong><br>
-                    <span style="font-size:.8rem">Éditer les valeurs aberrantes une à une dans l'étape 3 → Éditer les cellules</span>
+                    <span style="font-size:.8rem">Éditer les valeurs aberrantes une à une ci-dessous, dans « Corriger les données » → Éditer les cellules</span>
                 </div>
                 <div style="background:#E8F5E9;border-radius:8px;padding:.7rem;border-left:4px solid var(--primary)">
                     <strong>📊 Remplacer par la médiane</strong><br>
-                    <span style="font-size:.8rem">Aller à l'étape 3 → Valeurs manquantes → remplacer par médiane (après avoir mis les valeurs aberrantes à vide)</span>
+                    <span style="font-size:.8rem">Aller ci-dessous dans « Corriger les données » → Valeurs manquantes → remplacer par médiane (après avoir mis les valeurs aberrantes à vide)</span>
                 </div>
                 <div style="background:#E3F2FD;border-radius:8px;padding:.7rem;border-left:4px solid #1565C0">
                     <strong>🗑️ Supprimer les lignes</strong><br>
@@ -745,26 +746,23 @@ function renderStep2() {
                 </div>
                 <div style="background:#F3E5F5;border-radius:8px;padding:.7rem;border-left:4px solid #6A1B9A">
                     <strong>📝 Documenter et conserver</strong><br>
-                    <span style="font-size:.8rem">Si les valeurs sont réelles (événements exceptionnels), les noter dans la description de la variable à l'étape 4</span>
+                    <span style="font-size:.8rem">Si les valeurs sont réelles (événements exceptionnels), les noter dans la description de la variable à l'étape 3 (Documentation)</span>
                 </div>
             </div></div>`;
         }
     }
-    html += '</div>';
+    html += '</div></div>'; // ferme le dernier onglet + le tab-scope diagnostic
 
-    html += navButtons(1, 3, 'Modifier les données →');
+    html += `<h2 style="color:var(--primary);margin:1.5rem 0 .8rem;font-size:1.15rem;border-bottom:2px solid #E8F5E9;padding-bottom:.4rem">✏️ Corriger les données</h2>`;
+    html += renderEditSection();
+
+    html += navButtons(1, 3, 'Documenter les variables →');
     return html;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// STEP 3: EDIT DATA
-// ═══════════════════════════════════════════════════════════════
-function renderStep3() {
-    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
-
-    let html = `<div class="page-header"><h2>Étape 3 : Modifier les données</h2><p>Corrigez directement votre base de données</p></div>`;
-
-    html += `<div class="tabs">
+// ── Section correction (intégrée à l'étape 2) ──
+function renderEditSection() {
+    let html = `<div class="tab-scope"><div class="tabs">
         <div class="tab active" onclick="showEditTab('edit-cells',this)">Éditer les cellules</div>
         <div class="tab" onclick="showEditTab('edit-cols',this)">Colonnes</div>
         <div class="tab" onclick="showEditTab('edit-missing',this)">Valeurs manquantes</div>
@@ -844,14 +842,15 @@ function renderStep3() {
     }
     html += '</div></div>';
 
-    html += navButtons(2, 4, 'Documenter les variables →');
+    html += '</div>'; // ferme le tab-scope correction
     return html;
 }
 
 function showEditTab(id, el) {
-    document.querySelectorAll('.edit-tab').forEach(t => t.style.display = 'none');
+    const scope = el.closest('.tab-scope') || document;
+    scope.querySelectorAll('.edit-tab').forEach(t => t.style.display = 'none');
     document.getElementById(id).style.display = 'block';
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    scope.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
 }
 
@@ -979,7 +978,7 @@ function renderStep4() {
     const nTotal = APP.columns.length;
     const ratio = nTotal > 0 ? nDoc / nTotal : 0;
 
-    let html = `<div class="page-header"><h2>Étape 4 : Documenter les variables</h2><p>Décrivez chaque variable pour améliorer la réutilisabilité</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 3 : Documenter les variables</h2><p>Décrivez chaque variable pour améliorer la réutilisabilité</p></div>`;
     html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${ratio * 100}%;background:var(--primary)"></div></div>
         <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${nDoc}/${nTotal}</strong> variables documentées</p></div>`;
 
@@ -1001,7 +1000,7 @@ function renderStep4() {
         html += '</table></div></div>';
     }
 
-    html += navButtons(3, 5, 'Métadonnées →');
+    html += navButtons(2, 4, 'Métadonnées →');
     return html;
 }
 
@@ -1079,7 +1078,7 @@ function renderStep5() {
     ];
     const filled = fields.filter(f => m[f[0]]).length;
 
-    let html = `<div class="page-header"><h2>Étape 5 : Métadonnées du jeu de données</h2><p>Informations générales sur votre jeu de données</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 4 : Métadonnées du jeu de données</h2><p>Informations générales sur votre jeu de données</p></div>`;
     html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${pct(filled, fields.length)}%;background:var(--primary)"></div></div>
         <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${filled}/${fields.length}</strong> champs renseignés</p></div>`;
 
@@ -1101,7 +1100,7 @@ function renderStep5() {
         if (colCount === 2) { html += '</div><div class="form-row">'; colCount = 0; }
     }
     html += '</div><button class="btn btn-primary" style="margin-top:.8rem" onclick="saveMetadata()">Enregistrer les métadonnées</button></div>';
-    html += navButtons(4, 6, 'Score FAIR →');
+    html += navButtons(3, 5, 'Score FAIR →');
     return html;
 }
 
@@ -1179,7 +1178,7 @@ function renderStep6() {
     const fair = computeFAIR();
     APP.fairScore = fair;
 
-    let html = `<div class="page-header"><h2>Étape 6 : Conformité FAIR</h2><p>Findable · Accessible · Interoperable · Reusable</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 5 : Conformité FAIR</h2><p>Findable · Accessible · Interoperable · Reusable</p></div>`;
 
     const levelColor = scoreColor(fair.total / 100);
     html += `<div class="card"><div class="score-display">
@@ -1205,7 +1204,7 @@ function renderStep6() {
         html += '</div>';
     }
 
-    html += navButtons(5, 7, 'Score AI Readiness →');
+    html += navButtons(4, 6, 'AI Readiness →');
     return html;
 }
 
@@ -1262,10 +1261,11 @@ function computeAI() {
     details['Structure'] = [`Colonnes vides : ${emptyCols}, Lignes vides : ${emptyRows}`, `Observations : ${df.length}`];
 
     const sensitiveKw = ['nom','name','prenom','surname','telephone','phone','email','adresse','address','ssn','cin'];
-    const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
+    const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)))
+        .filter(c => !(APP.anonymizedCols || []).includes(c));
     let s7 = Math.max(0, 10 - sensitiveCols.length * 3);
     dims['Données sensibles'] = s7;
-    details['Données sensibles'] = [`Colonnes sensibles : ${sensitiveCols.length > 0 ? sensitiveCols.join(', ') : 'Aucune'}`];
+    details['Données sensibles'] = [`Colonnes sensibles non traitées : ${sensitiveCols.length > 0 ? sensitiveCols.join(', ') : 'Aucune'}`];
 
     const total = Object.values(dims).reduce((a, b) => a + b, 0);
     const level = total <= 39 ? ['Faible', 'var(--danger)'] : total <= 69 ? ['Moyen', 'var(--accent)'] : ['Élevé', 'var(--primary)'];
@@ -1278,7 +1278,7 @@ function renderStep7() {
     const ai = computeAI();
     APP.aiScore = ai;
 
-    let html = `<div class="page-header"><h2>Étape 7 : AI Readiness</h2><p>Évaluation de la préparation à l'intelligence artificielle</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 6 : AI Readiness</h2><p>Évaluation de la préparation à l'intelligence artificielle</p></div>`;
 
     html += `<div class="card"><div class="score-display">
         <div class="score-big" style="color:${ai.level[1]}">${ai.total}</div>
@@ -1304,7 +1304,7 @@ function renderStep7() {
         html += '</div>';
     }
 
-    html += navButtons(6, 8, 'Recommandations →');
+    html += navButtons(5, 7, 'Gouvernance →');
     return html;
 }
 
@@ -1342,31 +1342,73 @@ function generateRecos() {
     return recos;
 }
 
-function renderStep8() {
+// ═══════════════════════════════════════════════════════════════
+// STEP 7: GOUVERNANCE (sécurité, confidentialité, lineage, provenance)
+// ═══════════════════════════════════════════════════════════════
+function anonymizeOneColumn(col) {
+    mutAnonymize([col]);
+    addHistory('Pseudonymisation', col, 'Gouvernance : valeurs remplacées par des codes');
+    renderStep();
+}
+
+function renderGovernance() {
     if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
-    if (!APP.qualityReport) APP.qualityReport = analyzeQuality();
-    const recos = generateRecos();
-    APP.recommendations = recos;
+    const aqi = computeAQI();
+    const m = APP.metadata;
+    const sens = sensitiveColumns();
+    const pending = sens.filter(c => !(APP.anonymizedCols || []).includes(c));
 
-    let html = `<div class="page-header"><h2>Étape 8 : Recommandations</h2><p>Actions concrètes pour améliorer votre jeu de données</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 7 : Gouvernance</h2><p>Sécurité, confidentialité, provenance et traçabilité (RGPD · ISO 25012 · DAMA-DMBOK)</p></div>`;
 
-    const nU = recos.filter(r => r[0] === 'urgent').length;
-    const nI = recos.filter(r => r[0] === 'important').length;
-    const nA = recos.filter(r => r[0] === 'improve').length;
-    html += `<div class="metrics" style="grid-template-columns:repeat(3,1fr)">
-        <div class="metric" style="border-top-color:var(--danger)"><div class="val" style="color:var(--danger)">${nU}</div><div class="label">Urgentes</div></div>
-        <div class="metric" style="border-top-color:var(--accent)"><div class="val" style="color:var(--accent)">${nI}</div><div class="label">Importantes</div></div>
-        <div class="metric" style="border-top-color:var(--primary)"><div class="val" style="color:var(--primary)">${nA}</div><div class="label">Améliorations</div></div>
+    html += `<div class="metrics">
+        <div class="metric" style="border-top-color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}"><div class="val" style="color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}">${Math.round(aqi.dims.securite)}/100</div><div class="label">Sécurité & confidentialité</div></div>
+        <div class="metric"><div class="val">${pending.length}</div><div class="label">Colonnes sensibles à traiter</div></div>
+        <div class="metric"><div class="val">${APP.editHistory.length}</div><div class="label">Actions tracées (lineage)</div></div>
+        <div class="metric"><div class="val">${m.version || '-'}</div><div class="label">Version</div></div>
     </div>`;
 
-    for (const [prio, title, desc] of recos) {
-        const icon = prio === 'urgent' ? '🔴' : prio === 'important' ? '🟡' : '🟢';
-        html += `<div class="reco ${prio}"><strong>${icon} ${title}</strong>${desc}</div>`;
+    // Données sensibles / anonymisation
+    html += `<div class="card"><h3>🔒 Données personnelles et sensibles</h3>`;
+    if (!sens.length) {
+        html += '<div class="issue info">✅ <strong>Aucune colonne sensible détectée</strong> (recherche par mots-clés : nom, téléphone, email, adresse…).</div>';
+    } else {
+        html += `<div class="table-wrap"><table><tr><th>Colonne</th><th>Statut</th><th>Actions</th></tr>`;
+        for (const c of sens) {
+            const done = (APP.anonymizedCols || []).includes(c);
+            html += `<tr><td><strong>${c}</strong></td>
+                <td>${done ? '<span style="color:var(--primary);font-weight:700">✅ Pseudonymisée</span>' : '<span style="color:var(--danger);font-weight:700">⚠️ Identifiante</span>'}</td>
+                <td style="white-space:nowrap">${done ? '-' : `<button class="btn btn-primary btn-sm" onclick="anonymizeOneColumn('${c.replace(/'/g, "\\'")}')">🔒 Pseudonymiser</button>`}</td></tr>`;
+        }
+        html += '</table></div>';
+        if (pending.length) html += `<p style="font-size:.82rem;color:#666;margin-top:.5rem">La pseudonymisation remplace chaque valeur par un code stable (ex. NOM_1, NOM_2) : les analyses restent possibles, l'identité est protégée.</p>`;
     }
+    html += '</div>';
 
-    html += renderChangeLog();
-    html += `<div style="text-align:center;margin:1rem 0"><button class="btn btn-accent" onclick="goStep('analysis')">📊 Voir l'analyse visuelle & l'AQI →</button></div>`;
-    html += navButtons(7, 9, 'Exporter →');
+    // Provenance
+    const provRows = [['Fichier source', APP.fileName], ['Auteur', m.author], ['Organisation', m.organization],
+        ['Méthode de collecte', m.collection_method], ['Période', m.collection_period], ['Licence', m.license]];
+    html += `<div class="card"><h3>📜 Provenance</h3><div class="table-wrap"><table>`;
+    for (const [k, v] of provRows) html += `<tr><td style="width:220px"><strong>${k}</strong></td><td>${v || '<span style="color:var(--danger)">Non renseigné</span>'}</td></tr>`;
+    html += `</table></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="goStep(4)">✏️ Compléter dans les métadonnées</button></div>`;
+
+    // Data Lineage
+    html += `<div class="card"><h3>🧬 Data Lineage (traçabilité)</h3>`;
+    if (!APP.editHistory.length) {
+        html += '<p style="color:#888">Aucune modification enregistrée pour le moment. Chaque correction (manuelle ou assistant) est automatiquement tracée : date, étape, action, détail, justification.</p>';
+    } else {
+        html += `<p style="font-size:.85rem;margin-bottom:.5rem"><strong>${APP.editHistory.length}</strong> action(s) tracée(s). Les 5 dernières :</p>
+        <div class="table-wrap"><table><tr><th>Date</th><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
+        for (const h of APP.editHistory.slice(-5).reverse()) html += `<tr><td>${h.date || ''}</td><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
+        html += `</table></div><p style="font-size:.8rem;color:#888;margin-top:.4rem">Le journal complet est inclus dans l'export (journal_modifications.xlsx) et le rapport Word.</p>`;
+    }
+    html += '</div>';
+
+    // Versionnement
+    html += `<div class="card"><h3>🗂️ Versionnement</h3>
+        <p style="font-size:.88rem">Version déclarée : <strong>${m.version || 'non renseignée'}</strong>${APP.mode === 'project' ? ` · Projet « ${APP.projectName} » sauvegardé automatiquement (dernier enregistrement : ${APP.lastSaved || '-'})` : ' · Mode rapide : pensez à exporter votre travail ou à l\'enregistrer comme projet.'}</p></div>`;
+
+    html += navButtons(6, 8, 'Tableau de bord AQI →');
     return html;
 }
 
@@ -1910,7 +1952,8 @@ function computeAQI() {
     // 5. Sécurité et confidentialité (RGPD / ISO 25012)
     const sensitiveKw = ['nom', 'name', 'prenom', 'surname', 'telephone', 'phone', 'email', 'adresse', 'address', 'ssn', 'cin', 'passport', 'ip'];
     const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
-    let securite = 100 - sensitiveCols.length * 15;
+    const unhandledPII = sensitiveCols.filter(c => !(APP.anonymizedCols || []).includes(c));
+    let securite = 100 - unhandledPII.length * 15;
     if (APP.editHistory.length > 0) securite += 5; // bonus traçabilité (lineage)
     securite = clamp(securite, 0, 100);
 
@@ -1924,7 +1967,7 @@ function computeAQI() {
     );
     const level = total < 40 ? ['Faible', '#C62828'] : total < 60 ? ['Moyen', '#F57F17'] : total < 80 ? ['Bon', '#2E7D32'] : ['Excellent', '#1B5E20'];
 
-    const subs = { completeness, uniqueness, validity, consistency, docRatio: docRatio * 100, metaRatio: metaRatio * 100, sensitiveCols };
+    const subs = { completeness, uniqueness, validity, consistency, docRatio: docRatio * 100, metaRatio: metaRatio * 100, sensitiveCols, unhandledPII };
     const recos = [];
     if (intrinseque < 70) recos.push(['Qualité intrinsèque', 'Réduire les valeurs manquantes/doublons et corriger les formats incohérents (étapes 2-3).']);
     if (documentation < 70) recos.push(['Documentation', 'Compléter le dictionnaire des variables et les métadonnées clés (étapes 4-5).']);
@@ -2381,8 +2424,8 @@ function autoDescribe(col) {
 function simulateAQI(mutator) {
     const snap = {
         data: APP.data, columns: APP.columns, variableDocs: APP.variableDocs,
-        metadata: APP.metadata, editHistory: APP.editHistory, qualityReport: APP.qualityReport,
-        fairScore: APP.fairScore, aiScore: APP.aiScore
+        metadata: APP.metadata, editHistory: APP.editHistory, anonymizedCols: APP.anonymizedCols,
+        qualityReport: APP.qualityReport, fairScore: APP.fairScore, aiScore: APP.aiScore
     };
     try {
         mutator(); // doit produire de NOUVEAUX objets/tableaux, jamais muter les existants
@@ -2448,11 +2491,35 @@ function mutMetaPlaceholder() {
     for (const k of keys) if (!m[k]) m[k] = '·';
     APP.metadata = m;
 }
+function sensitiveColumns() {
+    const kw = ['nom', 'name', 'prenom', 'surname', 'telephone', 'phone', 'email', 'adresse', 'address', 'ssn', 'cin', 'passport'];
+    return APP.columns.filter(c => kw.some(k => c.toLowerCase().includes(k)));
+}
+function mutAnonymize(cols) {
+    const targets = (cols || sensitiveColumns()).filter(c => !(APP.anonymizedCols || []).includes(c));
+    if (!targets.length) return targets;
+    const maps = {};
+    for (const c of targets) maps[c] = new Map();
+    APP.data = APP.data.map(r => {
+        let nr = null;
+        for (const c of targets) {
+            const v = r[c];
+            if (isNull(v)) continue;
+            const m = maps[c];
+            if (!m.has(v)) m.set(v, c.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4) + '_' + (m.size + 1));
+            nr = nr || { ...r };
+            nr[c] = m.get(v);
+        }
+        return nr || r;
+    });
+    APP.anonymizedCols = [...new Set([...(APP.anonymizedCols || []), ...targets])];
+    return targets;
+}
 
 // ── Catalogue d'actions : gains calculés par simulation ──
 function buildAssistantActions() {
     const fp = [APP.editCount, APP.data.length, APP.columns.length, Object.keys(APP.variableDocs).length,
-        Object.values(APP.metadata).filter(Boolean).length].join('|');
+        Object.values(APP.metadata).filter(Boolean).length, (APP.anonymizedCols || []).length].join('|');
     if (APP._assistCache && APP._assistCache.fp === fp) return APP._assistCache;
 
     APP.qualityReport = APP.qualityReport || analyzeQuality();
@@ -2466,40 +2533,47 @@ function buildAssistantActions() {
     if (emptyCols.length) actions.push({
         id: 'empty', icon: '🗑️', label: `Supprimer ${emptyCols.length} colonne(s) vide(s)`,
         why: `${emptyCols.join(', ')} : aucune information, dégrade la structure.`,
-        gain: simulateAQI(mutDropEmptyCols) - current, auto: true, manualStep: 3
+        gain: simulateAQI(mutDropEmptyCols) - current, auto: true, manualStep: 2
     });
 
     if (countDuplicates() > 0) actions.push({
         id: 'dup', icon: '♻️', label: `Supprimer ${countDuplicates()} doublon(s)`,
         why: 'Des lignes identiques biaisent les statistiques et les modèles.',
-        gain: simulateAQI(mutDedupe) - current, auto: true, manualStep: 3
+        gain: simulateAQI(mutDedupe) - current, auto: true, manualStep: 2
     });
 
     let totalMiss = 0; APP.columns.forEach(c => { const m = countMissing(c); if (m < n) totalMiss += m; });
     if (totalMiss > 0) actions.push({
         id: 'missing', icon: '🧩', label: `Imputer ${totalMiss} valeur(s) manquante(s)`,
         why: 'Médiane pour les numériques, mode pour les catégorielles.',
-        gain: simulateAQI(mutImputeMissing) - current, auto: true, manualStep: 3
+        gain: simulateAQI(mutImputeMissing) - current, auto: true, manualStep: 2
     });
 
     const undoc = APP.columns.filter(c => !APP.variableDocs[c] || !APP.variableDocs[c].description);
     if (undoc.length) actions.push({
         id: 'doc', icon: '📖', label: `Documenter ${undoc.length} variable(s) (suggestions auto)`,
-        why: 'Descriptions générées depuis les données, modifiables à l\'étape 4.',
-        gain: simulateAQI(mutAutoDoc) - current, auto: true, manualStep: 4
+        why: 'Descriptions générées depuis les données, modifiables à l\'étape 3.',
+        gain: simulateAQI(mutAutoDoc) - current, auto: true, manualStep: 3
     });
 
     if (!APP.metadata.license) actions.push({
         id: 'license', icon: '⚖️', label: 'Ajouter une licence (CC-BY 4.0)',
         why: 'Sans licence, les données ne sont ni FAIR ni réutilisables.',
-        gain: simulateAQI(mutLicense) - current, auto: true, manualStep: 5
+        gain: simulateAQI(mutLicense) - current, auto: true, manualStep: 4
     });
 
     const metaMissing = ['title', 'author', 'description', 'keywords', 'contact'].filter(k => !APP.metadata[k]);
     if (metaMissing.length) actions.push({
         id: 'meta', icon: '📋', label: `Compléter ${metaMissing.length} métadonnée(s) clé(s)`,
-        why: `${metaMissing.join(', ')} : à renseigner vous-même (étape 5).`,
-        gain: simulateAQI(mutMetaPlaceholder) - current, auto: false, manualStep: 5
+        why: `${metaMissing.join(', ')} : à renseigner vous-même (étape 4).`,
+        gain: simulateAQI(mutMetaPlaceholder) - current, auto: false, manualStep: 4
+    });
+
+    const piiPending = sensitiveColumns().filter(c => !(APP.anonymizedCols || []).includes(c));
+    if (piiPending.length) actions.push({
+        id: 'anon', icon: '🔒', label: `Pseudonymiser ${piiPending.length} colonne(s) sensible(s)`,
+        why: `${piiPending.join(', ')} : remplace les valeurs identifiantes par des codes (RGPD).`,
+        gain: simulateAQI(() => mutAnonymize(piiPending)) - current, auto: true, manualStep: 7
     });
 
     const result = { fp, current, actions: actions.filter(a => a.gain > 0).sort((a, b) => b.gain - a.gain).slice(0, 5) };
@@ -2519,8 +2593,9 @@ function applyAssistAction(id) {
     if (id === 'empty') { const dropped = mutDropEmptyCols(); addHistory('Assistant : colonnes vides supprimées', dropped.join(', '), 'Correction automatique'); }
     else if (id === 'dup') { const before = APP.data.length; mutDedupe(); addHistory('Assistant : doublons supprimés', `${before - APP.data.length} ligne(s)`, 'Correction automatique'); }
     else if (id === 'missing') { const fills = mutImputeMissing(); addHistory('Assistant : valeurs manquantes imputées', Object.keys(fills).map(c => `${c}→${fills[c]}`).join(' ; '), 'Médiane/mode automatique'); }
-    else if (id === 'doc') { const added = mutAutoDoc(); addHistory('Assistant : variables documentées', `${added.length} suggestion(s) automatique(s)`, 'À relire à l\'étape 4'); }
+    else if (id === 'doc') { const added = mutAutoDoc(); addHistory('Assistant : variables documentées', `${added.length} suggestion(s) automatique(s)`, 'À relire à l\'étape 3'); }
     else if (id === 'license') { mutLicense(); addHistory('Assistant : licence ajoutée', 'CC-BY 4.0', 'Correction automatique'); }
+    else if (id === 'anon') { const done = mutAnonymize(); addHistory('Assistant : pseudonymisation', done.join(', '), 'Valeurs remplacées par des codes (RGPD)'); }
     APP._assistCache = null;
     pushAqiHistory('Assistant');
     renderNav(); renderStep();
@@ -2534,6 +2609,7 @@ function applyAllAssistActions() {
         else if (a.id === 'missing') mutImputeMissing();
         else if (a.id === 'doc') mutAutoDoc();
         else if (a.id === 'license') mutLicense();
+        else if (a.id === 'anon') mutAnonymize();
     }
     addHistory('Assistant : correction automatique globale', actions.filter(a => a.auto).map(a => a.label).join(' ; '), 'Toutes les corrections auto');
     APP._assistCache = null;
@@ -2650,7 +2726,7 @@ function serializeState() {
         variableDocs: APP.variableDocs, metadata: APP.metadata,
         editHistory: APP.editHistory, editCount: APP.editCount,
         sheetNames: APP.sheetNames, activeSheet: APP.activeSheet,
-        aqiHistory: APP.aqiHistory
+        aqiHistory: APP.aqiHistory, anonymizedCols: APP.anonymizedCols
     };
 }
 
@@ -2839,8 +2915,8 @@ async function loadProjectsList() {
 function renderStep() {
     const container = document.getElementById('main-content');
     const renderers = {
-        1: renderStep1, 2: renderStep2, 3: renderStep3, 4: renderStep4,
-        5: renderStep5, 6: renderStep6, 7: renderStep7, 8: renderStep8, 9: renderStep9,
+        1: renderStep1, 2: renderStep2, 3: renderStep4, 4: renderStep5,
+        5: renderStep6, 6: renderStep7, 7: renderGovernance, 8: renderAnalysis, 9: renderStep9,
         analysis: renderAnalysis, referentiel: renderReferentiel,
         welcome: renderWelcome, projects: renderProjects
     };
@@ -2849,7 +2925,7 @@ function renderStep() {
     updateFileInfo();
 
     // Post-render hooks
-    if (APP.step === 4 && APP.data) setTimeout(() => renderDocForm(), 50);
+    if (APP.step === 3 && APP.data) setTimeout(() => renderDocForm(), 50);
 
     // Drag and drop for step 1
     if (APP.step === 1) {
