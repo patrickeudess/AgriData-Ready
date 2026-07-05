@@ -730,25 +730,16 @@ function renderStep2() {
                 ${od.examples.map(v => `<strong style="color:var(--danger)">${v}</strong>`).join(', ')}
                 ${od.count > 5 ? ` … et ${od.count - 5} autre(s)` : ''}
             </p>`;
-            html += `<h4 style="font-size:.88rem;margin-bottom:.5rem;color:#444">Solutions possibles :</h4>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem">
-                <div style="background:#FFF8E1;border-radius:8px;padding:.7rem;border-left:4px solid var(--accent)">
-                    <strong>🔧 Corriger manuellement</strong><br>
-                    <span style="font-size:.8rem">Éditer les valeurs aberrantes une à une ci-dessous, dans « Corriger les données » → Éditer les cellules</span>
-                </div>
-                <div style="background:#E8F5E9;border-radius:8px;padding:.7rem;border-left:4px solid var(--primary)">
-                    <strong>📊 Remplacer par la médiane</strong><br>
-                    <span style="font-size:.8rem">Aller ci-dessous dans « Corriger les données » → Valeurs manquantes → remplacer par médiane (après avoir mis les valeurs aberrantes à vide)</span>
-                </div>
-                <div style="background:#E3F2FD;border-radius:8px;padding:.7rem;border-left:4px solid #1565C0">
-                    <strong>🗑️ Supprimer les lignes</strong><br>
-                    <span style="font-size:.8rem">Si les valeurs aberrantes sont des erreurs de saisie irrémédiables, supprimer les lignes concernées</span>
-                </div>
-                <div style="background:#F3E5F5;border-radius:8px;padding:.7rem;border-left:4px solid #6A1B9A">
-                    <strong>📝 Documenter et conserver</strong><br>
-                    <span style="font-size:.8rem">Si les valeurs sont réelles (événements exceptionnels), les noter dans la description de la variable à l'étape 3 (Documentation)</span>
-                </div>
-            </div></div>`;
+            const cj = col.replace(/'/g, "\\'");
+            html += `<h4 style="font-size:.88rem;margin-bottom:.5rem;color:#444">Corriger en un clic :</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem">
+                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','cap')" title="Ramène les valeurs extrêmes aux bornes [${od.lo}, ${od.hi}]">📉 Plafonner aux bornes</button>
+                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','median')" title="Remplace chaque valeur aberrante par la médiane">📊 Remplacer par la médiane</button>
+                <button class="btn btn-secondary btn-sm" onclick="fixOutliers('${cj}','null')" title="Vide les valeurs aberrantes (imputables ensuite)">🧩 Mettre à vide</button>
+                <button class="btn btn-danger btn-sm" onclick="if(confirm('Supprimer les ${od.count} ligne(s) contenant une valeur aberrante de « ${cj} » ?'))fixOutliers('${cj}','drop')" title="Supprime les lignes contenant une valeur aberrante">🗑️ Supprimer les lignes</button>
+            </div>
+            <p style="font-size:.78rem;color:#888;margin-top:.3rem">💡 Astuce : « Plafonner » ou « Médiane » conservent la ligne ; « Supprimer » réduit l'effectif. Si les valeurs sont réelles (cas exceptionnels), conservez-les et documentez la variable à l'étape 3.</p>
+            </div>`;
         }
     }
     html += '</div></div>'; // ferme le dernier onglet + le tab-scope diagnostic
@@ -967,6 +958,50 @@ function removeDuplicates() {
     APP.data = newData;
     addHistory('Supprimer doublons', `${removed} lignes`);
     renderStep();
+}
+
+// ── Correction des valeurs aberrantes en un clic (règle 1.5×IQR) ──
+function outlierBounds(col) {
+    const v = numericValues(col).sort((a, b) => a - b);
+    if (v.length < 4) return null;
+    const q1 = v[Math.floor((v.length - 1) * 0.25)], q3 = v[Math.floor((v.length - 1) * 0.75)];
+    const iqr = q3 - q1;
+    const median = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+    return { lo: q1 - 1.5 * iqr, hi: q3 + 1.5 * iqr, median };
+}
+
+function reopenOutliersTab() {
+    const t = [...document.querySelectorAll('.tab')].find(x => x.textContent.includes('aberrantes'));
+    if (t) showEditTab('q-outliers', t);
+}
+
+function fixOutliers(col, method) {
+    const b = outlierBounds(col);
+    if (!b) return;
+    const isOut = x => { const n = parseFloat(x); return !isNaN(n) && (n < b.lo || n > b.hi); };
+    let affected = 0;
+    if (method === 'drop') {
+        const before = APP.data.length;
+        APP.data = APP.data.filter(r => !isOut(r[col]));
+        affected = before - APP.data.length;
+        addHistory('Aberrantes : lignes supprimées', `${col} : ${affected} ligne(s)`, 'Règle 1.5×IQR');
+    } else {
+        APP.data = APP.data.map(r => {
+            if (!isOut(r[col])) return r;
+            affected++;
+            const nr = { ...r }, n = parseFloat(r[col]);
+            if (method === 'cap') nr[col] = Math.round((n < b.lo ? b.lo : b.hi) * 1000) / 1000;
+            else if (method === 'median') nr[col] = Math.round(b.median * 1000) / 1000;
+            else if (method === 'null') nr[col] = null;
+            return nr;
+        });
+        const lbl = method === 'cap' ? 'plafonnées (bornes IQR)' : method === 'median' ? 'remplacées par la médiane' : 'mises à vide';
+        addHistory(`Aberrantes : ${lbl}`, `${col} : ${affected} valeur(s)`, 'Règle 1.5×IQR');
+    }
+    APP._assistCache = null;
+    if (typeof pushAqiHistory === 'function') pushAqiHistory('Aberrantes');
+    renderStep();
+    setTimeout(reopenOutliersTab, 20);
 }
 
 // ═══════════════════════════════════════════════════════════════
