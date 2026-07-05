@@ -252,7 +252,6 @@ function renderNav() {
         const auxItems = [
             ['welcome', '🏠', 'Accueil', false],
             ['projects', '📂', 'Mes projets', false],
-            ['analysis', '📊', 'Analyse des données', !APP.data],
             ['referentiel', '📖', 'Référentiel utilisé', false]
         ];
         let h = auxItems.map(([id, icon, label, dis]) => {
@@ -2394,7 +2393,7 @@ function renderAnalysis() {
     let curMiss = 0; APP.columns.forEach(c => curMiss += countMissing(c));
     const docCount = APP.columns.filter(c => APP.variableDocs[c]).length;
 
-    let html = `<div class="page-header"><h2>📊 Analyse des données</h2><p>Tableau de bord des améliorations et AfriData Quality Index</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 8 : Tableau de bord AQI</h2><p>Score global, progression et visualisations de votre jeu de données</p></div>`;
 
     // AQI
     html += `<div class="card"><h3>🏅 AfriData Quality Index (AQI)</h3>
@@ -2452,7 +2451,7 @@ function renderAnalysis() {
         html += `<div class="card"><p style="color:#888">Aucune colonne numérique : histogrammes, boxplots et corrélations non disponibles.</p></div>`;
     }
 
-    html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(8)">← Recommandations</button></div>
+    html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(7)">← Gouvernance</button></div>
         <div><button class="btn btn-primary" onclick="goStep(9)">Exporter →</button></div></div>`;
     return html;
 }
