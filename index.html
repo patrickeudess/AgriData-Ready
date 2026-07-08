@@ -535,9 +535,9 @@ function renderStep1() {
             ${APP.baseline ? `<div class="metric" style="border-top-color:var(--accent)"><div class="val" style="color:var(--accent)">${APP.baseline.aqi}/100</div><div class="label">AQI initial</div></div>` : ''}
         </div>`;
 
-        html += `<div class="card"><h3>Aperçu des données</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
+        html += `<div class="card"><h3>Aperçu des données</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr>`;
         for (let i = 0; i < Math.min(10, APP.data.length); i++) {
-            html += '<tr>' + APP.columns.map(c => `<td>${APP.data[i][c] ?? '<em style="color:#ccc">vide</em>'}</td>`).join('') + '</tr>';
+            html += '<tr>' + APP.columns.map(c => isNull(APP.data[i][c]) ? '<td><em style="color:#ccc">vide</em></td>' : `<td>${escapeHtml(APP.data[i][c])}</td>`).join('') + '</tr>';
         }
         html += '</table></div></div>';
 
@@ -547,7 +547,7 @@ function renderStep1() {
             const miss = countMissing(col);
             const missPct = pct(miss, APP.data.length);
             const type = isNumericCol(col) ? 'Numérique' : 'Texte';
-            html += `<tr><td><strong>${col}</strong></td><td>${type}</td><td>${APP.data.length - miss}</td>
+            html += `<tr><td><strong>${escapeHtml(col)}</strong></td><td>${type}</td><td>${APP.data.length - miss}</td>
                 <td style="color:${missPct > 20 ? 'var(--danger)' : missPct > 5 ? 'var(--accent)' : 'var(--primary)'}">${missPct}%</td></tr>`;
         }
         html += '</table></div></div>';
@@ -668,9 +668,9 @@ function renderStep2() {
     </div>`;
 
     html += `<div class="tab-scope"><div class="tabs">
-        <div class="tab active" onclick="showEditTab('q-issues',this)">🔍 Problèmes (${report.issues.length})</div>
-        <div class="tab" onclick="showEditTab('q-stats',this)">📊 Statistiques descriptives</div>
-        <div class="tab" onclick="showEditTab('q-outliers',this)">⚠️ Valeurs aberrantes (${nOutlierCols})</div>
+        <div class="tab active" data-edit-tab="q-issues" onclick="showEditTab('q-issues',this)">🔍 Problèmes (${report.issues.length})</div>
+        <div class="tab" data-edit-tab="q-stats" onclick="showEditTab('q-stats',this)">📊 Statistiques descriptives</div>
+        <div class="tab" data-edit-tab="q-outliers" onclick="showEditTab('q-outliers',this)">⚠️ Valeurs aberrantes (${nOutlierCols})</div>
     </div>`;
 
     // === TAB 1: Issues ===
@@ -777,10 +777,10 @@ function renderStep2() {
 // ── Section correction (intégrée à l'étape 2) ──
 function renderEditSection() {
     let html = `<div class="tab-scope"><div class="tabs">
-        <div class="tab active" onclick="showEditTab('edit-cells',this)">Éditer les cellules</div>
-        <div class="tab" onclick="showEditTab('edit-cols',this)">Colonnes</div>
-        <div class="tab" onclick="showEditTab('edit-missing',this)">Valeurs manquantes</div>
-        <div class="tab" onclick="showEditTab('edit-dup',this)">Doublons</div>
+        <div class="tab active" data-edit-tab="edit-cells" onclick="showEditTab('edit-cells',this)">Éditer les cellules</div>
+        <div class="tab" data-edit-tab="edit-cols" onclick="showEditTab('edit-cols',this)">Colonnes</div>
+        <div class="tab" data-edit-tab="edit-missing" onclick="showEditTab('edit-missing',this)">Valeurs manquantes</div>
+        <div class="tab" data-edit-tab="edit-dup" onclick="showEditTab('edit-dup',this)">Doublons</div>
     </div>`;
 
     // Tab: Edit cells
@@ -806,7 +806,7 @@ function renderEditSection() {
     html += `<div id="edit-cols" class="edit-tab" style="display:none">
         <div class="card"><h3>Renommer une colonne</h3>
         <div class="form-row">
-            <div class="form-group"><label>Colonne :</label><select id="rename-col">${APP.columns.map(c => `<option>${c}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Colonne :</label><select id="rename-col">${APP.columns.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select></div>
             <div class="form-group"><label>Nouveau nom :</label><input id="rename-val"></div>
         </div>
         <button class="btn btn-primary" onclick="renameColumn()">Renommer</button></div>
@@ -814,7 +814,7 @@ function renderEditSection() {
         <div class="card"><h3>Supprimer des colonnes</h3>
         <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem">
         ${APP.columns.map(c => `<label style="display:flex;align-items:center;gap:.3rem;font-size:.82rem;background:#f5f5f5;padding:.3rem .6rem;border-radius:6px">
-            <input type="checkbox" class="del-col-check" value="${c}"> ${c}</label>`).join('')}
+            <input type="checkbox" class="del-col-check" value="${escapeHtml(c)}"> ${escapeHtml(c)}</label>`).join('')}
         </div>
         <button class="btn btn-danger" onclick="deleteColumns()">Supprimer les colonnes cochées</button></div>
 
@@ -1136,7 +1136,7 @@ function renderStep4() {
 
     html += `<div class="card"><h3>Sélectionner une variable</h3>
         <select id="doc-col-select" onchange="renderDocForm()" style="width:100%;padding:.5rem;font-size:.9rem;border:1px solid #ddd;border-radius:6px">
-        ${APP.columns.map(c => `<option value="${c}" ${APP.variableDocs[c] ? 'style="color:var(--primary)"' : ''}>${c} ${APP.variableDocs[c] ? '✓' : ''}</option>`).join('')}</select></div>`;
+        ${APP.columns.map(c => `<option value="${escapeHtml(c)}" ${APP.variableDocs[c] ? 'style="color:var(--primary)"' : ''}>${escapeHtml(c)} ${APP.variableDocs[c] ? '✓' : ''}</option>`).join('')}</select></div>`;
 
     html += `<div id="doc-form-container"></div>`;
 
@@ -1146,8 +1146,8 @@ function renderStep4() {
             <tr><th>Variable</th><th>Description</th><th>Type</th><th>Unité</th><th>Statut</th></tr>`;
         for (const col of APP.columns) {
             const doc = APP.variableDocs[col];
-            html += `<tr><td><strong>${col}</strong></td><td>${doc?.description || '-'}</td><td>${doc?.data_type || '-'}</td>
-                <td>${doc?.unit || '-'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
+            html += `<tr><td><strong>${escapeHtml(col)}</strong></td><td>${doc?.description ? escapeHtml(doc.description) : '-'}</td><td>${doc?.data_type ? escapeHtml(doc.data_type) : '-'}</td>
+                <td>${doc?.unit ? escapeHtml(doc.unit) : '-'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
         }
         html += '</table></div></div>';
     }
@@ -1173,21 +1173,21 @@ function renderDocForm() {
 
     const types = ['Numérique continu','Numérique discret','Catégoriel nominal','Catégoriel ordinal','Date/Temps','Texte libre','Binaire','Identifiant'];
 
-    let form = `<div class="card"><h3>Documentation de « ${col} »</h3>${info}
-        <div class="form-group"><label>Description :</label><textarea id="doc-desc" rows="2">${doc.description || ''}</textarea></div>
+    let form = `<div class="card"><h3>Documentation de « ${escapeHtml(col)} »</h3>${info}
+        <div class="form-group"><label>Description :</label><textarea id="doc-desc" rows="2">${doc.description ? escapeHtml(doc.description) : ''}</textarea></div>
         <div class="form-row">
             <div class="form-group"><label>Type de donnée :</label><select id="doc-type">${types.map(t => `<option ${t === doc.data_type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Unité de mesure :</label><input id="doc-unit" value="${doc.unit || ''}"></div>
+            <div class="form-group"><label>Unité de mesure :</label><input id="doc-unit" value="${doc.unit ? escapeHtml(doc.unit) : ''}"></div>
         </div>
         <div class="form-row">
-            <div class="form-group"><label>Format attendu :</label><input id="doc-format" value="${doc.format || ''}" placeholder="ex: YYYY-MM-DD"></div>
-            <div class="form-group"><label>Valeurs possibles :</label><input id="doc-values" value="${doc.values || ''}" placeholder="ex: 0-100, Oui/Non"></div>
+            <div class="form-group"><label>Format attendu :</label><input id="doc-format" value="${doc.format ? escapeHtml(doc.format) : ''}" placeholder="ex: YYYY-MM-DD"></div>
+            <div class="form-group"><label>Valeurs possibles :</label><input id="doc-values" value="${doc.values ? escapeHtml(doc.values) : ''}" placeholder="ex: 0-100, Oui/Non"></div>
         </div>
         <div class="form-row">
-            <div class="form-group"><label>Règle de validation :</label><input id="doc-validation" value="${doc.validation || ''}" placeholder="ex: > 0, non vide"></div>
-            <div class="form-group"><label>Exemple de valeur :</label><input id="doc-example" value="${doc.example || ''}"></div>
+            <div class="form-group"><label>Règle de validation :</label><input id="doc-validation" value="${doc.validation ? escapeHtml(doc.validation) : ''}" placeholder="ex: > 0, non vide"></div>
+            <div class="form-group"><label>Exemple de valeur :</label><input id="doc-example" value="${doc.example ? escapeHtml(doc.example) : ''}"></div>
         </div>
-        <div class="form-group"><label>Utilité pour l'analyse / l'IA :</label><input id="doc-utility" value="${doc.utility || ''}"></div>
+        <div class="form-group"><label>Utilité pour l'analyse / l'IA :</label><input id="doc-utility" value="${doc.utility ? escapeHtml(doc.utility) : ''}"></div>
         <label style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:.85rem">
             <input type="checkbox" id="doc-target" ${doc.is_target ? 'checked' : ''}> Variable cible (target) pour l'IA</label>
         <button class="btn btn-primary" onclick="saveDocForm()">Enregistrer</button>
@@ -1239,14 +1239,14 @@ function renderStep5() {
     for (const [key, label, type] of fields) {
         if (type === 'textarea') {
             if (colCount % 2 !== 0) html += '</div><div class="form-row">';
-            html += `</div><div class="form-group"><label>${label} :</label><textarea id="meta-${key}" rows="2">${m[key] || ''}</textarea></div><div class="form-row">`;
+            html += `</div><div class="form-group"><label>${label} :</label><textarea id="meta-${key}" rows="2">${m[key] ? escapeHtml(m[key]) : ''}</textarea></div><div class="form-row">`;
             colCount = 0;
         } else if (type === 'select') {
             html += `<div class="form-group"><label>${label} :</label><select id="meta-${key}">
-                ${licenses.map(l => `<option ${l === m[key] ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
+                ${licenses.map(l => `<option ${l === m[key] ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select></div>`;
             colCount++;
         } else {
-            html += `<div class="form-group"><label>${label} :</label><input id="meta-${key}" value="${m[key] || ''}"></div>`;
+            html += `<div class="form-group"><label>${label} :</label><input id="meta-${key}" value="${m[key] ? escapeHtml(m[key]) : ''}"></div>`;
             colCount++;
         }
         if (colCount === 2) { html += '</div><div class="form-row">'; colCount = 0; }
@@ -1578,9 +1578,9 @@ function renderGovernance() {
         html += `<div class="table-wrap"><table><tr><th>Colonne</th><th>Statut</th><th>Actions</th></tr>`;
         for (const c of sens) {
             const done = (APP.anonymizedCols || []).includes(c);
-            html += `<tr><td><strong>${c}</strong></td>
+            html += `<tr><td><strong>${escapeHtml(c)}</strong></td>
                 <td>${done ? '<span style="color:var(--primary);font-weight:700">✅ Pseudonymisée</span>' : '<span style="color:var(--danger);font-weight:700">⚠️ Identifiante</span>'}</td>
-                <td style="white-space:nowrap">${done ? '-' : `<button class="btn btn-primary btn-sm" onclick="anonymizeOneColumn('${c.replace(/'/g, "\\'")}')">🔒 Pseudonymiser</button>`}</td></tr>`;
+                <td style="white-space:nowrap">${done ? '-' : `<button class="btn btn-primary btn-sm governance-anonymize" data-col="${escapeHtml(c)}">🔒 Pseudonymiser</button>`}</td></tr>`;
         }
         html += '</table></div>';
         if (pending.length) html += `<p style="font-size:.82rem;color:#666;margin-top:.5rem">La pseudonymisation remplace chaque valeur par un code stable (ex. NOM_1, NOM_2) : les analyses restent possibles, l'identité est protégée.</p>`;
@@ -1591,7 +1591,7 @@ function renderGovernance() {
     const provRows = [['Fichier source', APP.fileName], ['Auteur', m.author], ['Organisation', m.organization],
         ['Méthode de collecte', m.collection_method], ['Période', m.collection_period], ['Licence', m.license]];
     html += `<div class="card"><h3>📜 Provenance</h3><div class="table-wrap"><table>`;
-    for (const [k, v] of provRows) html += `<tr><td style="width:220px"><strong>${k}</strong></td><td>${v || '<span style="color:var(--danger)">Non renseigné</span>'}</td></tr>`;
+    for (const [k, v] of provRows) html += `<tr><td style="width:220px"><strong>${escapeHtml(k)}</strong></td><td>${v ? escapeHtml(v) : '<span style="color:var(--danger)">Non renseigné</span>'}</td></tr>`;
     html += `</table></div>
         <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="goStep(4)">✏️ Compléter dans les métadonnées</button></div>`;
 
@@ -1602,7 +1602,7 @@ function renderGovernance() {
     } else {
         html += `<p style="font-size:.85rem;margin-bottom:.5rem"><strong>${APP.editHistory.length}</strong> action(s) tracée(s). Les 5 dernières :</p>
         <div class="table-wrap"><table><tr><th>Date</th><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
-        for (const h of APP.editHistory.slice(-5).reverse()) html += `<tr><td>${h.date || ''}</td><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
+        for (const h of APP.editHistory.slice(-5).reverse()) html += `<tr><td>${escapeHtml(h.date || '')}</td><td>${escapeHtml(h.time)}</td><td>${escapeHtml(h.action)}</td><td>${escapeHtml(h.detail)}</td></tr>`;
         html += `</table></div><p style="font-size:.8rem;color:#888;margin-top:.4rem">Le journal complet est inclus dans l'export (journal_modifications.xlsx) et le rapport Word.</p>`;
     }
     html += '</div>';
@@ -3148,6 +3148,12 @@ function renderStep() {
             const method = document.getElementById('fill-method')?.value;
             const custom = document.getElementById('fill-custom')?.value ?? '';
             fillMissing(col, method, custom);
+        });
+    });
+    document.querySelectorAll('.governance-anonymize').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const col = btn.dataset.col;
+            if (col) anonymizeOneColumn(col);
         });
     });
 
