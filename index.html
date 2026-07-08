@@ -205,6 +205,7 @@ const APP = {
     aiScore: null,
     recommendations: [],
     editHistory: [],
+    undoStack: [],
     editCount: 0,
     editPage: 0,
     aqiScore: null,
@@ -376,6 +377,7 @@ function onDataLoaded() {
     APP.variableDocs = {};
     APP.metadata = {};
     APP.editHistory = [];
+    APP.undoStack = [];
     APP.editCount = 0;
     APP.qualityReport = null;
     APP.fairScore = null;
@@ -517,6 +519,72 @@ function addHistory(action, detail, justification) {
     APP._assistCache = null;
     updateFileInfo();
     scheduleAutosave();
+}
+function cloneStateForUndo() {
+    return {
+        data: JSON.parse(JSON.stringify(APP.data || [])),
+        columns: [...(APP.columns || [])],
+        variableDocs: JSON.parse(JSON.stringify(APP.variableDocs || {})),
+        metadata: JSON.parse(JSON.stringify(APP.metadata || {})),
+        anonymizedCols: [...(APP.anonymizedCols || [])],
+        aqiHistory: JSON.parse(JSON.stringify(APP.aqiHistory || [])),
+        activeEditTab: APP.activeEditTab,
+        editPage: APP.editPage
+    };
+}
+function pushUndoSnapshot(label) {
+    if (!APP.data) return;
+    APP.undoStack.push({ label: label || 'Action precedente', state: cloneStateForUndo(), at: new Date().toLocaleTimeString('fr-FR') });
+    if (APP.undoStack.length > 20) APP.undoStack.shift();
+}
+function restoreUndoState(snapshot) {
+    const s = snapshot.state;
+    APP.data = s.data || [];
+    APP.columns = s.columns || [];
+    APP.variableDocs = s.variableDocs || {};
+    APP.metadata = s.metadata || {};
+    APP.anonymizedCols = s.anonymizedCols || [];
+    APP.aqiHistory = s.aqiHistory || [];
+    APP.activeEditTab = s.activeEditTab || APP.activeEditTab;
+    APP.editPage = s.editPage || 0;
+    APP.qualityReport = null;
+    APP.fairScore = null;
+    APP.aiScore = null;
+    APP.aqiScore = null;
+    APP._assistCache = null;
+}
+function undoLastChange() {
+    const snapshot = APP.undoStack.pop();
+    if (!snapshot) {
+        notify('Aucune action a annuler pour le moment.', 'warning');
+        renderStep();
+        return;
+    }
+    restoreUndoState(snapshot);
+    const now = new Date();
+    APP.editHistory.push({
+        date: now.toLocaleDateString('fr-FR'),
+        time: now.toLocaleTimeString(),
+        step: typeof APP.step === 'number' ? (STEPS[APP.step - 1] || '') : String(APP.step),
+        user: APP.metadata.author || '-',
+        action: 'Annuler la derniere action',
+        detail: snapshot.label,
+        justification: 'Retour utilisateur'
+    });
+    APP.editCount++;
+    notify(`Action annulee : ${snapshot.label}. La base et les exports utilisent l'etat restaure.`, 'info');
+    updateFileInfo();
+    scheduleAutosave();
+    renderNav();
+    renderStep();
+}
+function renderUndoToolbar() {
+    if (!APP.data || !APP.undoStack.length) return '';
+    const last = APP.undoStack[APP.undoStack.length - 1];
+    return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;border-left:5px solid var(--primary-light)">
+        <div style="font-size:.88rem"><strong>Derniere action reversible :</strong> ${escapeHtml(last.label)} <span style="color:#777">(${escapeHtml(last.at)})</span></div>
+        <button class="btn btn-secondary btn-sm" onclick="undoLastChange()">Annuler</button>
+    </div>`;
 }
 function pct(a, b) { return b > 0 ? Math.round(a / b * 1000) / 10 : 0; }
 function scoreColor(ratio) { return ratio < 0.4 ? 'var(--danger)' : ratio < 0.7 ? 'var(--accent)' : 'var(--primary)'; }
@@ -1034,6 +1102,8 @@ function changeEditPage(delta) {
 
 function editCell(rowIdx, col, val) {
     const old = APP.data[rowIdx][col];
+    if (String(old ?? '') === String(val ?? '')) return;
+    pushUndoSnapshot(`Modifier cellule ligne ${rowIdx + 1}, colonne ${col}`);
     if (val === '' || val === 'null') APP.data[rowIdx][col] = null;
     else if (!isNaN(val) && val.trim() !== '') APP.data[rowIdx][col] = parseFloat(val);
     else APP.data[rowIdx][col] = val;
@@ -1041,6 +1111,7 @@ function editCell(rowIdx, col, val) {
 }
 
 function deleteRow(idx) {
+    pushUndoSnapshot(`Supprimer la ligne ${idx + 1}`);
     APP.data.splice(idx, 1);
     addHistory('Supprimer ligne', `Ligne ${idx}`);
     renderStep();
@@ -1050,6 +1121,7 @@ function renameColumn() {
     const old = document.getElementById('rename-col').value;
     const nw = document.getElementById('rename-val').value.trim();
     if (!nw || nw === old) return;
+    pushUndoSnapshot(`Renommer la colonne ${old}`);
     const idx = APP.columns.indexOf(old);
     if (idx >= 0) APP.columns[idx] = nw;
     APP.data.forEach(row => { row[nw] = row[old]; delete row[old]; });
@@ -1062,6 +1134,7 @@ function deleteColumns() {
     const checks = document.querySelectorAll('.del-col-check:checked');
     const toDel = [...checks].map(c => c.value);
     if (toDel.length === 0) return;
+    pushUndoSnapshot(`Supprimer ${toDel.length} colonne(s)`);
     APP.columns = APP.columns.filter(c => !toDel.includes(c));
     APP.data.forEach(row => toDel.forEach(c => delete row[c]));
     addHistory('Supprimer colonnes', toDel.join(', '));
@@ -1069,6 +1142,7 @@ function deleteColumns() {
 }
 
 function standardizeNames() {
+    pushUndoSnapshot('Standardiser les noms de colonnes');
     const mapping = {};
     APP.columns.forEach((c, i) => {
         let nw = String(c).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -1114,6 +1188,7 @@ function fillMissing(colArg, methodArg, customArg) {
         return;
     }
 
+    pushUndoSnapshot(`Traiter les valeurs manquantes de ${col}`);
     if (method === 'drop') {
         const before = APP.data.length;
         APP.data = APP.data.filter(r => !isNull(r[col]));
@@ -1159,6 +1234,7 @@ function fillMissing(colArg, methodArg, customArg) {
 }
 
 function removeDuplicates() {
+    pushUndoSnapshot('Supprimer les doublons');
     const seen = new Set(); const newData = [];
     for (const row of APP.data) {
         const key = APP.columns.map(c => String(row[c] ?? '')).join('|');
@@ -1185,6 +1261,7 @@ function applySimilarValues(col, values, target) {
         alert('Veuillez saisir une valeur cible non vide.');
         return;
     }
+    pushUndoSnapshot(`Harmoniser les valeurs similaires de ${col}`);
     const originals = new Set(values.map(v => String(v)));
     let changed = 0;
     APP.data = APP.data.map(row => {
@@ -1194,6 +1271,7 @@ function applySimilarValues(col, values, target) {
         return { ...row, [col]: target };
     });
     if (changed === 0) {
+        APP.undoStack.pop();
         alert(`Aucune valeur à modifier dans "${col}".`);
         return;
     }
@@ -1267,6 +1345,7 @@ function fixOutliers(col, method) {
         return;
     }
 
+    pushUndoSnapshot(`Corriger les valeurs aberrantes de ${col}`);
     let affected = 0;
     let passes = 0;
     const maxPasses = 20;
@@ -1377,6 +1456,7 @@ function renderDocForm() {
 
 function saveDocForm() {
     const col = document.getElementById('doc-col-select').value;
+    pushUndoSnapshot(`Documenter la variable ${col}`);
     APP.variableDocs[col] = {
         description: document.getElementById('doc-desc').value,
         data_type: document.getElementById('doc-type').value,
@@ -1388,6 +1468,7 @@ function saveDocForm() {
         utility: document.getElementById('doc-utility').value,
         is_target: document.getElementById('doc-target').checked,
     };
+    addHistory('Documenter variable', col, 'Documentation manuelle');
     scheduleAutosave();
     renderStep();
     setTimeout(() => { document.getElementById('doc-col-select').value = col; renderDocForm(); }, 50);
@@ -1438,10 +1519,12 @@ function renderStep5() {
 function saveMetadata() {
     const fields = ['title','author','organization','country','geographic_area','collection_period','description',
         'collection_method','target_population','license','access_conditions','keywords','contact','version','doi','citation'];
+    pushUndoSnapshot('Modifier les metadonnees');
     for (const f of fields) {
         const el = document.getElementById('meta-' + f);
         if (el) APP.metadata[f] = el.value;
     }
+    addHistory('Metadonnees enregistrees', `${fields.filter(f => APP.metadata[f]).length}/${fields.length} champs renseignes`, 'Saisie utilisateur');
     scheduleAutosave();
     notify('Métadonnées enregistrées.');
     renderStep();
@@ -1729,6 +1812,7 @@ function generateRecos() {
 // STEP 7: GOUVERNANCE (sécurité, confidentialité, lineage, provenance)
 // ═══════════════════════════════════════════════════════════════
 function anonymizeOneColumn(col) {
+    pushUndoSnapshot(`Pseudonymiser la colonne ${col}`);
     mutAnonymize([col]);
     addHistory('Pseudonymisation', col, 'Gouvernance : valeurs remplacées par des codes');
     renderStep();
@@ -1837,6 +1921,41 @@ function renderChangeLog() {
 // ═══════════════════════════════════════════════════════════════
 // STEP 9: EXPORT
 // ═══════════════════════════════════════════════════════════════
+function buildCleaningSummaryRows() {
+    const ini = APP.initialStats || {};
+    let curMissing = 0;
+    for (const col of APP.columns || []) curMissing += countMissing(col);
+    const curDup = countDuplicates();
+    const q = APP.qualityReport || analyzeQuality();
+    const actionTypes = {};
+    for (const h of APP.editHistory || []) actionTypes[h.action] = (actionTypes[h.action] || 0) + 1;
+    const rows = [
+        { Section: 'Fichier', Indicateur: 'Nom du fichier source', Avant: APP.fileName || '', Apres: APP.fileName || '', Commentaire: 'Traite localement dans le navigateur' },
+        { Section: 'Structure', Indicateur: 'Lignes', Avant: ini.rows ?? '', Apres: APP.data.length, Commentaire: 'Le fichier exporte utilise cette version finale' },
+        { Section: 'Structure', Indicateur: 'Colonnes', Avant: ini.cols ?? '', Apres: APP.columns.length, Commentaire: 'Colonnes finales apres corrections' },
+        { Section: 'Qualite', Indicateur: 'Valeurs manquantes', Avant: ini.missing ?? '', Apres: curMissing, Commentaire: curMissing === 0 ? 'Aucune valeur manquante restante' : `${curMissing} valeur(s) encore a traiter/documenter` },
+        { Section: 'Qualite', Indicateur: 'Doublons', Avant: ini.duplicates ?? '', Apres: curDup, Commentaire: curDup === 0 ? 'Aucun doublon exact restant' : `${curDup} doublon(s) exact(s) restant(s)` },
+        { Section: 'Qualite', Indicateur: 'Colonnes avec valeurs aberrantes', Avant: '', Apres: Object.keys(q.outlierDetails || {}).length, Commentaire: 'Detection par regle 1.5 x IQR' },
+        { Section: 'Documentation', Indicateur: 'Variables documentees', Avant: 0, Apres: Object.keys(APP.variableDocs || {}).length, Commentaire: `${Object.keys(APP.variableDocs || {}).length}/${APP.columns.length} variable(s)` },
+        { Section: 'Tracabilite', Indicateur: 'Actions enregistrees', Avant: 0, Apres: (APP.editHistory || []).length, Commentaire: 'Journal complet inclus dans journal_modifications.xlsx' }
+    ];
+    for (const [action, count] of Object.entries(actionTypes)) {
+        rows.push({ Section: 'Actions', Indicateur: action, Avant: '', Apres: count, Commentaire: 'Nombre d actions de ce type' });
+    }
+    return rows;
+}
+
+function renderCleaningProofCard() {
+    const rows = buildCleaningSummaryRows().slice(1, 8);
+    return `<div class="card" style="border-left:5px solid var(--primary-light)">
+        <h3>Preuve de traitement applique</h3>
+        <p style="font-size:.88rem;color:#666;margin-bottom:.7rem">Ce resume compare le fichier importe et la base finale qui sera exportee.</p>
+        <div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>Apres</th><th>Commentaire</th></tr>
+            ${rows.map(r => `<tr><td><strong>${escapeHtml(r.Indicateur)}</strong></td><td>${escapeHtml(r.Avant)}</td><td>${escapeHtml(r.Apres)}</td><td>${escapeHtml(r.Commentaire)}</td></tr>`).join('')}
+        </table></div>
+    </div>`;
+}
+
 function renderStep9() {
     if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
 
@@ -1882,6 +2001,8 @@ function renderStep9() {
         ${readyCount === readyItems.length ? '<p style="font-size:.85rem;color:var(--primary);font-weight:700;margin-top:.7rem">La base est prête pour l’export.</p>' : '<p style="font-size:.85rem;color:#777;margin-top:.7rem">Tu peux exporter maintenant ou revenir aux étapes précédentes pour améliorer les points signalés.</p>'}
     </div>`;
 
+    html += renderCleaningProofCard();
+
     html += `<div class="card"><h3>Contenu du Data Product (ZIP)</h3>
         <p style="margin-bottom:.8rem;font-size:.9rem">Les données corrigées gardent le <strong>même format que l'original (${fmtLabel})</strong>.</p>
         ${APP.inputFormat === 'xlsx' ? `<div style="margin-bottom:.8rem"><label style="cursor:pointer;font-size:.88rem"><input type="checkbox" id="export-styling" style="margin-right:.4rem">Appliquer la mise en forme Excel (en-têtes colorés, colonnes ajustées)</label></div>` : ''}
@@ -1898,6 +2019,7 @@ function renderStep9() {
             <div class="issue info">🏅 Rapport AQI (Excel + HTML)</div>
             <div class="issue info">💡 Recommandations (Excel)</div>
             <div class="issue info">🧬 Journal / Data Lineage (Excel)</div>
+            <div class="issue info">📌 Résumé de nettoyage (Excel + JSON)</div>
             <div class="issue info">📝 Rapport des modifications (Word)</div>
             <div class="issue info">📘 README.md + CITATION.cff</div>
             <div class="issue info">🎖️ Certificat AQI (HTML → PDF)</div>
@@ -2282,6 +2404,9 @@ function exportZip() {
     // Journal des modifications (Data Lineage) → Excel
     const histRows = APP.editHistory.map(h => ({ "Date": h.date || '', "Heure": h.time, "Etape": h.step || '', "Utilisateur": h.user || '', "Action": h.action, "Detail": h.detail, "Justification": h.justification || '' }));
     zip.file('journal_modifications.xlsx', rowsToExcel(histRows.length ? histRows : [{ Action: 'Aucune modification' }], 'Lineage'));
+    const cleaningSummaryRows = buildCleaningSummaryRows();
+    zip.file('resume_nettoyage.xlsx', rowsToExcel(cleaningSummaryRows, 'Resume nettoyage'));
+    zip.file('resume_nettoyage.json', JSON.stringify(cleaningSummaryRows, null, 2));
 
     // AQI
     const aqi = APP.aqiScore || computeAQI();
@@ -3051,6 +3176,7 @@ function pushAqiHistory(label) {
 
 // Applique réellement une action de l'assistant
 function applyAssistAction(id) {
+    pushUndoSnapshot('Correction automatique de l assistant');
     if (id === 'empty') { const dropped = mutDropEmptyCols(); addHistory('Assistant : colonnes vides supprimées', dropped.join(', '), 'Correction automatique'); }
     else if (id === 'dup') { const before = APP.data.length; mutDedupe(); addHistory('Assistant : doublons supprimés', `${before - APP.data.length} ligne(s)`, 'Correction automatique'); }
     else if (id === 'missing') { const fills = mutImputeMissing(); addHistory('Assistant : valeurs manquantes imputées', Object.keys(fills).map(c => `${c}→${fills[c]}`).join(' ; '), 'Médiane/mode automatique'); }
@@ -3065,6 +3191,7 @@ function applyAssistAction(id) {
 
 function applyAllAssistActions() {
     const { actions } = buildAssistantActions();
+    pushUndoSnapshot('Correction automatique globale');
     for (const a of actions) if (a.auto) {
         if (a.id === 'empty') mutDropEmptyCols();
         else if (a.id === 'dup') mutDedupe();
@@ -3187,7 +3314,7 @@ function serializeState() {
         initialStats: APP.initialStats, baseline: APP.baseline,
         inputFormat: APP.inputFormat, columns: APP.columns, fileName: APP.fileName,
         variableDocs: APP.variableDocs, metadata: APP.metadata,
-        editHistory: APP.editHistory, editCount: APP.editCount,
+        editHistory: APP.editHistory, editCount: APP.editCount, undoStack: APP.undoStack,
         sheetNames: APP.sheetNames, activeSheet: APP.activeSheet,
         aqiHistory: APP.aqiHistory, anonymizedCols: APP.anonymizedCols
     };
@@ -3198,7 +3325,7 @@ function restoreState(s) {
     APP.initialStats = s.initialStats; APP.baseline = s.baseline;
     APP.inputFormat = s.inputFormat || 'csv'; APP.columns = s.columns || []; APP.fileName = s.fileName || '';
     APP.variableDocs = s.variableDocs || {}; APP.metadata = s.metadata || {};
-    APP.editHistory = s.editHistory || []; APP.editCount = s.editCount || 0;
+    APP.editHistory = s.editHistory || []; APP.editCount = s.editCount || 0; APP.undoStack = s.undoStack || [];
     APP.sheetNames = s.sheetNames || []; APP.activeSheet = s.activeSheet || '';
     APP.aqiHistory = s.aqiHistory || [];
     APP._assistCache = null;
@@ -3384,7 +3511,7 @@ function renderStep() {
         welcome: renderWelcome, projects: renderProjects
     };
     const showBar = APP.data && APP.data.length && (typeof APP.step === 'number' || APP.step === 'analysis');
-    container.innerHTML = (showBar ? renderObjectiveBar() : '') + renderNotice() + renderers[APP.step]();
+    container.innerHTML = (showBar ? renderObjectiveBar() : '') + renderUndoToolbar() + renderNotice() + renderers[APP.step]();
     updateFileInfo();
 
     // Post-render hooks
