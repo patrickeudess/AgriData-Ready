@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AfriData Ready : From Raw Data to FAIR & AI-Ready Data</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ðŸŒ</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 <script src="libs/papaparse.min.js"></script>
 <script src="libs/xlsx.full.min.js"></script>
 <script src="libs/jszip.min.js"></script>
@@ -164,7 +164,7 @@ textarea{min-height:64px}
 
 <header class="topbar">
     <img class="topbar-brand-logo" src="assets/logo_afridata_ready_white.png" alt="AfriData Ready">
-    <button class="burger" onclick="toggleSidebar()" aria-label="Menu">â˜°</button>
+    <button class="burger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
 </header>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
@@ -184,9 +184,9 @@ textarea{min-height:64px}
 <div class="main" id="main-content"></div>
 
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // APPLICATION STATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 const APP = {
     step: 1,
     data: null,
@@ -214,7 +214,7 @@ const APP = {
     projectName: '',
     lastSaved: null,
     aqiHistory: [],      // progression de l'AQI [{label, score}]
-    anonymizedCols: [],  // colonnes sensibles pseudonymisÃ©es (gouvernance)
+    anonymizedCols: [],  // colonnes sensibles pseudonymisées (gouvernance)
     activeEditTab: 'edit-cells',
     _assistCache: null
 };
@@ -222,10 +222,10 @@ const AQI_TARGET = 90;
 const ROWS_PER_PAGE = 100;
 
 const STEPS = [
-    'Importer les donnÃ©es',
-    'QualitÃ© des donnÃ©es',
+    'Importer les données',
+    'Qualité des données',
     'Documenter les variables',
-    'MÃ©tadonnÃ©es',
+    'Métadonnées',
     'Score FAIR',
     'AI Readiness',
     'Gouvernance',
@@ -233,9 +233,9 @@ const STEPS = [
     'Exporter'
 ];
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // NAVIGATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderNav() {
     const c = document.getElementById('nav-items');
     c.innerHTML = STEPS.map((name, i) => {
@@ -245,7 +245,7 @@ function renderNav() {
         else if (APP.data && n < APP.step) cls += ' done';
         const disabled = !APP.data && n > 1;
         return `<div class="${cls}" onclick="${disabled ? '' : `goStep(${n})`}" style="${disabled ? 'opacity:.4;cursor:default' : ''}">
-            <span class="num">${n === APP.step ? 'â–¶' : (APP.data && n < APP.step ? 'âœ“' : n)}</span>
+            <span class="num">${n === APP.step ? '▶' : (APP.data && n < APP.step ? '✓' : n)}</span>
             <span>${name}</span>
         </div>`;
     }).join('');
@@ -253,9 +253,9 @@ function renderNav() {
     const aux = document.getElementById('aux-nav');
     if (aux) {
         const auxItems = [
-            ['welcome', 'ðŸ ', 'Accueil', false],
-            ['projects', 'ðŸ“‚', 'Mes projets', false],
-            ['referentiel', 'ðŸ“–', 'RÃ©fÃ©rentiel utilisÃ©', false]
+            ['welcome', '🏠', 'Accueil', false],
+            ['projects', '📂', 'Mes projets', false],
+            ['referentiel', '📖', 'Référentiel utilisé', false]
         ];
         let h = auxItems.map(([id, icon, label, dis]) => {
             let cls = 'nav-item'; if (id === APP.step) cls += ' active';
@@ -266,13 +266,13 @@ function renderNav() {
         // Panneau projet / sauvegarde
         if (APP.mode === 'project' && APP.projectId) {
             h += `<div style="margin-top:.8rem;padding:.6rem .8rem;background:rgba(255,255,255,.12);border-radius:8px;font-size:.78rem">
-                <p style="margin:0 0 .3rem"><strong>ðŸ“‚ ${String(APP.projectName).replace(/</g, '&lt;')}</strong></p>
-                <p id="save-indicator" style="margin:0 0 .5rem;opacity:.8">${APP.lastSaved ? 'ðŸ’¾ SauvegardÃ© Ã  ' + APP.lastSaved : 'Non sauvegardÃ©'}</p>
-                <button class="btn btn-sm" style="background:#fff;color:#1B5E20;width:100%" onclick="saveProject(false)">ðŸ’¾ Enregistrer maintenant</button>
+                <p style="margin:0 0 .3rem"><strong>📂 ${String(APP.projectName).replace(/</g, '&lt;')}</strong></p>
+                <p id="save-indicator" style="margin:0 0 .5rem;opacity:.8">${APP.lastSaved ? '💾 Sauvegardé à ' + APP.lastSaved : 'Non sauvegardé'}</p>
+                <button class="btn btn-sm" style="background:#fff;color:#1B5E20;width:100%" onclick="saveProject(false)">💾 Enregistrer maintenant</button>
             </div>`;
         } else if (APP.mode === 'quick' && APP.data) {
             h += `<div style="margin-top:.8rem">
-                <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;width:100%;border:1px dashed rgba(255,255,255,.5)" onclick="saveAsProject()">ðŸ’¾ Enregistrer ce travail comme projet</button>
+                <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;width:100%;border:1px dashed rgba(255,255,255,.5)" onclick="saveAsProject()">💾 Enregistrer ce travail comme projet</button>
             </div>`;
         }
         aux.innerHTML = h;
@@ -309,9 +309,9 @@ function updateFileInfo() {
     document.getElementById('info-edits').textContent = APP.editCount;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // FILE LOADING
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function handleFile(file) {
     APP.fileName = file.name;
     const ext = file.name.toLowerCase().split('.').pop();
@@ -351,7 +351,7 @@ function handleFile(file) {
         };
         reader.readAsText(file);
     } else {
-        alert('Format non supportÃ©. Utilisez CSV, Excel ou JSON.');
+        alert('Format non supporté. Utilisez CSV, Excel ou JSON.');
     }
 }
 
@@ -400,9 +400,9 @@ function onDataLoaded() {
     scheduleAutosave();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // UTILITY FUNCTIONS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function getVal(row, col) { return row[col]; }
 function isNull(v) { return v === null || v === undefined || v === '' || (typeof v === 'number' && isNaN(v)); }
 function countMissing(col) { return APP.data.filter(r => isNull(r[col])).length; }
@@ -473,23 +473,23 @@ function restoreEditTab() {
     const tab = [...document.querySelectorAll('.tab')].find(t => t.dataset.editTab === id || (t.getAttribute('onclick') || '').includes(`'${id}'`));
     if (tab) tab.classList.add('active');
 }
-function navButtons(prev, next, nextLabel = 'Suivant â†’') {
+function navButtons(prev, next, nextLabel = 'Suivant →') {
     return `<div class="nav-buttons">
-        <div>${prev ? `<button class="btn btn-secondary" onclick="goStep(${prev})">â† Retour</button>` : ''}</div>
+        <div>${prev ? `<button class="btn btn-secondary" onclick="goStep(${prev})">← Retour</button>` : ''}</div>
         <div>${next ? `<button class="btn btn-primary" onclick="goStep(${next})">${nextLabel}</button>` : ''}</div>
     </div>`;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 1: IMPORT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderStep1() {
-    let html = `<div class="page-header"><h2>Ã‰tape 1 : Importer les donnÃ©es</h2><p>DÃ©posez votre fichier de donnÃ©es brut pour commencer</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 1 : Importer les données</h2><p>Déposez votre fichier de données brut pour commencer</p></div>`;
 
     html += `<div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-        <span class="icon">ðŸ“‚</span>
-        <h3>Glissez-dÃ©posez un fichier ici</h3>
-        <p style="color:#888;margin-top:.3rem">ou cliquez pour sÃ©lectionner : CSV, Excel (.xlsx), JSON</p>
+        <span class="icon">📂</span>
+        <h3>Glissez-déposez un fichier ici</h3>
+        <p style="color:#888;margin-top:.3rem">ou cliquez pour sélectionner : CSV, Excel (.xlsx), JSON</p>
         <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" onchange="if(this.files[0])handleFile(this.files[0])">
     </div>`;
 
@@ -500,7 +500,7 @@ function renderStep1() {
         const nDup = countDuplicates();
 
         html += `<div style="margin-top:1rem;padding:.6rem 1rem;background:#E8F5E9;border-radius:8px;color:var(--primary);font-weight:600">
-            âœ… Fichier chargÃ© : ${APP.fileName}</div>`;
+            ✅ Fichier chargé : ${APP.fileName}</div>`;
 
         if (APP.sheetNames.length > 1) {
             html += `<div class="card" style="margin-top:1rem"><h3>Feuilles du fichier (${APP.sheetNames.length})</h3>
@@ -535,30 +535,30 @@ function renderStep1() {
             ${APP.baseline ? `<div class="metric" style="border-top-color:var(--accent)"><div class="val" style="color:var(--accent)">${APP.baseline.aqi}/100</div><div class="label">AQI initial</div></div>` : ''}
         </div>`;
 
-        html += `<div class="card"><h3>AperÃ§u des donnÃ©es</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
+        html += `<div class="card"><h3>Aperçu des données</h3><div class="table-wrap"><table><tr>${APP.columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
         for (let i = 0; i < Math.min(10, APP.data.length); i++) {
             html += '<tr>' + APP.columns.map(c => `<td>${APP.data[i][c] ?? '<em style="color:#ccc">vide</em>'}</td>`).join('') + '</tr>';
         }
         html += '</table></div></div>';
 
         html += `<div class="card"><h3>Types des colonnes</h3><div class="table-wrap"><table>
-            <tr><th>Colonne</th><th>Type dÃ©tectÃ©</th><th>Non-null</th><th>Manquants (%)</th></tr>`;
+            <tr><th>Colonne</th><th>Type détecté</th><th>Non-null</th><th>Manquants (%)</th></tr>`;
         for (const col of APP.columns) {
             const miss = countMissing(col);
             const missPct = pct(miss, APP.data.length);
-            const type = isNumericCol(col) ? 'NumÃ©rique' : 'Texte';
+            const type = isNumericCol(col) ? 'Numérique' : 'Texte';
             html += `<tr><td><strong>${col}</strong></td><td>${type}</td><td>${APP.data.length - miss}</td>
                 <td style="color:${missPct > 20 ? 'var(--danger)' : missPct > 5 ? 'var(--accent)' : 'var(--primary)'}">${missPct}%</td></tr>`;
         }
         html += '</table></div></div>';
-        html += navButtons(null, 2, 'Analyser la qualitÃ© â†’');
+        html += navButtons(null, 2, 'Analyser la qualité →');
     }
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 2: QUALITY
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function analyzeQuality() {
     const issues = [];
     const n = APP.data.length, nc = APP.columns.length, totalCells = n * nc;
@@ -581,7 +581,7 @@ function analyzeQuality() {
 
     const emptyCols = APP.columns.filter(c => missingPerCol[c] === n);
     if (emptyCols.length > 0)
-        issues.push({ type: 'empty_cols', severity: 'critical', message: `${emptyCols.length} colonne(s) entiÃ¨rement vide(s) : ${emptyCols.join(', ')}` });
+        issues.push({ type: 'empty_cols', severity: 'critical', message: `${emptyCols.length} colonne(s) entièrement vide(s) : ${emptyCols.join(', ')}` });
 
     const badNames = APP.columns.filter(c => c.length <= 2 || c.startsWith('Unnamed') || /^col\d+$/i.test(c));
     if (badNames.length > 0)
@@ -597,13 +597,13 @@ function analyzeQuality() {
                 const ouiForms = inter.filter(v => ['oui','yes','1','true','o','vrai'].includes(v));
                 const nonForms = inter.filter(v => ['non','no','0','false','n','faux'].includes(v));
                 if (ouiForms.length > 1 || nonForms.length > 1)
-                    issues.push({ type: 'inconsistent', severity: 'warning', message: `Colonne '${col}' : codage binaire incohÃ©rent (${unique.join(', ')})` });
+                    issues.push({ type: 'inconsistent', severity: 'warning', message: `Colonne '${col}' : codage binaire incohérent (${unique.join(', ')})` });
             }
         }
     }
 
     for (const col of APP.columns) {
-        if (/date|annee|annÃ©e|mois|year|period/i.test(col)) {
+        if (/date|annee|année|mois|year|period/i.test(col)) {
             const vals = APP.data.map(r => r[col]).filter(v => !isNull(v)).map(v => String(v));
             const patterns = new Set();
             for (const v of vals.slice(0, 50)) {
@@ -658,28 +658,28 @@ function renderStep2() {
     APP.qualityReport = report;
     const nOutlierCols = Object.keys(report.outlierDetails || {}).length;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 2 : QualitÃ© des donnÃ©es</h2><p>Diagnostiquer, comprendre, puis corriger â€” automatiquement ou Ã  la main</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 2 : Qualité des données</h2><p>Diagnostiquer, comprendre, puis corriger — automatiquement ou à la main</p></div>`;
     html += `<div class="metrics">
         <div class="metric"><div class="val">${report.totalMissing} <span style="font-size:.9rem">(${report.missingPct}%)</span></div><div class="label">Valeurs manquantes</div></div>
         <div class="metric"><div class="val">${report.n_duplicates}</div><div class="label">Doublons</div></div>
         <div class="metric"><div class="val">${report.emptyCols.length}</div><div class="label">Colonnes vides</div></div>
         <div class="metric"><div class="val">${nOutlierCols}</div><div class="label">Cols. aberrantes</div></div>
-        <div class="metric"><div class="val">${report.issues.length}</div><div class="label">ProblÃ¨mes totaux</div></div>
+        <div class="metric"><div class="val">${report.issues.length}</div><div class="label">Problèmes totaux</div></div>
     </div>`;
 
     html += `<div class="tab-scope"><div class="tabs">
-        <div class="tab active" onclick="showEditTab('q-issues',this)">ðŸ” ProblÃ¨mes (${report.issues.length})</div>
-        <div class="tab" onclick="showEditTab('q-stats',this)">ðŸ“Š Statistiques descriptives</div>
-        <div class="tab" onclick="showEditTab('q-outliers',this)">âš ï¸ Valeurs aberrantes (${nOutlierCols})</div>
+        <div class="tab active" onclick="showEditTab('q-issues',this)">🔍 Problèmes (${report.issues.length})</div>
+        <div class="tab" onclick="showEditTab('q-stats',this)">📊 Statistiques descriptives</div>
+        <div class="tab" onclick="showEditTab('q-outliers',this)">⚠️ Valeurs aberrantes (${nOutlierCols})</div>
     </div>`;
 
     // === TAB 1: Issues ===
     html += `<div id="q-issues" class="edit-tab">`;
     if (report.issues.length === 0) {
-        html += '<div class="issue info">âœ… <strong>Aucun problÃ¨me majeur dÃ©tectÃ©.</strong></div>';
+        html += '<div class="issue info">✅ <strong>Aucun problème majeur détecté.</strong></div>';
     } else {
         for (const issue of report.issues) {
-            const icon = issue.severity === 'critical' ? 'ðŸ”´' : issue.severity === 'warning' ? 'ðŸŸ¡' : 'â„¹ï¸';
+            const icon = issue.severity === 'critical' ? '🔴' : issue.severity === 'warning' ? '🟡' : 'ℹ️';
             html += `<div class="issue ${issue.severity}">${icon} <strong>${issue.message}</strong></div>`;
         }
     }
@@ -701,8 +701,8 @@ function renderStep2() {
 
     // === TAB 2: Descriptive Stats ===
     html += `<div id="q-stats" class="edit-tab" style="display:none">`;
-    html += `<div class="card"><h3>Colonnes numÃ©riques</h3><div class="table-wrap"><table>
-        <tr><th>Colonne</th><th>N</th><th>Moyenne</th><th>MÃ©diane</th><th>Ã‰cart-type</th><th>Min</th><th>Q1</th><th>Q3</th><th>Max</th><th>Manquants</th></tr>`;
+    html += `<div class="card"><h3>Colonnes numériques</h3><div class="table-wrap"><table>
+        <tr><th>Colonne</th><th>N</th><th>Moyenne</th><th>Médiane</th><th>Écart-type</th><th>Min</th><th>Q1</th><th>Q3</th><th>Max</th><th>Manquants</th></tr>`;
     let hasNum = false;
     for (const col of APP.columns) {
         const s = (report.descStats || {})[col];
@@ -714,11 +714,11 @@ function renderStep2() {
             <td>${s.std}</td><td>${s.min}</td><td>${s.q1}</td><td>${s.q3}</td><td>${s.max}</td>
             <td style="color:${mColor}">${m} (${mp}%)</td></tr>`;
     }
-    if (!hasNum) html += '<tr><td colspan="10" style="color:#888;text-align:center">Aucune colonne numÃ©rique</td></tr>';
+    if (!hasNum) html += '<tr><td colspan="10" style="color:#888;text-align:center">Aucune colonne numérique</td></tr>';
     html += '</table></div></div>';
 
-    html += `<div class="card"><h3>Colonnes catÃ©gorielles</h3><div class="table-wrap"><table>
-        <tr><th>Colonne</th><th>RenseignÃ©es</th><th>Valeurs uniques</th><th>Valeurs les plus frÃ©quentes</th><th>Manquants</th></tr>`;
+    html += `<div class="card"><h3>Colonnes catégorielles</h3><div class="table-wrap"><table>
+        <tr><th>Colonne</th><th>Renseignées</th><th>Valeurs uniques</th><th>Valeurs les plus fréquentes</th><th>Manquants</th></tr>`;
     let hasCat = false;
     for (const col of APP.columns) {
         const s = (report.descStats || {})[col];
@@ -730,55 +730,55 @@ function renderStep2() {
         html += `<tr><td><strong>${col}</strong></td><td>${s.count}</td><td>${s.unique}</td><td>${top}</td>
             <td style="color:${mColor}">${m} (${mp}%)</td></tr>`;
     }
-    if (!hasCat) html += '<tr><td colspan="5" style="color:#888;text-align:center">Aucune colonne catÃ©gorielle</td></tr>';
+    if (!hasCat) html += '<tr><td colspan="5" style="color:#888;text-align:center">Aucune colonne catégorielle</td></tr>';
     html += '</table></div></div>';
     html += '</div>';
 
     // === TAB 3: Outliers ===
     html += `<div id="q-outliers" class="edit-tab" style="display:none">`;
     if (nOutlierCols === 0) {
-        html += '<div class="issue info">âœ… <strong>Aucune valeur aberrante dÃ©tectÃ©e.</strong></div>';
+        html += '<div class="issue info">✅ <strong>Aucune valeur aberrante détectée.</strong></div>';
     } else {
-        html += `<p style="margin-bottom:1rem;font-size:.88rem;color:#555">MÃ©thode : rÃ¨gle des 1.5Ã—IQR : valeurs hors de [Q1 âˆ’ 1.5Ã—IQR, Q3 + 1.5Ã—IQR]</p>`;
+        html += `<p style="margin-bottom:1rem;font-size:.88rem;color:#555">Méthode : règle des 1.5×IQR : valeurs hors de [Q1 − 1.5×IQR, Q3 + 1.5×IQR]</p>`;
         for (const [col, od] of Object.entries(report.outlierDetails)) {
             const s = (report.descStats || {})[col];
-            html += `<div class="card"><h3>ðŸ“Œ ${col} : ${od.count} valeur(s) aberrante(s)</h3>`;
+            html += `<div class="card"><h3>📌 ${col} : ${od.count} valeur(s) aberrante(s)</h3>`;
             if (s) {
                 html += `<p style="font-size:.85rem;margin-bottom:.6rem">
                     Plage normale : [<strong>${od.lo}</strong> : <strong>${od.hi}</strong>] &nbsp;|&nbsp;
-                    Q1 = ${od.q1} &nbsp;Â·&nbsp; Q3 = ${od.q3} &nbsp;Â·&nbsp; IQR = ${od.iqr} &nbsp;Â·&nbsp;
-                    Min = ${s.min} &nbsp;Â·&nbsp; Max = ${s.max}
+                    Q1 = ${od.q1} &nbsp;·&nbsp; Q3 = ${od.q3} &nbsp;·&nbsp; IQR = ${od.iqr} &nbsp;·&nbsp;
+                    Min = ${s.min} &nbsp;·&nbsp; Max = ${s.max}
                 </p>`;
             }
             html += `<p style="font-size:.85rem;margin-bottom:.8rem">Exemples de valeurs aberrantes :
                 ${od.examples.map(v => `<strong style="color:var(--danger)">${v}</strong>`).join(', ')}
-                ${od.count > 5 ? ` â€¦ et ${od.count - 5} autre(s)` : ''}
+                ${od.count > 5 ? ` … et ${od.count - 5} autre(s)` : ''}
             </p>`;
             const cj = col.replace(/'/g, "\\'");
             html += `<h4 style="font-size:.88rem;margin-bottom:.5rem;color:#444">Corriger en un clic :</h4>
             <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem">
-                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','cap')" title="RamÃ¨ne les valeurs extrÃªmes aux bornes [${od.lo}, ${od.hi}]">ðŸ“‰ Plafonner aux bornes</button>
-                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','median')" title="Remplace chaque valeur aberrante par la mÃ©diane">ðŸ“Š Remplacer par la mÃ©diane</button>
-                <button class="btn btn-secondary btn-sm" onclick="fixOutliers('${cj}','null')" title="Vide les valeurs aberrantes (imputables ensuite)">ðŸ§© Mettre Ã  vide</button>
-                <button class="btn btn-danger btn-sm" onclick="if(confirm('Supprimer les ${od.count} ligne(s) contenant une valeur aberrante de Â« ${cj} Â» ?'))fixOutliers('${cj}','drop')" title="Supprime les lignes contenant une valeur aberrante">ðŸ—‘ï¸ Supprimer les lignes</button>
+                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','cap')" title="Ramène les valeurs extrêmes aux bornes [${od.lo}, ${od.hi}]">📉 Plafonner aux bornes</button>
+                <button class="btn btn-primary btn-sm" onclick="fixOutliers('${cj}','median')" title="Remplace chaque valeur aberrante par la médiane">📊 Remplacer par la médiane</button>
+                <button class="btn btn-secondary btn-sm" onclick="fixOutliers('${cj}','null')" title="Vide les valeurs aberrantes (imputables ensuite)">🧩 Mettre à vide</button>
+                <button class="btn btn-danger btn-sm" onclick="if(confirm('Supprimer les ${od.count} ligne(s) contenant une valeur aberrante de « ${cj} » ?'))fixOutliers('${cj}','drop')" title="Supprime les lignes contenant une valeur aberrante">🗑️ Supprimer les lignes</button>
             </div>
-            <p style="font-size:.78rem;color:#888;margin-top:.3rem">ðŸ’¡ Astuce : Â« Plafonner Â» ou Â« MÃ©diane Â» conservent la ligne ; Â« Supprimer Â» rÃ©duit l'effectif. Si les valeurs sont rÃ©elles (cas exceptionnels), conservez-les et documentez la variable Ã  l'Ã©tape 3.</p>
+            <p style="font-size:.78rem;color:#888;margin-top:.3rem">💡 Astuce : « Plafonner » ou « Médiane » conservent la ligne ; « Supprimer » réduit l'effectif. Si les valeurs sont réelles (cas exceptionnels), conservez-les et documentez la variable à l'étape 3.</p>
             </div>`;
         }
     }
     html += '</div></div>'; // ferme le dernier onglet + le tab-scope diagnostic
 
-    html += `<h2 style="color:var(--primary);margin:1.5rem 0 .8rem;font-size:1.15rem;border-bottom:2px solid #E8F5E9;padding-bottom:.4rem">âœï¸ Corriger les donnÃ©es</h2>`;
+    html += `<h2 style="color:var(--primary);margin:1.5rem 0 .8rem;font-size:1.15rem;border-bottom:2px solid #E8F5E9;padding-bottom:.4rem">✏️ Corriger les données</h2>`;
     html += renderEditSection();
 
-    html += navButtons(1, 3, 'Documenter les variables â†’');
+    html += navButtons(1, 3, 'Documenter les variables →');
     return html;
 }
 
-// â”€â”€ Section correction (intÃ©grÃ©e Ã  l'Ã©tape 2) â”€â”€
+// ── Section correction (intégrée à l'étape 2) ──
 function renderEditSection() {
     let html = `<div class="tab-scope"><div class="tabs">
-        <div class="tab active" onclick="showEditTab('edit-cells',this)">Ã‰diter les cellules</div>
+        <div class="tab active" onclick="showEditTab('edit-cells',this)">Éditer les cellules</div>
         <div class="tab" onclick="showEditTab('edit-cols',this)">Colonnes</div>
         <div class="tab" onclick="showEditTab('edit-missing',this)">Valeurs manquantes</div>
         <div class="tab" onclick="showEditTab('edit-dup',this)">Doublons</div>
@@ -794,9 +794,9 @@ function renderEditSection() {
     html += `<div id="edit-cells-table">${renderCellsTable(start, end)}</div>`;
     if (nPages > 1) {
         html += `<div style="display:flex;align-items:center;justify-content:center;gap:.8rem;margin-top:1rem">
-            <button class="btn btn-secondary btn-sm" onclick="changeEditPage(-1)" ${APP.editPage === 0 ? 'disabled' : ''}>â† PrÃ©cÃ©dent</button>
-            <span style="font-size:.85rem">Lignes <strong>${start + 1}</strong> Ã  <strong>${end}</strong> sur <strong>${APP.data.length}</strong> (page ${APP.editPage + 1}/${nPages})</span>
-            <button class="btn btn-secondary btn-sm" onclick="changeEditPage(1)" ${APP.editPage >= nPages - 1 ? 'disabled' : ''}>Suivant â†’</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeEditPage(-1)" ${APP.editPage === 0 ? 'disabled' : ''}>← Précédent</button>
+            <span style="font-size:.85rem">Lignes <strong>${start + 1}</strong> à <strong>${end}</strong> sur <strong>${APP.data.length}</strong> (page ${APP.editPage + 1}/${nPages})</span>
+            <button class="btn btn-secondary btn-sm" onclick="changeEditPage(1)" ${APP.editPage >= nPages - 1 ? 'disabled' : ''}>Suivant →</button>
         </div>`;
     } else {
         html += `<p style="text-align:center;color:#888;font-size:.82rem;margin-top:.6rem">${APP.data.length} ligne(s) au total</p>`;
@@ -817,10 +817,10 @@ function renderEditSection() {
         ${APP.columns.map(c => `<label style="display:flex;align-items:center;gap:.3rem;font-size:.82rem;background:#f5f5f5;padding:.3rem .6rem;border-radius:6px">
             <input type="checkbox" class="del-col-check" value="${c}"> ${c}</label>`).join('')}
         </div>
-        <button class="btn btn-danger" onclick="deleteColumns()">Supprimer les colonnes cochÃ©es</button></div>
+        <button class="btn btn-danger" onclick="deleteColumns()">Supprimer les colonnes cochées</button></div>
 
         <div class="card"><h3>Standardiser les noms de colonnes</h3>
-        <p style="font-size:.83rem;color:#666;margin-bottom:.5rem">Convertit en minuscules, remplace espaces et caractÃ¨res spÃ©ciaux par des underscores.</p>
+        <p style="font-size:.83rem;color:#666;margin-bottom:.5rem">Convertit en minuscules, remplace espaces et caractères spéciaux par des underscores.</p>
         <div class="table-wrap"><table><tr><th>Actuel</th><th>Nouveau nom</th></tr>
         ${APP.columns.map(c => `<tr><td>${escapeHtml(c)}</td><td>${escapeHtml(String(c).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''))}</td></tr>`).join('')}
         </table></div>
@@ -831,16 +831,16 @@ function renderEditSection() {
     const colsWithMissing = APP.columns.filter(c => countMissing(c) > 0);
     html += `<div id="edit-missing" class="edit-tab" style="display:none"><div class="card"><h3>Traitement des valeurs manquantes</h3>`;
     if (colsWithMissing.length === 0) {
-        html += '<p style="color:var(--primary);font-weight:600">âœ… Aucune valeur manquante.</p>';
+        html += '<p style="color:var(--primary);font-weight:600">✅ Aucune valeur manquante.</p>';
     } else {
         html += `<div class="form-row">
             <div class="form-group"><label>Colonne :</label><select id="fill-col">${colsWithMissing.map(c => `<option value="${c}">${c} (${countMissing(c)} manquants)</option>`).join('')}</select></div>
-            <div class="form-group"><label>MÃ©thode :</label><select id="fill-method">
-                <option value="mean">Moyenne</option><option value="median">MÃ©diane</option>
-                <option value="mode">Mode</option><option value="custom">Valeur personnalisÃ©e</option>
+            <div class="form-group"><label>Méthode :</label><select id="fill-method">
+                <option value="mean">Moyenne</option><option value="median">Médiane</option>
+                <option value="mode">Mode</option><option value="custom">Valeur personnalisée</option>
                 <option value="drop">Supprimer les lignes</option></select></div>
         </div>
-        <div class="form-group"><label>Valeur personnalisÃ©e (si applicable) :</label><input id="fill-custom"></div>
+        <div class="form-group"><label>Valeur personnalisée (si applicable) :</label><input id="fill-custom"></div>
         <button class="btn btn-primary" onclick="fillMissing()">Appliquer</button>`;
     }
     html += '</div></div>';
@@ -853,7 +853,7 @@ function renderEditSection() {
         html += `<p style="margin-bottom:.8rem">Ces lignes sont des copies exactes d'autres lignes.</p>
             <button class="btn btn-danger" onclick="removeDuplicates()">Supprimer les doublons</button>`;
     } else {
-        html += '<p style="color:var(--primary);font-weight:600">âœ… Aucun doublon dÃ©tectÃ©.</p>';
+        html += '<p style="color:var(--primary);font-weight:600">✅ Aucun doublon détecté.</p>';
     }
     html += '</div></div>';
 
@@ -876,7 +876,7 @@ function renderCellsTable(start, end) {
         h += `<tr><td style="color:#888;font-size:.8rem">${i + 1}</td>` + APP.columns.map(c => {
             const v = APP.data[i][c] ?? '';
             return `<td><input value="${escapeHtml(v)}" onchange="editCell(${i},${jsString(c)},this.value)"></td>`;
-        }).join('') + `<td><button class="btn btn-danger btn-sm" onclick="deleteRow(${i})">âœ•</button></td></tr>`;
+        }).join('') + `<td><button class="btn btn-danger btn-sm" onclick="deleteRow(${i})">✕</button></td></tr>`;
     }
     h += '</table></div>';
     return h;
@@ -897,7 +897,7 @@ function editCell(rowIdx, col, val) {
     if (val === '' || val === 'null') APP.data[rowIdx][col] = null;
     else if (!isNaN(val) && val.trim() !== '') APP.data[rowIdx][col] = parseFloat(val);
     else APP.data[rowIdx][col] = val;
-    addHistory('Modifier cellule', `Ligne ${rowIdx}, ${col}: "${old}" â†’ "${val}"`);
+    addHistory('Modifier cellule', `Ligne ${rowIdx}, ${col}: "${old}" → "${val}"`);
 }
 
 function deleteRow(idx) {
@@ -914,7 +914,7 @@ function renameColumn() {
     if (idx >= 0) APP.columns[idx] = nw;
     APP.data.forEach(row => { row[nw] = row[old]; delete row[old]; });
     if (APP.variableDocs[old]) { APP.variableDocs[nw] = APP.variableDocs[old]; delete APP.variableDocs[old]; }
-    addHistory('Renommer colonne', `${old} â†’ ${nw}`);
+    addHistory('Renommer colonne', `${old} → ${nw}`);
     renderStep();
 }
 
@@ -963,7 +963,7 @@ function fillMissing() {
         return;
     }
     if (method === 'custom' && custom.trim() === '') {
-        alert('Veuillez saisir une valeur personnalisÃ©e non vide.');
+        alert('Veuillez saisir une valeur personnalisée non vide.');
         restoreEditTab();
         return;
     }
@@ -972,12 +972,12 @@ function fillMissing() {
         const before = APP.data.length;
         APP.data = APP.data.filter(r => !isNull(r[col]));
         addHistory('Supprimer lignes (manquants)', `${col}: ${before - APP.data.length} lignes`);
-        alert(`${before - APP.data.length} ligne(s) supprimÃ©e(s) pour "${col}".`);
+        alert(`${before - APP.data.length} ligne(s) supprimée(s) pour "${col}".`);
     } else {
         let fillVal;
         const vals = numericValues(col);
         if ((method === 'mean' || method === 'median') && vals.length === 0) {
-            alert(`Cette mÃ©thode n'est pas applicable : "${col}" ne contient pas de valeurs numÃ©riques.`);
+            alert(`Cette méthode n'est pas applicable : "${col}" ne contient pas de valeurs numériques.`);
             restoreEditTab();
             return;
         }
@@ -1001,8 +1001,8 @@ function fillMissing() {
         if (fillVal !== undefined) {
             APP.data.forEach(r => { if (isNull(r[col])) r[col] = fillVal; });
             const changed = missingBefore - countMissing(col);
-            addHistory(`Remplir manquants (${method})`, `${col} â†’ ${fillVal}`);
-            alert(`${changed} valeur(s) manquante(s) remplacÃ©e(s) dans "${col}".`);
+            addHistory(`Remplir manquants (${method})`, `${col} → ${fillVal}`);
+            alert(`${changed} valeur(s) manquante(s) remplacée(s) dans "${col}".`);
         }
     }
     renderStep();
@@ -1021,7 +1021,7 @@ function removeDuplicates() {
     renderStep();
 }
 
-// â”€â”€ Correction des valeurs aberrantes en un clic (rÃ¨gle 1.5Ã—IQR) â”€â”€
+// ── Correction des valeurs aberrantes en un clic (règle 1.5×IQR) ──
 function outlierBounds(col) {
     const v = numericValues(col).sort((a, b) => a - b);
     if (v.length < 4) return null;
@@ -1045,7 +1045,7 @@ function fixOutliers(col, method) {
         const before = APP.data.length;
         APP.data = APP.data.filter(r => !isOut(r[col]));
         affected = before - APP.data.length;
-        addHistory('Aberrantes : lignes supprimÃ©es', `${col} : ${affected} ligne(s)`, 'RÃ¨gle 1.5Ã—IQR');
+        addHistory('Aberrantes : lignes supprimées', `${col} : ${affected} ligne(s)`, 'Règle 1.5×IQR');
     } else {
         APP.data = APP.data.map(r => {
             if (!isOut(r[col])) return r;
@@ -1056,8 +1056,8 @@ function fixOutliers(col, method) {
             else if (method === 'null') nr[col] = null;
             return nr;
         });
-        const lbl = method === 'cap' ? 'plafonnÃ©es (bornes IQR)' : method === 'median' ? 'remplacÃ©es par la mÃ©diane' : 'mises Ã  vide';
-        addHistory(`Aberrantes : ${lbl}`, `${col} : ${affected} valeur(s)`, 'RÃ¨gle 1.5Ã—IQR');
+        const lbl = method === 'cap' ? 'plafonnées (bornes IQR)' : method === 'median' ? 'remplacées par la médiane' : 'mises à vide';
+        addHistory(`Aberrantes : ${lbl}`, `${col} : ${affected} valeur(s)`, 'Règle 1.5×IQR');
     }
     APP._assistCache = null;
     if (typeof pushAqiHistory === 'function') pushAqiHistory('Aberrantes');
@@ -1065,38 +1065,38 @@ function fixOutliers(col, method) {
     setTimeout(reopenOutliersTab, 20);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 4: VARIABLE DOCUMENTATION
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderStep4() {
     if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
     const nDoc = Object.keys(APP.variableDocs).length;
     const nTotal = APP.columns.length;
     const ratio = nTotal > 0 ? nDoc / nTotal : 0;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 3 : Documenter les variables</h2><p>DÃ©crivez chaque variable pour amÃ©liorer la rÃ©utilisabilitÃ©</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 3 : Documenter les variables</h2><p>Décrivez chaque variable pour améliorer la réutilisabilité</p></div>`;
     html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${ratio * 100}%;background:var(--primary)"></div></div>
-        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${nDoc}/${nTotal}</strong> variables documentÃ©es</p></div>`;
+        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${nDoc}/${nTotal}</strong> variables documentées</p></div>`;
 
-    html += `<div class="card"><h3>SÃ©lectionner une variable</h3>
+    html += `<div class="card"><h3>Sélectionner une variable</h3>
         <select id="doc-col-select" onchange="renderDocForm()" style="width:100%;padding:.5rem;font-size:.9rem;border:1px solid #ddd;border-radius:6px">
-        ${APP.columns.map(c => `<option value="${c}" ${APP.variableDocs[c] ? 'style="color:var(--primary)"' : ''}>${c} ${APP.variableDocs[c] ? 'âœ“' : ''}</option>`).join('')}</select></div>`;
+        ${APP.columns.map(c => `<option value="${c}" ${APP.variableDocs[c] ? 'style="color:var(--primary)"' : ''}>${c} ${APP.variableDocs[c] ? '✓' : ''}</option>`).join('')}</select></div>`;
 
     html += `<div id="doc-form-container"></div>`;
 
     // Summary table
     if (nDoc > 0) {
-        html += `<div class="card"><h3>RÃ©sumÃ© de la documentation</h3><div class="table-wrap"><table>
-            <tr><th>Variable</th><th>Description</th><th>Type</th><th>UnitÃ©</th><th>Statut</th></tr>`;
+        html += `<div class="card"><h3>Résumé de la documentation</h3><div class="table-wrap"><table>
+            <tr><th>Variable</th><th>Description</th><th>Type</th><th>Unité</th><th>Statut</th></tr>`;
         for (const col of APP.columns) {
             const doc = APP.variableDocs[col];
             html += `<tr><td><strong>${col}</strong></td><td>${doc?.description || '-'}</td><td>${doc?.data_type || '-'}</td>
-                <td>${doc?.unit || '-'}</td><td>${doc ? 'âœ…' : 'âŒ'}</td></tr>`;
+                <td>${doc?.unit || '-'}</td><td>${doc ? '✅' : '❌'}</td></tr>`;
         }
         html += '</table></div></div>';
     }
 
-    html += navButtons(2, 4, 'MÃ©tadonnÃ©es â†’');
+    html += navButtons(2, 4, 'Métadonnées →');
     return html;
 }
 
@@ -1109,29 +1109,29 @@ function renderDocForm() {
     const isNum = isNumericCol(col);
 
     let info = `<div class="metrics" style="grid-template-columns:repeat(4,1fr)">
-        <div class="metric"><div class="val" style="font-size:1.2rem">${isNum ? 'Num' : 'Texte'}</div><div class="label">Type dÃ©tectÃ©</div></div>
+        <div class="metric"><div class="val" style="font-size:1.2rem">${isNum ? 'Num' : 'Texte'}</div><div class="label">Type détecté</div></div>
         <div class="metric"><div class="val" style="font-size:1.2rem">${serie.length}</div><div class="label">Non-null</div></div>
         <div class="metric"><div class="val" style="font-size:1.2rem">${nUnique}</div><div class="label">Uniques</div></div>
         <div class="metric"><div class="val" style="font-size:1.2rem">${nMissing}</div><div class="label">Manquants</div></div>
     </div>`;
 
-    const types = ['NumÃ©rique continu','NumÃ©rique discret','CatÃ©goriel nominal','CatÃ©goriel ordinal','Date/Temps','Texte libre','Binaire','Identifiant'];
+    const types = ['Numérique continu','Numérique discret','Catégoriel nominal','Catégoriel ordinal','Date/Temps','Texte libre','Binaire','Identifiant'];
 
-    let form = `<div class="card"><h3>Documentation de Â« ${col} Â»</h3>${info}
+    let form = `<div class="card"><h3>Documentation de « ${col} »</h3>${info}
         <div class="form-group"><label>Description :</label><textarea id="doc-desc" rows="2">${doc.description || ''}</textarea></div>
         <div class="form-row">
-            <div class="form-group"><label>Type de donnÃ©e :</label><select id="doc-type">${types.map(t => `<option ${t === doc.data_type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-            <div class="form-group"><label>UnitÃ© de mesure :</label><input id="doc-unit" value="${doc.unit || ''}"></div>
+            <div class="form-group"><label>Type de donnée :</label><select id="doc-type">${types.map(t => `<option ${t === doc.data_type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Unité de mesure :</label><input id="doc-unit" value="${doc.unit || ''}"></div>
         </div>
         <div class="form-row">
             <div class="form-group"><label>Format attendu :</label><input id="doc-format" value="${doc.format || ''}" placeholder="ex: YYYY-MM-DD"></div>
             <div class="form-group"><label>Valeurs possibles :</label><input id="doc-values" value="${doc.values || ''}" placeholder="ex: 0-100, Oui/Non"></div>
         </div>
         <div class="form-row">
-            <div class="form-group"><label>RÃ¨gle de validation :</label><input id="doc-validation" value="${doc.validation || ''}" placeholder="ex: > 0, non vide"></div>
+            <div class="form-group"><label>Règle de validation :</label><input id="doc-validation" value="${doc.validation || ''}" placeholder="ex: > 0, non vide"></div>
             <div class="form-group"><label>Exemple de valeur :</label><input id="doc-example" value="${doc.example || ''}"></div>
         </div>
-        <div class="form-group"><label>UtilitÃ© pour l'analyse / l'IA :</label><input id="doc-utility" value="${doc.utility || ''}"></div>
+        <div class="form-group"><label>Utilité pour l'analyse / l'IA :</label><input id="doc-utility" value="${doc.utility || ''}"></div>
         <label style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:.85rem">
             <input type="checkbox" id="doc-target" ${doc.is_target ? 'checked' : ''}> Variable cible (target) pour l'IA</label>
         <button class="btn btn-primary" onclick="saveDocForm()">Enregistrer</button>
@@ -1158,27 +1158,27 @@ function saveDocForm() {
     setTimeout(() => { document.getElementById('doc-col-select').value = col; renderDocForm(); }, 50);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 5: METADATA
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderStep5() {
     const m = APP.metadata;
     const licenses = ['','CC-BY 4.0','CC-BY-SA 4.0','CC-BY-NC 4.0','CC0 1.0','ODC-ODbL','Autre'];
     const fields = [
-        ['title','Titre du jeu de donnÃ©es','text'],['author','Auteur(s)','text'],['organization','Organisation','text'],
-        ['country','Pays','text'],['geographic_area','Zone gÃ©ographique','text'],['collection_period','PÃ©riode de collecte','text'],
-        ['description','Description','textarea'],['collection_method','MÃ©thode de collecte','textarea'],
+        ['title','Titre du jeu de données','text'],['author','Auteur(s)','text'],['organization','Organisation','text'],
+        ['country','Pays','text'],['geographic_area','Zone géographique','text'],['collection_period','Période de collecte','text'],
+        ['description','Description','textarea'],['collection_method','Méthode de collecte','textarea'],
         ['target_population','Population cible','text'],['license','Licence','select'],
-        ['access_conditions',"Conditions d'accÃ¨s",'text'],['keywords','Mots-clÃ©s (sÃ©parÃ©s par virgules)','text'],
-        ['contact','Contact','text'],['version','Version','text'],['doi','DOI (si disponible)','text'],['citation','Citation recommandÃ©e','textarea']
+        ['access_conditions',"Conditions d'accès",'text'],['keywords','Mots-clés (séparés par virgules)','text'],
+        ['contact','Contact','text'],['version','Version','text'],['doi','DOI (si disponible)','text'],['citation','Citation recommandée','textarea']
     ];
     const filled = fields.filter(f => m[f[0]]).length;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 4 : MÃ©tadonnÃ©es du jeu de donnÃ©es</h2><p>Informations gÃ©nÃ©rales sur votre jeu de donnÃ©es</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 4 : Métadonnées du jeu de données</h2><p>Informations générales sur votre jeu de données</p></div>`;
     html += `<div class="card"><div class="progress-bar"><div class="fill" style="width:${pct(filled, fields.length)}%;background:var(--primary)"></div></div>
-        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${filled}/${fields.length}</strong> champs renseignÃ©s</p></div>`;
+        <p style="text-align:center;font-size:.85rem;margin-top:.3rem"><strong>${filled}/${fields.length}</strong> champs renseignés</p></div>`;
 
-    html += '<div class="card"><h3>Informations gÃ©nÃ©rales</h3><div class="form-row">';
+    html += '<div class="card"><h3>Informations générales</h3><div class="form-row">';
     let colCount = 0;
     for (const [key, label, type] of fields) {
         if (type === 'textarea') {
@@ -1195,8 +1195,8 @@ function renderStep5() {
         }
         if (colCount === 2) { html += '</div><div class="form-row">'; colCount = 0; }
     }
-    html += '</div><button class="btn btn-primary" style="margin-top:.8rem" onclick="saveMetadata()">Enregistrer les mÃ©tadonnÃ©es</button></div>';
-    html += navButtons(3, 5, 'Score FAIR â†’');
+    html += '</div><button class="btn btn-primary" style="margin-top:.8rem" onclick="saveMetadata()">Enregistrer les métadonnées</button></div>';
+    html += navButtons(3, 5, 'Score FAIR →');
     return html;
 }
 
@@ -1208,12 +1208,12 @@ function saveMetadata() {
         if (el) APP.metadata[f] = el.value;
     }
     scheduleAutosave();
-    alert('MÃ©tadonnÃ©es enregistrÃ©es !');
+    alert('Métadonnées enregistrées !');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 6: FAIR SCORE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function computeFAIR() {
     const m = APP.metadata, df = APP.data, cols = APP.columns;
     const d = {};
@@ -1222,22 +1222,22 @@ function computeFAIR() {
     const details = { F: [], A: [], I: [], R: [] };
     const maxS = { F: 25, A: 25, I: 25, R: 25 };
 
-    // fix = {field, step} : action concrÃ¨te pour atteindre le critÃ¨re
+    // fix = {field, step} : action concrète pour atteindre le critère
     const check = (letter, pts, cond, ok, fail, fix) => {
         if (cond) { scores[letter] += pts; details[letter].push(['ok', ok, null]); }
         else details[letter].push(['missing', fail, fix]);
     };
 
-    check('F', 5, m.title, 'Titre renseignÃ©', 'Titre manquant', { field: 'title', step: 4 });
-    check('F', 5, m.description, 'Description renseignÃ©e', 'Description manquante', { field: 'description', step: 4 });
-    check('F', 5, m.keywords, 'Mots-clÃ©s renseignÃ©s', 'Mots-clÃ©s manquants', { field: 'keywords', step: 4 });
-    check('F', 5, m.author, 'Auteur renseignÃ©', 'Auteur manquant', { field: 'author', step: 4 });
-    check('F', 5, m.version, 'Version renseignÃ©e', 'Version manquante', { field: 'version', step: 4, auto: 'version' });
+    check('F', 5, m.title, 'Titre renseigné', 'Titre manquant', { field: 'title', step: 4 });
+    check('F', 5, m.description, 'Description renseignée', 'Description manquante', { field: 'description', step: 4 });
+    check('F', 5, m.keywords, 'Mots-clés renseignés', 'Mots-clés manquants', { field: 'keywords', step: 4 });
+    check('F', 5, m.author, 'Auteur renseigné', 'Auteur manquant', { field: 'author', step: 4 });
+    check('F', 5, m.version, 'Version renseignée', 'Version manquante', { field: 'version', step: 4, auto: 'version' });
 
-    check('A', 8, m.license, 'Licence dÃ©finie', 'Licence manquante', { field: 'license', step: 4, auto: 'license' });
-    check('A', 7, m.access_conditions, "Conditions d'accÃ¨s dÃ©finies", "Conditions d'accÃ¨s manquantes", { field: 'access_conditions', step: 4, auto: 'access' });
-    check('A', 5, m.contact, 'Contact renseignÃ©', 'Contact manquant', { field: 'contact', step: 4 });
-    check('A', 5, m.citation, 'Citation recommandÃ©e dÃ©finie', 'Citation recommandÃ©e manquante', { field: 'citation', step: 4, auto: 'citation' });
+    check('A', 8, m.license, 'Licence définie', 'Licence manquante', { field: 'license', step: 4, auto: 'license' });
+    check('A', 7, m.access_conditions, "Conditions d'accès définies", "Conditions d'accès manquantes", { field: 'access_conditions', step: 4, auto: 'access' });
+    check('A', 5, m.contact, 'Contact renseigné', 'Contact manquant', { field: 'contact', step: 4 });
+    check('A', 5, m.citation, 'Citation recommandée définie', 'Citation recommandée manquante', { field: 'citation', step: 4, auto: 'citation' });
 
     const goodNames = cols.filter(c => c.length > 3 && !c.startsWith('Unnamed')).length;
     const nameRatio = cols.length > 0 ? goodNames / cols.length : 0;
@@ -1247,41 +1247,41 @@ function computeFAIR() {
     const nNumeric = cols.filter(c => isNumericCol(c)).length;
     const typeRatio = cols.length > 0 ? nNumeric / cols.length : 0;
     scores.I += Math.round(typeRatio * 7);
-    details.I.push([typeRatio > 0.5 ? 'ok' : 'missing', `Colonnes typÃ©es : ${nNumeric}/${cols.length}`, null]);
+    details.I.push([typeRatio > 0.5 ? 'ok' : 'missing', `Colonnes typées : ${nNumeric}/${cols.length}`, null]);
     scores.I += 5; details.I.push(['ok', 'Format standard (CSV/Excel)', null]);
     const docRatio = cols.length > 0 ? Object.keys(d).length / cols.length : 0;
     scores.I += Math.round(docRatio * 5);
-    details.I.push([docRatio > 0.5 ? 'ok' : 'missing', `Variables documentÃ©es : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
+    details.I.push([docRatio > 0.5 ? 'ok' : 'missing', `Variables documentées : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
 
-    check('R', 6, m.license, 'Licence dÃ©finie pour rÃ©utilisation', 'Licence nÃ©cessaire pour la rÃ©utilisation', { field: 'license', step: 4, auto: 'license' });
-    check('R', 5, m.collection_method, 'MÃ©thode de collecte documentÃ©e', 'MÃ©thode de collecte manquante', { field: 'collection_method', step: 4 });
-    check('R', 4, m.geographic_area, 'Zone gÃ©ographique renseignÃ©e', 'Zone gÃ©ographique manquante', { field: 'geographic_area', step: 4 });
+    check('R', 6, m.license, 'Licence définie pour réutilisation', 'Licence nécessaire pour la réutilisation', { field: 'license', step: 4, auto: 'license' });
+    check('R', 5, m.collection_method, 'Méthode de collecte documentée', 'Méthode de collecte manquante', { field: 'collection_method', step: 4 });
+    check('R', 4, m.geographic_area, 'Zone géographique renseignée', 'Zone géographique manquante', { field: 'geographic_area', step: 4 });
 
     const totalCells = df.length * cols.length;
     let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
     const missPct = totalCells > 0 ? totalMiss / totalCells * 100 : 100;
-    if (missPct < 5) { scores.R += 5; details.R.push(['ok', `ComplÃ©tude Ã©levÃ©e (${(100 - missPct).toFixed(1)}%)`, null]); }
-    else if (missPct < 20) { scores.R += 3; details.R.push(['partial', `ComplÃ©tude moyenne (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]); }
-    else details.R.push(['missing', `ComplÃ©tude faible (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]);
+    if (missPct < 5) { scores.R += 5; details.R.push(['ok', `Complétude élevée (${(100 - missPct).toFixed(1)}%)`, null]); }
+    else if (missPct < 20) { scores.R += 3; details.R.push(['partial', `Complétude moyenne (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]); }
+    else details.R.push(['missing', `Complétude faible (${(100 - missPct).toFixed(1)}%)`, { step: 2 }]);
 
     scores.R += Math.round(docRatio * 5);
-    details.R.push([docRatio > 0.5 ? 'ok' : 'missing', `Dictionnaire de donnÃ©es : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
+    details.R.push([docRatio > 0.5 ? 'ok' : 'missing', `Dictionnaire de données : ${Object.keys(d).length}/${cols.length}`, docRatio > 0.5 ? null : { step: 3, auto: 'doc' }]);
 
     return { scores, details, total: scores.F + scores.A + scores.I + scores.R, max: 100, maxS };
 }
 
-// Renseigne automatiquement un champ FAIR dÃ©ductible, puis recalcule
+// Renseigne automatiquement un champ FAIR déductible, puis recalcule
 function fairAutoFix(kind) {
     const m = { ...APP.metadata };
     if (kind === 'license') m.license = m.license || 'CC-BY 4.0';
     else if (kind === 'version') m.version = m.version || '1.0';
-    else if (kind === 'access') m.access_conditions = m.access_conditions || 'AccÃ¨s ouvert';
+    else if (kind === 'access') m.access_conditions = m.access_conditions || 'Accès ouvert';
     else if (kind === 'citation') {
         const author = m.author || 'Auteur', year = new Date().getFullYear(), title = m.title || APP.fileName;
         m.citation = m.citation || `${author} (${year}). ${title}. Version ${m.version || '1.0'}.`;
     }
     APP.metadata = m;
-    addHistory('FAIR : champ renseignÃ© automatiquement', kind, 'Valeur par dÃ©faut proposÃ©e, modifiable Ã  l\'Ã©tape 4');
+    addHistory('FAIR : champ renseigné automatiquement', kind, 'Valeur par défaut proposée, modifiable à l\'étape 4');
     if (typeof pushAqiHistory === 'function') pushAqiHistory('FAIR');
     APP._assistCache = null;
     renderNav(); renderStep();
@@ -1292,13 +1292,13 @@ function renderStep6() {
     const fair = computeFAIR();
     APP.fairScore = fair;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 5 : ConformitÃ© FAIR</h2><p>Findable Â· Accessible Â· Interoperable Â· Reusable</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 5 : Conformité FAIR</h2><p>Findable · Accessible · Interoperable · Reusable</p></div>`;
 
     const levelColor = scoreColor(fair.total / 100);
     html += `<div class="card"><div class="score-display">
         <div class="score-big" style="color:${levelColor}">${fair.total}</div>
         <div class="score-max">/100</div>
-        <div class="score-level" style="background:${levelColor};color:#fff">${fair.total <= 39 ? 'Faible' : fair.total <= 69 ? 'Moyen' : 'Ã‰levÃ©'}</div>
+        <div class="score-level" style="background:${levelColor};color:#fff">${fair.total <= 39 ? 'Faible' : fair.total <= 69 ? 'Moyen' : 'Élevé'}</div>
     </div></div>`;
 
     html += '<div class="fair-row">';
@@ -1309,94 +1309,94 @@ function renderStep6() {
     }
     html += '</div>';
 
-    // Actions rapides globales pour les champs dÃ©ductibles automatiquement
+    // Actions rapides globales pour les champs déductibles automatiquement
     const autoable = [];
     if (!APP.metadata.license) autoable.push(['license', 'Licence CC-BY 4.0']);
     if (!APP.metadata.version) autoable.push(['version', 'Version 1.0']);
-    if (!APP.metadata.access_conditions) autoable.push(['access', "Conditions d'accÃ¨s : ouvert"]);
-    if (!APP.metadata.citation && (APP.metadata.author || APP.metadata.title)) autoable.push(['citation', 'Citation recommandÃ©e']);
+    if (!APP.metadata.access_conditions) autoable.push(['access', "Conditions d'accès : ouvert"]);
+    if (!APP.metadata.citation && (APP.metadata.author || APP.metadata.title)) autoable.push(['citation', 'Citation recommandée']);
     if (autoable.length) {
-        html += `<div class="card" style="border-left:4px solid var(--primary-light)"><h3>âš¡ Atteindre plus vite les critÃ¨res</h3>
-            <p style="font-size:.85rem;color:#666;margin-bottom:.6rem">Ces critÃ¨res peuvent Ãªtre renseignÃ©s automatiquement (valeurs par dÃ©faut modifiables ensuite Ã  l'Ã©tape 4) :</p>
+        html += `<div class="card" style="border-left:4px solid var(--primary-light)"><h3>⚡ Atteindre plus vite les critères</h3>
+            <p style="font-size:.85rem;color:#666;margin-bottom:.6rem">Ces critères peuvent être renseignés automatiquement (valeurs par défaut modifiables ensuite à l'étape 4) :</p>
             <div style="display:flex;flex-wrap:wrap;gap:.5rem">`;
-        for (const [k, lbl] of autoable) html += `<button class="btn btn-primary btn-sm" onclick="fairAutoFix('${k}')">âœ… ${lbl}</button>`;
+        for (const [k, lbl] of autoable) html += `<button class="btn btn-primary btn-sm" onclick="fairAutoFix('${k}')">✅ ${lbl}</button>`;
         html += `</div></div>`;
     }
 
     for (const [letter, name] of [['F','Findable'],['A','Accessible'],['I','Interoperable'],['R','Reusable']]) {
         html += `<div class="card"><h3>${letter} : ${name} (${fair.scores[letter]}/${fair.maxS[letter]})</h3>`;
         for (const [status, msg, fix] of fair.details[letter]) {
-            const icon = status === 'ok' ? 'âœ…' : status === 'partial' ? 'âš ï¸' : 'âŒ';
+            const icon = status === 'ok' ? '✅' : status === 'partial' ? '⚠️' : '❌';
             html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.35rem 0">
                 <span style="flex:1;min-width:200px;font-size:.85rem">${icon} ${msg}</span>`;
             if (fix && status !== 'ok') {
-                if (fix.auto) html += `<button class="btn btn-primary btn-sm" onclick="${fix.auto === 'doc' ? "applyAssistAction('doc')" : `fairAutoFix('${fix.auto}')`}">âœ… Corriger auto</button>`;
-                html += `<button class="btn btn-secondary btn-sm" onclick="goStep(${fix.step})">âœï¸ ${fix.step === 4 ? 'Renseigner' : fix.step === 2 ? 'Corriger' : 'Documenter'}</button>`;
+                if (fix.auto) html += `<button class="btn btn-primary btn-sm" onclick="${fix.auto === 'doc' ? "applyAssistAction('doc')" : `fairAutoFix('${fix.auto}')`}">✅ Corriger auto</button>`;
+                html += `<button class="btn btn-secondary btn-sm" onclick="goStep(${fix.step})">✏️ ${fix.step === 4 ? 'Renseigner' : fix.step === 2 ? 'Corriger' : 'Documenter'}</button>`;
             }
             html += `</div>`;
         }
         html += '</div>';
     }
 
-    // CritÃ¨res FAIR rÃ©ellement externes (impossibles hors publication)
+    // Critères FAIR réellement externes (impossibles hors publication)
     html += `<div class="card" style="background:#FFF8E1;border-left:4px solid var(--accent)">
-        <h3>ðŸŒ CritÃ¨res nÃ©cessitant une publication (hors application)</h3>
-        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">Certains principes FAIR â€” <strong>identifiant pÃ©renne (DOI)</strong>, <strong>accÃ¨s via un protocole standard</strong> et <strong>indexation dans un catalogue</strong> â€” ne peuvent pas Ãªtre satisfaits par un outil local : ils exigent le dÃ©pÃ´t du jeu de donnÃ©es sur un entrepÃ´t.</p>
-        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">âœ… <strong>Bonne nouvelle :</strong> AfriData Ready gÃ©nÃ¨re dÃ©jÃ  le fichier <strong>metadata_datacite.xml</strong> (Ã  l'export) qui permet d'obtenir un DOI. Pour finaliser :</p>
+        <h3>🌐 Critères nécessitant une publication (hors application)</h3>
+        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">Certains principes FAIR — <strong>identifiant pérenne (DOI)</strong>, <strong>accès via un protocole standard</strong> et <strong>indexation dans un catalogue</strong> — ne peuvent pas être satisfaits par un outil local : ils exigent le dépôt du jeu de données sur un entrepôt.</p>
+        <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">✅ <strong>Bonne nouvelle :</strong> AfriData Ready génère déjà le fichier <strong>metadata_datacite.xml</strong> (à l'export) qui permet d'obtenir un DOI. Pour finaliser :</p>
         <ul style="font-size:.83rem;color:#555;margin-left:1.1rem">
-            <li>DÃ©posez le dossier ZIP sur <strong>Zenodo</strong>, <strong>Dataverse</strong> ou <strong>OSF</strong> (gratuit) â†’ vous obtenez un DOI pÃ©renne et une URL d'accÃ¨s stable.</li>
-            <li>Ces plateformes indexent automatiquement vos donnÃ©es dans des catalogues (moissonnage DCAT/OAI-PMH).</li>
-            <li>Reportez ensuite le DOI obtenu dans les mÃ©tadonnÃ©es (Ã©tape 4).</li>
+            <li>Déposez le dossier ZIP sur <strong>Zenodo</strong>, <strong>Dataverse</strong> ou <strong>OSF</strong> (gratuit) → vous obtenez un DOI pérenne et une URL d'accès stable.</li>
+            <li>Ces plateformes indexent automatiquement vos données dans des catalogues (moissonnage DCAT/OAI-PMH).</li>
+            <li>Reportez ensuite le DOI obtenu dans les métadonnées (étape 4).</li>
         </ul>
-        <p style="font-size:.8rem;color:#999;margin-top:.5rem;font-style:italic">Le score FAIR de l'application se concentre donc volontairement sur ce qui est rÃ©alisable localement ; le dÃ©pÃ´t final complÃ¨te les derniers critÃ¨res.</p>
+        <p style="font-size:.8rem;color:#999;margin-top:.5rem;font-style:italic">Le score FAIR de l'application se concentre donc volontairement sur ce qui est réalisable localement ; le dépôt final complète les derniers critères.</p>
     </div>`;
 
-    html += navButtons(4, 6, 'AI Readiness â†’');
+    html += navButtons(4, 6, 'AI Readiness →');
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 7: AI READINESS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function computeAI() {
     const df = APP.data, cols = APP.columns, m = APP.metadata;
     const d = {};
     for (const c of cols) { if (APP.variableDocs[c]) d[c] = APP.variableDocs[c]; }
     const dims = {}, details = {};
-    const maxD = { 'ComplÃ©tude': 20, 'CohÃ©rence': 15, 'Documentation': 15, 'QualitÃ© des variables': 15, 'Variable cible': 10, 'Structure': 15, 'DonnÃ©es sensibles': 10 };
+    const maxD = { 'Complétude': 20, 'Cohérence': 15, 'Documentation': 15, 'Qualité des variables': 15, 'Variable cible': 10, 'Structure': 15, 'Données sensibles': 10 };
 
     const totalCells = df.length * cols.length;
     let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
     const missPct = totalCells > 0 ? totalMiss / totalCells * 100 : 100;
-    dims['ComplÃ©tude'] = missPct === 0 ? 20 : missPct <= 2 ? 18 : missPct <= 5 ? 15 : missPct <= 10 ? 12 : missPct <= 20 ? 8 : missPct <= 35 ? 4 : 0;
-    details['ComplÃ©tude'] = [`Taux de valeurs manquantes : ${missPct.toFixed(1)}%`];
+    dims['Complétude'] = missPct === 0 ? 20 : missPct <= 2 ? 18 : missPct <= 5 ? 15 : missPct <= 10 ? 12 : missPct <= 20 ? 8 : missPct <= 35 ? 4 : 0;
+    details['Complétude'] = [`Taux de valeurs manquantes : ${missPct.toFixed(1)}%`];
 
     const nDup = countDuplicates();
     const dupPct = df.length > 0 ? nDup / df.length * 100 : 0;
     let s2 = 15;
     if (dupPct > 20) s2 -= 8; else if (dupPct > 5) s2 -= 4; else if (dupPct > 0) s2 -= 2;
-    dims['CohÃ©rence'] = Math.max(0, s2);
-    details['CohÃ©rence'] = [`Doublons : ${nDup} (${dupPct.toFixed(1)}%)`];
+    dims['Cohérence'] = Math.max(0, s2);
+    details['Cohérence'] = [`Doublons : ${nDup} (${dupPct.toFixed(1)}%)`];
 
     const docRatio = cols.length > 0 ? Object.keys(d).length / cols.length : 0;
     let s3 = Math.round(docRatio * 10);
     if (m.description) s3 += 3;
     if (m.collection_method) s3 += 2;
     dims['Documentation'] = Math.min(15, s3);
-    details['Documentation'] = [`Variables documentÃ©es : ${Object.keys(d).length}/${cols.length}`];
+    details['Documentation'] = [`Variables documentées : ${Object.keys(d).length}/${cols.length}`];
 
     const goodNames = cols.filter(c => c.length > 3 && !c.startsWith('Unnamed')).length;
     const nameRatio = cols.length > 0 ? goodNames / cols.length : 0;
     const nNumeric = cols.filter(c => isNumericCol(c)).length;
     const featRatio = cols.length > 0 ? nNumeric / cols.length : 0;
-    dims['QualitÃ© des variables'] = Math.min(15, Math.round(nameRatio * 8) + Math.round(featRatio * 7));
-    details['QualitÃ© des variables'] = [`Noms explicites : ${goodNames}/${cols.length}`, `Features numÃ©riques : ${nNumeric}/${cols.length}`];
+    dims['Qualité des variables'] = Math.min(15, Math.round(nameRatio * 8) + Math.round(featRatio * 7));
+    details['Qualité des variables'] = [`Noms explicites : ${goodNames}/${cols.length}`, `Features numériques : ${nNumeric}/${cols.length}`];
 
     const targetKw = ['target','cible','label','classe','class','output','yield','rendement','production'];
     let hasTarget = cols.some(c => targetKw.some(k => c.toLowerCase().includes(k)));
     if (!hasTarget) hasTarget = Object.values(d).some(v => v.is_target);
     dims['Variable cible'] = hasTarget ? 10 : 0;
-    details['Variable cible'] = [`Variable cible identifiÃ©e : ${hasTarget ? 'Oui' : 'Non'}`];
+    details['Variable cible'] = [`Variable cible identifiée : ${hasTarget ? 'Oui' : 'Non'}`];
 
     let s6 = 15;
     const emptyCols = cols.filter(c => countMissing(c) === df.length).length;
@@ -1411,11 +1411,11 @@ function computeAI() {
     const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)))
         .filter(c => !(APP.anonymizedCols || []).includes(c));
     let s7 = Math.max(0, 10 - sensitiveCols.length * 3);
-    dims['DonnÃ©es sensibles'] = s7;
-    details['DonnÃ©es sensibles'] = [`Colonnes sensibles non traitÃ©es : ${sensitiveCols.length > 0 ? sensitiveCols.join(', ') : 'Aucune'}`];
+    dims['Données sensibles'] = s7;
+    details['Données sensibles'] = [`Colonnes sensibles non traitées : ${sensitiveCols.length > 0 ? sensitiveCols.join(', ') : 'Aucune'}`];
 
     const total = Object.values(dims).reduce((a, b) => a + b, 0);
-    const level = total <= 39 ? ['Faible', 'var(--danger)'] : total <= 69 ? ['Moyen', 'var(--accent)'] : ['Ã‰levÃ©', 'var(--primary)'];
+    const level = total <= 39 ? ['Faible', 'var(--danger)'] : total <= 69 ? ['Moyen', 'var(--accent)'] : ['Élevé', 'var(--primary)'];
 
     return { dims, details, total, max: 100, maxD, level };
 }
@@ -1425,7 +1425,7 @@ function renderStep7() {
     const ai = computeAI();
     APP.aiScore = ai;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 6 : AI Readiness</h2><p>Ã‰valuation de la prÃ©paration Ã  l'intelligence artificielle</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 6 : AI Readiness</h2><p>Évaluation de la préparation à l'intelligence artificielle</p></div>`;
 
     html += `<div class="card"><div class="score-display">
         <div class="score-big" style="color:${ai.level[1]}">${ai.total}</div>
@@ -1447,54 +1447,54 @@ function renderStep7() {
 
     for (const [dim, lines] of Object.entries(ai.details)) {
         html += `<div class="card"><h3>${dim} : ${ai.dims[dim]}/${ai.maxD[dim]}</h3>`;
-        for (const line of lines) html += `<p style="margin:.2rem 0;font-size:.85rem">â€¢ ${line}</p>`;
+        for (const line of lines) html += `<p style="margin:.2rem 0;font-size:.85rem">• ${line}</p>`;
         html += '</div>';
     }
 
-    html += navButtons(5, 7, 'Gouvernance â†’');
+    html += navButtons(5, 7, 'Gouvernance →');
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 8: RECOMMENDATIONS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function generateRecos() {
     const recos = [];
     const q = APP.qualityReport || analyzeQuality();
     const m = APP.metadata;
 
-    if (q.missingPct > 20) recos.push(['urgent', 'ComplÃ©ter les donnÃ©es', `Taux de valeurs manquantes Ã©levÃ© (${q.missingPct}%). Appliquer une stratÃ©gie d'imputation ou documenter les raisons.`]);
-    else if (q.missingPct > 5) recos.push(['important', 'RÃ©duire les valeurs manquantes', `${q.missingPct}% de valeurs manquantes. VÃ©rifier les colonnes critiques.`]);
-    if (q.n_duplicates > 0) recos.push(['important', 'Supprimer les doublons', `${q.n_duplicates} ligne(s) en doublon dÃ©tectÃ©e(s).`]);
+    if (q.missingPct > 20) recos.push(['urgent', 'Compléter les données', `Taux de valeurs manquantes élevé (${q.missingPct}%). Appliquer une stratégie d'imputation ou documenter les raisons.`]);
+    else if (q.missingPct > 5) recos.push(['important', 'Réduire les valeurs manquantes', `${q.missingPct}% de valeurs manquantes. Vérifier les colonnes critiques.`]);
+    if (q.n_duplicates > 0) recos.push(['important', 'Supprimer les doublons', `${q.n_duplicates} ligne(s) en doublon détectée(s).`]);
     if (q.emptyCols.length > 0) recos.push(['urgent', 'Supprimer les colonnes vides', `${q.emptyCols.length} colonne(s) vide(s) : ${q.emptyCols.join(', ')}`]);
 
     const missingMeta = ['title','author','description','license','keywords','contact'].filter(f => !m[f]);
-    if (missingMeta.length > 0) recos.push([missingMeta.length > 3 ? 'urgent' : 'important', 'ComplÃ©ter les mÃ©tadonnÃ©es', `Champs manquants : ${missingMeta.join(', ')}`]);
+    if (missingMeta.length > 0) recos.push([missingMeta.length > 3 ? 'urgent' : 'important', 'Compléter les métadonnées', `Champs manquants : ${missingMeta.join(', ')}`]);
 
     const nUndoc = APP.columns.length - APP.columns.filter(c => APP.variableDocs[c]).length;
-    if (nUndoc > 0) recos.push(['important', 'Documenter les variables', `${nUndoc} variable(s) non documentÃ©e(s).`]);
-    if (!m.license) recos.push(['urgent', 'Ajouter une licence', 'CC-BY 4.0 est recommandÃ©e pour les donnÃ©es ouvertes.']);
+    if (nUndoc > 0) recos.push(['important', 'Documenter les variables', `${nUndoc} variable(s) non documentée(s).`]);
+    if (!m.license) recos.push(['urgent', 'Ajouter une licence', 'CC-BY 4.0 est recommandée pour les données ouvertes.']);
 
     const badNames = APP.columns.filter(c => c.length <= 2 || c.startsWith('Unnamed')).length;
-    if (badNames > 0) recos.push(['important', 'AmÃ©liorer les noms de colonnes', `${badNames} colonne(s) avec des noms peu explicites.`]);
+    if (badNames > 0) recos.push(['important', 'Améliorer les noms de colonnes', `${badNames} colonne(s) avec des noms peu explicites.`]);
 
     const sensitiveKw = ['nom','name','prenom','telephone','phone','email','adresse','address'];
     const sensitive = APP.columns.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
-    if (sensitive.length > 0) recos.push(['important', 'Anonymiser les donnÃ©es sensibles', `Colonnes sensibles : ${sensitive.join(', ')}`]);
+    if (sensitive.length > 0) recos.push(['important', 'Anonymiser les données sensibles', `Colonnes sensibles : ${sensitive.join(', ')}`]);
 
-    recos.push(['improve', 'DÃ©poser sur un entrepÃ´t', 'DÃ©poser le dataset sur Zenodo ou Dataverse pour obtenir un DOI pÃ©renne (principe FAIR).']);
+    recos.push(['improve', 'Déposer sur un entrepôt', 'Déposer le dataset sur Zenodo ou Dataverse pour obtenir un DOI pérenne (principe FAIR).']);
 
     const order = { urgent: 0, important: 1, improve: 2 };
     recos.sort((a, b) => order[a[0]] - order[b[0]]);
     return recos;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// STEP 7: GOUVERNANCE (sÃ©curitÃ©, confidentialitÃ©, lineage, provenance)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// STEP 7: GOUVERNANCE (sécurité, confidentialité, lineage, provenance)
+// ═══════════════════════════════════════════════════════════════
 function anonymizeOneColumn(col) {
     mutAnonymize([col]);
-    addHistory('Pseudonymisation', col, 'Gouvernance : valeurs remplacÃ©es par des codes');
+    addHistory('Pseudonymisation', col, 'Gouvernance : valeurs remplacées par des codes');
     renderStep();
 }
 
@@ -1505,57 +1505,57 @@ function renderGovernance() {
     const sens = sensitiveColumns();
     const pending = sens.filter(c => !(APP.anonymizedCols || []).includes(c));
 
-    let html = `<div class="page-header"><h2>Ã‰tape 7 : Gouvernance</h2><p>SÃ©curitÃ©, confidentialitÃ©, provenance et traÃ§abilitÃ© (RGPD Â· ISO 25012 Â· DAMA-DMBOK)</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 7 : Gouvernance</h2><p>Sécurité, confidentialité, provenance et traçabilité (RGPD · ISO 25012 · DAMA-DMBOK)</p></div>`;
 
     html += `<div class="metrics">
-        <div class="metric" style="border-top-color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}"><div class="val" style="color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}">${Math.round(aqi.dims.securite)}/100</div><div class="label">SÃ©curitÃ© & confidentialitÃ©</div></div>
-        <div class="metric"><div class="val">${pending.length}</div><div class="label">Colonnes sensibles Ã  traiter</div></div>
-        <div class="metric"><div class="val">${APP.editHistory.length}</div><div class="label">Actions tracÃ©es (lineage)</div></div>
+        <div class="metric" style="border-top-color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}"><div class="val" style="color:${aqi.dims.securite >= 80 ? 'var(--primary)' : 'var(--danger)'}">${Math.round(aqi.dims.securite)}/100</div><div class="label">Sécurité & confidentialité</div></div>
+        <div class="metric"><div class="val">${pending.length}</div><div class="label">Colonnes sensibles à traiter</div></div>
+        <div class="metric"><div class="val">${APP.editHistory.length}</div><div class="label">Actions tracées (lineage)</div></div>
         <div class="metric"><div class="val">${m.version || '-'}</div><div class="label">Version</div></div>
     </div>`;
 
-    // DonnÃ©es sensibles / anonymisation
-    html += `<div class="card"><h3>ðŸ”’ DonnÃ©es personnelles et sensibles</h3>`;
+    // Données sensibles / anonymisation
+    html += `<div class="card"><h3>🔒 Données personnelles et sensibles</h3>`;
     if (!sens.length) {
-        html += '<div class="issue info">âœ… <strong>Aucune colonne sensible dÃ©tectÃ©e</strong> (recherche par mots-clÃ©s : nom, tÃ©lÃ©phone, email, adresseâ€¦).</div>';
+        html += '<div class="issue info">✅ <strong>Aucune colonne sensible détectée</strong> (recherche par mots-clés : nom, téléphone, email, adresse…).</div>';
     } else {
         html += `<div class="table-wrap"><table><tr><th>Colonne</th><th>Statut</th><th>Actions</th></tr>`;
         for (const c of sens) {
             const done = (APP.anonymizedCols || []).includes(c);
             html += `<tr><td><strong>${c}</strong></td>
-                <td>${done ? '<span style="color:var(--primary);font-weight:700">âœ… PseudonymisÃ©e</span>' : '<span style="color:var(--danger);font-weight:700">âš ï¸ Identifiante</span>'}</td>
-                <td style="white-space:nowrap">${done ? '-' : `<button class="btn btn-primary btn-sm" onclick="anonymizeOneColumn('${c.replace(/'/g, "\\'")}')">ðŸ”’ Pseudonymiser</button>`}</td></tr>`;
+                <td>${done ? '<span style="color:var(--primary);font-weight:700">✅ Pseudonymisée</span>' : '<span style="color:var(--danger);font-weight:700">⚠️ Identifiante</span>'}</td>
+                <td style="white-space:nowrap">${done ? '-' : `<button class="btn btn-primary btn-sm" onclick="anonymizeOneColumn('${c.replace(/'/g, "\\'")}')">🔒 Pseudonymiser</button>`}</td></tr>`;
         }
         html += '</table></div>';
-        if (pending.length) html += `<p style="font-size:.82rem;color:#666;margin-top:.5rem">La pseudonymisation remplace chaque valeur par un code stable (ex. NOM_1, NOM_2) : les analyses restent possibles, l'identitÃ© est protÃ©gÃ©e.</p>`;
+        if (pending.length) html += `<p style="font-size:.82rem;color:#666;margin-top:.5rem">La pseudonymisation remplace chaque valeur par un code stable (ex. NOM_1, NOM_2) : les analyses restent possibles, l'identité est protégée.</p>`;
     }
     html += '</div>';
 
     // Provenance
     const provRows = [['Fichier source', APP.fileName], ['Auteur', m.author], ['Organisation', m.organization],
-        ['MÃ©thode de collecte', m.collection_method], ['PÃ©riode', m.collection_period], ['Licence', m.license]];
-    html += `<div class="card"><h3>ðŸ“œ Provenance</h3><div class="table-wrap"><table>`;
-    for (const [k, v] of provRows) html += `<tr><td style="width:220px"><strong>${k}</strong></td><td>${v || '<span style="color:var(--danger)">Non renseignÃ©</span>'}</td></tr>`;
+        ['Méthode de collecte', m.collection_method], ['Période', m.collection_period], ['Licence', m.license]];
+    html += `<div class="card"><h3>📜 Provenance</h3><div class="table-wrap"><table>`;
+    for (const [k, v] of provRows) html += `<tr><td style="width:220px"><strong>${k}</strong></td><td>${v || '<span style="color:var(--danger)">Non renseigné</span>'}</td></tr>`;
     html += `</table></div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="goStep(4)">âœï¸ ComplÃ©ter dans les mÃ©tadonnÃ©es</button></div>`;
+        <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="goStep(4)">✏️ Compléter dans les métadonnées</button></div>`;
 
     // Data Lineage
-    html += `<div class="card"><h3>ðŸ§¬ Data Lineage (traÃ§abilitÃ©)</h3>`;
+    html += `<div class="card"><h3>🧬 Data Lineage (traçabilité)</h3>`;
     if (!APP.editHistory.length) {
-        html += '<p style="color:#888">Aucune modification enregistrÃ©e pour le moment. Chaque correction (manuelle ou assistant) est automatiquement tracÃ©e : date, Ã©tape, action, dÃ©tail, justification.</p>';
+        html += '<p style="color:#888">Aucune modification enregistrée pour le moment. Chaque correction (manuelle ou assistant) est automatiquement tracée : date, étape, action, détail, justification.</p>';
     } else {
-        html += `<p style="font-size:.85rem;margin-bottom:.5rem"><strong>${APP.editHistory.length}</strong> action(s) tracÃ©e(s). Les 5 derniÃ¨res :</p>
-        <div class="table-wrap"><table><tr><th>Date</th><th>Heure</th><th>Action</th><th>DÃ©tail</th></tr>`;
+        html += `<p style="font-size:.85rem;margin-bottom:.5rem"><strong>${APP.editHistory.length}</strong> action(s) tracée(s). Les 5 dernières :</p>
+        <div class="table-wrap"><table><tr><th>Date</th><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
         for (const h of APP.editHistory.slice(-5).reverse()) html += `<tr><td>${h.date || ''}</td><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
         html += `</table></div><p style="font-size:.8rem;color:#888;margin-top:.4rem">Le journal complet est inclus dans l'export (journal_modifications.xlsx) et le rapport Word.</p>`;
     }
     html += '</div>';
 
     // Versionnement
-    html += `<div class="card"><h3>ðŸ—‚ï¸ Versionnement</h3>
-        <p style="font-size:.88rem">Version dÃ©clarÃ©e : <strong>${m.version || 'non renseignÃ©e'}</strong>${APP.mode === 'project' ? ` Â· Projet Â« ${APP.projectName} Â» sauvegardÃ© automatiquement (dernier enregistrement : ${APP.lastSaved || '-'})` : ' Â· Mode rapide : pensez Ã  exporter votre travail ou Ã  l\'enregistrer comme projet.'}</p></div>`;
+    html += `<div class="card"><h3>🗂️ Versionnement</h3>
+        <p style="font-size:.88rem">Version déclarée : <strong>${m.version || 'non renseignée'}</strong>${APP.mode === 'project' ? ` · Projet « ${APP.projectName} » sauvegardé automatiquement (dernier enregistrement : ${APP.lastSaved || '-'})` : ' · Mode rapide : pensez à exporter votre travail ou à l\'enregistrer comme projet.'}</p></div>`;
 
-    html += navButtons(6, 8, 'Tableau de bord AQI â†’');
+    html += navButtons(6, 8, 'Tableau de bord AQI →');
     return html;
 }
 
@@ -1568,9 +1568,9 @@ function renderChangeLog() {
     const addedCols = APP.columns.filter(c => !ini.columns.includes(c));
     const removedCols = ini.columns.filter(c => !APP.columns.includes(c));
 
-    let html = `<div class="card" style="margin-top:1.5rem"><h3>ðŸ“‹ Bilan des modifications</h3>`;
-    html += `<h4 style="margin:.8rem 0 .5rem;font-size:.9rem;color:#555">Comparatif avant / aprÃ¨s</h4>`;
-    html += `<div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>AprÃ¨s</th><th>Ã‰volution</th></tr>`;
+    let html = `<div class="card" style="margin-top:1.5rem"><h3>📋 Bilan des modifications</h3>`;
+    html += `<h4 style="margin:.8rem 0 .5rem;font-size:.9rem;color:#555">Comparatif avant / après</h4>`;
+    html += `<div class="table-wrap"><table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
     function diffBadge(before, after, lowerIsBetter) {
         const d = after - before;
         if (d === 0) return '<span style="color:#888">-</span>';
@@ -1583,24 +1583,24 @@ function renderChangeLog() {
     html += `<tr><td>Valeurs manquantes</td><td>${ini.missing}</td><td>${curMissing}</td><td>${diffBadge(ini.missing, curMissing, true)}</td></tr>`;
     html += `<tr><td>Doublons</td><td>${ini.duplicates}</td><td>${curDup}</td><td>${diffBadge(ini.duplicates, curDup, true)}</td></tr>`;
     html += '</table></div>';
-    if (removedCols.length) html += `<p style="font-size:.85rem;margin-top:.5rem">ðŸ—‘ï¸ Colonnes supprimÃ©es : <strong>${removedCols.join(', ')}</strong></p>`;
-    if (addedCols.length) html += `<p style="font-size:.85rem;margin-top:.3rem">âž• Colonnes ajoutÃ©es : <strong>${addedCols.join(', ')}</strong></p>`;
+    if (removedCols.length) html += `<p style="font-size:.85rem;margin-top:.5rem">🗑️ Colonnes supprimées : <strong>${removedCols.join(', ')}</strong></p>`;
+    if (addedCols.length) html += `<p style="font-size:.85rem;margin-top:.3rem">➕ Colonnes ajoutées : <strong>${addedCols.join(', ')}</strong></p>`;
 
     if (APP.editHistory.length > 0) {
         html += `<h4 style="margin:1rem 0 .5rem;font-size:.9rem;color:#555">Journal des actions (${APP.editHistory.length})</h4>`;
-        html += `<div class="table-wrap" style="max-height:300px;overflow-y:auto"><table><tr><th>Heure</th><th>Action</th><th>DÃ©tail</th></tr>`;
+        html += `<div class="table-wrap" style="max-height:300px;overflow-y:auto"><table><tr><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
         for (const h of APP.editHistory) html += `<tr><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
         html += '</table></div>';
     } else {
-        html += `<p style="color:#888;margin-top:.5rem;font-style:italic">Aucune modification effectuÃ©e.</p>`;
+        html += `<p style="color:#888;margin-top:.5rem;font-style:italic">Aucune modification effectuée.</p>`;
     }
     html += '</div>';
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // STEP 9: EXPORT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderStep9() {
     if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier.</p></div>';
 
@@ -1611,46 +1611,46 @@ function renderStep9() {
     APP.aqiScore = computeAQI();
     const aqi = APP.aqiScore;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 9 : Exporter le Data Product</h2><p>TÃ©lÃ©chargez votre jeu de donnÃ©es documentÃ©, certifiÃ© et conforme</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 9 : Exporter le Data Product</h2><p>Téléchargez votre jeu de données documenté, certifié et conforme</p></div>`;
 
     html += `<div class="metrics">
-        <div class="metric" style="border-top-color:${aqi.level[1]}"><div class="val" style="color:${aqi.level[1]}">${aqi.total}/100</div><div class="label">AQI Â· ${aqi.level[0]}</div></div>
+        <div class="metric" style="border-top-color:${aqi.level[1]}"><div class="val" style="color:${aqi.level[1]}">${aqi.total}/100</div><div class="label">AQI · ${aqi.level[0]}</div></div>
         <div class="metric"><div class="val" style="color:${scoreColor(APP.fairScore.total/100)}">${APP.fairScore.total}/100</div><div class="label">Score FAIR</div></div>
         <div class="metric"><div class="val" style="color:${APP.aiScore.level[1]}">${APP.aiScore.total}/100</div><div class="label">AI Readiness</div></div>
-        <div class="metric"><div class="val">${APP.data.length}Ã—${APP.columns.length}</div><div class="label">Lignes Ã— Colonnes</div></div>
+        <div class="metric"><div class="val">${APP.data.length}×${APP.columns.length}</div><div class="label">Lignes × Colonnes</div></div>
     </div>`;
 
     const fmtLabel = APP.inputFormat === 'xlsx' ? 'Excel' : APP.inputFormat === 'json' ? 'JSON' : 'CSV';
 
     html += `<div class="card"><h3>Contenu du Data Product (ZIP)</h3>
-        <p style="margin-bottom:.8rem;font-size:.9rem">Les donnÃ©es corrigÃ©es gardent le <strong>mÃªme format que l'original (${fmtLabel})</strong>.</p>
-        ${APP.inputFormat === 'xlsx' ? `<div style="margin-bottom:.8rem"><label style="cursor:pointer;font-size:.88rem"><input type="checkbox" id="export-styling" style="margin-right:.4rem">Appliquer la mise en forme Excel (en-tÃªtes colorÃ©s, colonnes ajustÃ©es)</label></div>` : ''}
+        <p style="margin-bottom:.8rem;font-size:.9rem">Les données corrigées gardent le <strong>même format que l'original (${fmtLabel})</strong>.</p>
+        ${APP.inputFormat === 'xlsx' ? `<div style="margin-bottom:.8rem"><label style="cursor:pointer;font-size:.88rem"><input type="checkbox" id="export-styling" style="margin-right:.4rem">Appliquer la mise en forme Excel (en-têtes colorés, colonnes ajustées)</label></div>` : ''}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.5rem">
-            <div class="issue info">ðŸ“„ DonnÃ©es corrigÃ©es (${fmtLabel})</div>
-            <div class="issue info">ðŸ—‚ï¸ DonnÃ©es originales (CSV)</div>
-            <div class="issue info">ðŸ“– Dictionnaire de donnÃ©es (Excel)</div>
-            <div class="issue info">ðŸ“‹ MÃ©tadonnÃ©es (Excel + JSON)</div>
-            <div class="issue info">ðŸŒ metadata.yaml</div>
-            <div class="issue info">ðŸ”– metadata_datacite.xml (DOI/DCAT)</div>
-            <div class="issue info">ðŸ” Rapport qualitÃ© (Excel)</div>
-            <div class="issue info">ðŸ“Š Score FAIR (Excel)</div>
-            <div class="issue info">ðŸ¤– Score AI Readiness (Excel)</div>
-            <div class="issue info">ðŸ… Rapport AQI (Excel + HTML)</div>
-            <div class="issue info">ðŸ’¡ Recommandations (Excel)</div>
-            <div class="issue info">ðŸ§¬ Journal / Data Lineage (Excel)</div>
-            <div class="issue info">ðŸ“ Rapport des modifications (Word)</div>
-            <div class="issue info">ðŸ“˜ README.md + CITATION.cff</div>
-            <div class="issue info">ðŸŽ–ï¸ Certificat AQI (HTML â†’ PDF)</div>
+            <div class="issue info">📄 Données corrigées (${fmtLabel})</div>
+            <div class="issue info">🗂️ Données originales (CSV)</div>
+            <div class="issue info">📖 Dictionnaire de données (Excel)</div>
+            <div class="issue info">📋 Métadonnées (Excel + JSON)</div>
+            <div class="issue info">🌐 metadata.yaml</div>
+            <div class="issue info">🔖 metadata_datacite.xml (DOI/DCAT)</div>
+            <div class="issue info">🔍 Rapport qualité (Excel)</div>
+            <div class="issue info">📊 Score FAIR (Excel)</div>
+            <div class="issue info">🤖 Score AI Readiness (Excel)</div>
+            <div class="issue info">🏅 Rapport AQI (Excel + HTML)</div>
+            <div class="issue info">💡 Recommandations (Excel)</div>
+            <div class="issue info">🧬 Journal / Data Lineage (Excel)</div>
+            <div class="issue info">📝 Rapport des modifications (Word)</div>
+            <div class="issue info">📘 README.md + CITATION.cff</div>
+            <div class="issue info">🎖️ Certificat AQI (HTML → PDF)</div>
         </div></div>`;
 
     html += `<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem">
-        <button class="btn btn-primary" style="font-size:1.1rem;padding:.8rem 2rem" onclick="exportZip()">ðŸ“¦ TÃ©lÃ©charger le Data Product (ZIP)</button>
-        <button class="btn btn-secondary" onclick="exportData()">ðŸ“„ DonnÃ©es corrigÃ©es (${fmtLabel})</button>
-        <button class="btn btn-secondary" onclick="exportCertificate()">ðŸŽ–ï¸ Certificat AQI (PDF)</button>
-        <button class="btn btn-secondary" onclick="exportWord()">ðŸ“ Rapport (Word)</button>
+        <button class="btn btn-primary" style="font-size:1.1rem;padding:.8rem 2rem" onclick="exportZip()">📦 Télécharger le Data Product (ZIP)</button>
+        <button class="btn btn-secondary" onclick="exportData()">📄 Données corrigées (${fmtLabel})</button>
+        <button class="btn btn-secondary" onclick="exportCertificate()">🎖️ Certificat AQI (PDF)</button>
+        <button class="btn btn-secondary" onclick="exportWord()">📝 Rapport (Word)</button>
     </div>`;
 
-    html += `<div class="issue warning" style="margin-top:1rem;font-size:.85rem">âš ï¸ Les scores AQI, FAIR et AI Readiness sont des <strong>Ã©valuations internes</strong> inspirÃ©es de standards internationaux : pas une certification officielle. Voir <a href="#" onclick="goStep('referentiel');return false;">RÃ©fÃ©rentiel utilisÃ©</a>.</div>`;
+    html += `<div class="issue warning" style="margin-top:1rem;font-size:.85rem">⚠️ Les scores AQI, FAIR et AI Readiness sont des <strong>évaluations internes</strong> inspirées de standards internationaux : pas une certification officielle. Voir <a href="#" onclick="goStep('referentiel');return false;">Référentiel utilisé</a>.</div>`;
 
     html += navButtons(8, null);
     return html;
@@ -1685,7 +1685,7 @@ function buildExcelBuffer(withStyle) {
         }
     }
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'DonnÃ©es');
+    XLSX.utils.book_append_sheet(wb, ws, 'Données');
     return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
 }
 
@@ -1735,8 +1735,8 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
 
     doc += `<img class="topbar-brand-logo" src="assets/logo_afridata_ready_white.png" alt="AfriData Ready">`;
     doc += `<p class="subtitle">From Raw Data to FAIR & AI-Ready Data</p>`;
-    doc += `<p><strong>Fichier traitÃ© :</strong> ${APP.fileName}</p>`;
-    doc += `<p><strong>Date :</strong> ${date} Ã  ${time}</p>`;
+    doc += `<p><strong>Fichier traité :</strong> ${APP.fileName}</p>`;
+    doc += `<p><strong>Date :</strong> ${date} à ${time}</p>`;
     if (m.author) doc += `<p><strong>Auteur :</strong> ${m.author}</p>`;
 
     doc += `<h2>1. Description du fichier initial</h2>`;
@@ -1748,28 +1748,28 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
         <li><strong>${ini.duplicates ?? '?'}</strong> doublons</li>
     </ul>`;
 
-    doc += `<h2>2. Comparatif avant / aprÃ¨s</h2>`;
-    doc += `<table><tr><th>Indicateur</th><th>Avant</th><th>AprÃ¨s</th><th>Ã‰volution</th></tr>`;
+    doc += `<h2>2. Comparatif avant / après</h2>`;
+    doc += `<table><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Évolution</th></tr>`;
     function evol(before, after, lowerIsBetter) {
         const d = after - before;
         if (d === 0) return '=';
         const good = lowerIsBetter ? d < 0 : d > 0;
-        return (d > 0 ? '+' : '') + d + (good ? ' âœ“' : ' âœ—');
+        return (d > 0 ? '+' : '') + d + (good ? ' ✓' : ' ✗');
     }
     doc += `<tr><td>Lignes</td><td>${ini.rows}</td><td>${APP.data.length}</td><td>${evol(ini.rows, APP.data.length, false)}</td></tr>`;
     doc += `<tr><td>Colonnes</td><td>${ini.cols}</td><td>${APP.columns.length}</td><td>${evol(ini.cols, APP.columns.length, false)}</td></tr>`;
     doc += `<tr><td>Valeurs manquantes</td><td>${ini.missing}</td><td>${curMissing}</td><td>${evol(ini.missing, curMissing, true)}</td></tr>`;
     doc += `<tr><td>Doublons</td><td>${ini.duplicates}</td><td>${curDup}</td><td>${evol(ini.duplicates, curDup, true)}</td></tr>`;
     doc += `</table>`;
-    if (removedCols.length) doc += `<p>Colonnes supprimÃ©es : <strong>${removedCols.join(', ')}</strong></p>`;
-    if (addedCols.length) doc += `<p>Colonnes ajoutÃ©es : <strong>${addedCols.join(', ')}</strong></p>`;
+    if (removedCols.length) doc += `<p>Colonnes supprimées : <strong>${removedCols.join(', ')}</strong></p>`;
+    if (addedCols.length) doc += `<p>Colonnes ajoutées : <strong>${addedCols.join(', ')}</strong></p>`;
 
-    doc += `<h2>3. DÃ©tail des actions effectuÃ©es</h2>`;
+    doc += `<h2>3. Détail des actions effectuées</h2>`;
     if (APP.editHistory.length === 0) {
-        doc += `<p><em>Aucune modification n'a Ã©tÃ© effectuÃ©e sur le fichier.</em></p>`;
+        doc += `<p><em>Aucune modification n'a été effectuée sur le fichier.</em></p>`;
     } else {
-        doc += `<p>Au total, <strong>${APP.editHistory.length} action(s)</strong> ont Ã©tÃ© rÃ©alisÃ©es sur le fichier :</p>`;
-        doc += `<table><tr><th>NÂ°</th><th>Heure</th><th>Action</th><th>DÃ©tail</th></tr>`;
+        doc += `<p>Au total, <strong>${APP.editHistory.length} action(s)</strong> ont été réalisées sur le fichier :</p>`;
+        doc += `<table><tr><th>N°</th><th>Heure</th><th>Action</th><th>Détail</th></tr>`;
         APP.editHistory.forEach((h, i) => {
             doc += `<tr><td>${i + 1}</td><td>${h.time}</td><td>${h.action}</td><td>${h.detail}</td></tr>`;
         });
@@ -1779,24 +1779,24 @@ p{font-size:11pt;line-height:1.5;margin:4pt 0}
         for (const h of APP.editHistory) {
             actionSummary[h.action] = (actionSummary[h.action] || 0) + 1;
         }
-        doc += `<h3>RÃ©sumÃ© par type d'action</h3><ul>`;
+        doc += `<h3>Résumé par type d'action</h3><ul>`;
         for (const [action, count] of Object.entries(actionSummary)) {
             doc += `<li>${action} : <strong>${count} fois</strong></li>`;
         }
         doc += `</ul>`;
     }
 
-    doc += `<h2>4. Ã‰tat final du jeu de donnÃ©es</h2>`;
-    doc += `<div class="highlight"><p>Le fichier corrigÃ© contient <strong>${APP.data.length} lignes</strong> et <strong>${APP.columns.length} colonnes</strong>.</p>`;
+    doc += `<h2>4. État final du jeu de données</h2>`;
+    doc += `<div class="highlight"><p>Le fichier corrigé contient <strong>${APP.data.length} lignes</strong> et <strong>${APP.columns.length} colonnes</strong>.</p>`;
     doc += `<p>Colonnes finales : ${APP.columns.join(', ')}</p></div>`;
 
-    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport gÃ©nÃ©rÃ© par AfriData Ready : From Raw Data to FAIR & AI-Ready Data</p>`;
+    doc += `<br><hr><p style="text-align:center;color:#888;font-size:9pt">Rapport généré par AfriData Ready : From Raw Data to FAIR & AI-Ready Data</p>`;
     doc += `</body></html>`;
     return doc;
 }
 
 function exportWord() {
-    const blob = new Blob(['ï»¿' + buildWordReport()], { type: 'application/msword;charset=utf-8;' });
+    const blob = new Blob(['﻿' + buildWordReport()], { type: 'application/msword;charset=utf-8;' });
     saveAs(blob, 'rapport_modifications.doc');
 }
 
@@ -1810,7 +1810,7 @@ function rowsToExcel(rows, sheetName) {
 
 function xmlEscape(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-// â”€â”€ DataCite XML (mapping vers Dublin Core, pour DOI / CKAN) â”€â”€
+// ── DataCite XML (mapping vers Dublin Core, pour DOI / CKAN) ──
 function buildDataCiteXML() {
     const m = APP.metadata;
     const kw = (m.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
@@ -1824,7 +1824,7 @@ function buildDataCiteXML() {
   <resourceType resourceTypeGeneral="Dataset">Dataset</resourceType>
   <subjects>${kw.map(k => `<subject>${xmlEscape(k)}</subject>`).join('')}</subjects>
   <language>fr</language>
-  <rightsList><rights>${xmlEscape(m.license || 'Non spÃ©cifiÃ©')}</rights></rightsList>
+  <rightsList><rights>${xmlEscape(m.license || 'Non spécifié')}</rights></rightsList>
   <descriptions><description descriptionType="Abstract">${xmlEscape(m.description || '')}</description></descriptions>
   <geoLocations><geoLocation><geoLocationPlace>${xmlEscape(m.geographic_area || m.country || '')}</geoLocationPlace></geoLocation></geoLocations>
   <!-- Dublin Core mapping -->
@@ -1842,7 +1842,7 @@ function buildDataCiteXML() {
 </resource>`;
 }
 
-// â”€â”€ metadata.yaml â”€â”€
+// ── metadata.yaml ──
 function buildYAML() {
     const m = APP.metadata, a = APP.aqiScore || computeAQI();
     const esc = s => `"${String(s == null ? '' : s).replace(/"/g, '\\"')}"`;
@@ -1868,7 +1868,7 @@ generated_at: ${esc(new Date().toISOString())}
 `;
 }
 
-// â”€â”€ README.md auto-gÃ©nÃ©rÃ© â”€â”€
+// ── README.md auto-généré ──
 function buildReadme() {
     const m = APP.metadata, a = APP.aqiScore || computeAQI();
     return `# ${m.title || APP.fileName}
@@ -1880,10 +1880,10 @@ ${m.description || '_Aucune description fournie._'}
 - **Organisation :** ${m.organization || '-'}
 - **Licence :** ${m.license || '-'}
 - **Version :** ${m.version || '1.0'}
-- **Zone gÃ©ographique :** ${m.geographic_area || '-'}
-- **Lignes Ã— colonnes :** ${APP.data.length} Ã— ${APP.columns.length}
+- **Zone géographique :** ${m.geographic_area || '-'}
+- **Lignes × colonnes :** ${APP.data.length} × ${APP.columns.length}
 
-## QualitÃ© (Ã©valuation interne AfriData Ready)
+## Qualité (évaluation interne AfriData Ready)
 | Indicateur | Score |
 |---|---|
 | AfriData Quality Index (AQI) | **${a.total}/100 : ${a.level[0]}** |
@@ -1891,50 +1891,50 @@ ${m.description || '_Aucune description fournie._'}
 | AI Readiness | ${APP.aiScore ? APP.aiScore.total : 0}/100 |
 
 ## Contenu du package
-- \`donnees_corrigees\` : donnÃ©es nettoyÃ©es
+- \`donnees_corrigees\` : données nettoyées
 - \`dictionnaire_donnees\` : documentation des variables
-- \`metadata.yaml\`, \`metadata_datacite.xml\` : mÃ©tadonnÃ©es
+- \`metadata.yaml\`, \`metadata_datacite.xml\` : métadonnées
 - \`rapport_aqi\`, \`rapport_qualite\`, \`score_fair\`, \`score_ai_readiness\`
 - \`journal_modifications\` : data lineage
 - \`CITATION.cff\`, \`certificat_afridata.html\`
 
-> _Les Ã©valuations sont inspirÃ©es de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD) mais constituent une Ã©valuation interne automatisÃ©e, non une certification officielle._
+> _Les évaluations sont inspirées de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD) mais constituent une évaluation interne automatisée, non une certification officielle._
 
-*GÃ©nÃ©rÃ© par AfriData Ready : ${new Date().toLocaleDateString('fr-FR')}*
+*Généré par AfriData Ready : ${new Date().toLocaleDateString('fr-FR')}*
 `;
 }
 
-// â”€â”€ CITATION.cff â”€â”€
+// ── CITATION.cff ──
 function buildCitation() {
     const m = APP.metadata;
     const author = (m.author || 'Inconnu').trim();
     return `cff-version: 1.2.0
-message: "Si vous utilisez ce jeu de donnÃ©es, merci de le citer comme suit."
+message: "Si vous utilisez ce jeu de données, merci de le citer comme suit."
 title: "${(m.title || APP.fileName).replace(/"/g, "'")}"
 authors:
   - name: "${author.replace(/"/g, "'")}"
 version: "${m.version || '1.0'}"
 date-released: "${new Date().toISOString().slice(0, 10)}"
-license: "${m.license || 'Non spÃ©cifiÃ©'}"
+license: "${m.license || 'Non spécifié'}"
 `;
 }
 
-// â”€â”€ Rapport AQI (HTML) â”€â”€
+// ── Rapport AQI (HTML) ──
 function buildAQIReport() {
     const a = APP.aqiScore || computeAQI();
-    const rows = [['QualitÃ© intrinsÃ¨que', 30, a.dims.intrinseque], ['Documentation & mÃ©tadonnÃ©es', 20, a.dims.documentation], ['FAIR', 20, a.dims.fair], ['AI Readiness', 20, a.dims.ai], ['SÃ©curitÃ© & confidentialitÃ©', 10, a.dims.securite]];
+    const rows = [['Qualité intrinsèque', 30, a.dims.intrinseque], ['Documentation & métadonnées', 20, a.dims.documentation], ['FAIR', 20, a.dims.fair], ['AI Readiness', 20, a.dims.ai], ['Sécurité & confidentialité', 10, a.dims.securite]];
     return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport AQI</title>
 <style>body{font-family:Segoe UI,sans-serif;max-width:900px;margin:0 auto;padding:2rem;color:#333}h1{color:#1B5E20}table{width:100%;border-collapse:collapse;margin:1rem 0}th{background:#1B5E20;color:#fff;padding:.6rem;text-align:left}td{padding:.5rem;border-bottom:1px solid #ddd}.big{font-size:3rem;font-weight:800;color:${a.level[1]}}</style></head><body>
-<h1>ðŸ… AfriData Quality Index</h1>
+<h1>🏅 AfriData Quality Index</h1>
 <p class="big">${a.total}/100 : ${a.level[0]}</p>
 <table><tr><th>Dimension</th><th>Poids</th><th>Score /100</th></tr>
 ${rows.map(([n, w, s]) => `<tr><td>${n}</td><td>${w}%</td><td>${Math.round(s)}</td></tr>`).join('')}</table>
-<h2>Recommandations</h2><ul>${a.recos.map(([d, t]) => `<li><strong>${d} :</strong> ${t}</li>`).join('') || '<li>Aucune : excellente qualitÃ©.</li>'}</ul>
-<hr><p style="font-size:.8rem;color:#888">Ã‰valuation interne inspirÃ©e de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD). Ne constitue pas une certification officielle. GÃ©nÃ©rÃ© le ${new Date().toLocaleDateString('fr-FR')}.</p>
+<h2>Recommandations</h2><ul>${a.recos.map(([d, t]) => `<li><strong>${d} :</strong> ${t}</li>`).join('') || '<li>Aucune : excellente qualité.</li>'}</ul>
+<hr><p style="font-size:.8rem;color:#888">Évaluation interne inspirée de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD). Ne constitue pas une certification officielle. Généré le ${new Date().toLocaleDateString('fr-FR')}.</p>
 </body></html>`;
 }
 
-// â”€â”€ Certificat (HTML imprimable en PDF) â”€â”€
+// ── Certificat (HTML imprimable en PDF) ──
 function buildCertificate() {
     const a = APP.aqiScore || computeAQI();
     const m = APP.metadata;
@@ -1951,22 +1951,22 @@ table{margin:1.4rem auto;border-collapse:collapse}td{padding:.4rem 1.6rem;font-s
 .btn{margin:1rem;padding:.6rem 1.6rem;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer}
 @media print{.btn{display:none}}</style></head><body>
 <div class="cert">
-<div class="btn-wrap"><button class="btn" onclick="window.print()">ðŸ–¨ï¸ Imprimer / Enregistrer en PDF</button></div>
+<div class="btn-wrap"><button class="btn" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
 <img class="topbar-brand-logo" src="assets/logo_afridata_ready_white.png" alt="AfriData Ready">
-<p class="sub">Certificat de qualitÃ© des donnÃ©es : Ã©valuation indicative</p>
-<p style="margin-top:1.4rem;font-size:1.1rem">Jeu de donnÃ©es</p>
+<p class="sub">Certificat de qualité des données : évaluation indicative</p>
+<p style="margin-top:1.4rem;font-size:1.1rem">Jeu de données</p>
 <h2 style="margin:.2rem;color:#2E7D32">${xmlEscape(m.title || APP.fileName)}</h2>
 <div class="score">${a.total}<span style="font-size:1.5rem">/100</span></div>
 <div class="level">Niveau : ${a.level[0]}</div>
 <table>
 <tr><td>Score FAIR</td><td><strong>${APP.fairScore ? APP.fairScore.total : 0}/100</strong></td></tr>
 <tr><td>Score AI Readiness</td><td><strong>${APP.aiScore ? APP.aiScore.total : 0}/100</strong></td></tr>
-<tr><td>Corrections effectuÃ©es</td><td><strong>${APP.editCount}</strong></td></tr>
-<tr><td>MÃ©tadonnÃ©es renseignÃ©es</td><td><strong>${metaCount}/10</strong></td></tr>
-<tr><td>Variables documentÃ©es</td><td><strong>${docCount}/${APP.columns.length}</strong></td></tr>
+<tr><td>Corrections effectuées</td><td><strong>${APP.editCount}</strong></td></tr>
+<tr><td>Métadonnées renseignées</td><td><strong>${metaCount}/10</strong></td></tr>
+<tr><td>Variables documentées</td><td><strong>${docCount}/${APP.columns.length}</strong></td></tr>
 </table>
-<p style="font-size:.95rem">DÃ©livrÃ© le ${new Date().toLocaleDateString('fr-FR')}${m.author ? ' Â· ' + xmlEscape(m.author) : ''}</p>
-<p class="disc">Ce rapport constitue une Ã©valuation indicative gÃ©nÃ©rÃ©e automatiquement par AfriData Ready Ã  partir de critÃ¨res inspirÃ©s de standards internationaux (ISO 8000, ISO/IEC 25012, ISO/IEC 11179, Dublin Core, DataCite, FAIR, RGPD). Il ne constitue pas une certification officielle dÃ©livrÃ©e par un organisme accrÃ©ditÃ©.</p>
+<p style="font-size:.95rem">Délivré le ${new Date().toLocaleDateString('fr-FR')}${m.author ? ' · ' + xmlEscape(m.author) : ''}</p>
+<p class="disc">Ce rapport constitue une évaluation indicative générée automatiquement par AfriData Ready à partir de critères inspirés de standards internationaux (ISO 8000, ISO/IEC 25012, ISO/IEC 11179, Dublin Core, DataCite, FAIR, RGPD). Il ne constitue pas une certification officielle délivrée par un organisme accrédité.</p>
 </div></body></html>`;
 }
 
@@ -1988,71 +1988,71 @@ function exportZip() {
         zip.file('donnees_corrigees.csv', dataToCSV());
     }
 
-    // MÃ©tadonnÃ©es â†’ Excel (Champ / Valeur)
+    // Métadonnées → Excel (Champ / Valeur)
     const metaRows = Object.entries(APP.metadata).filter(([k, v]) => v !== undefined && v !== '')
         .map(([k, v]) => ({ Champ: k, Valeur: v }));
-    zip.file('metadonnees.xlsx', rowsToExcel(metaRows, 'MÃ©tadonnÃ©es'));
+    zip.file('metadonnees.xlsx', rowsToExcel(metaRows, 'Métadonnées'));
 
-    // Dictionnaire des donnÃ©es â†’ Excel
+    // Dictionnaire des données → Excel
     const dictRows = APP.columns.map(c => {
         const d = APP.variableDocs[c] || {};
         return { variable: c, ...d };
     });
     zip.file('dictionnaire_donnees.xlsx', rowsToExcel(dictRows, 'Dictionnaire'));
 
-    // Rapport qualitÃ© â†’ Excel
+    // Rapport qualité → Excel
     const qualityRows = APP.qualityReport.issues.map(i => ({ "Type": i.type, "Severite": i.severity, "Message": i.message }));
-    zip.file('rapport_qualite.xlsx', rowsToExcel(qualityRows.length ? qualityRows : [{ Message: 'Aucun problÃ¨me dÃ©tectÃ©' }], 'QualitÃ©'));
+    zip.file('rapport_qualite.xlsx', rowsToExcel(qualityRows.length ? qualityRows : [{ Message: 'Aucun problème détecté' }], 'Qualité'));
 
-    // Score FAIR â†’ Excel
+    // Score FAIR → Excel
     const fairRows = Object.entries(APP.fairScore.scores).map(([k, v]) => ({ Principe: k, Score: v }));
     fairRows.push({ Principe: 'TOTAL', Score: APP.fairScore.total + '/100' });
     zip.file('score_fair.xlsx', rowsToExcel(fairRows, 'Score FAIR'));
 
-    // Score AI Readiness â†’ Excel
+    // Score AI Readiness → Excel
     const aiRows = Object.entries(APP.aiScore.dims).map(([k, v]) => ({ Dimension: k, Score: v }));
     aiRows.push({ Dimension: 'TOTAL', Score: APP.aiScore.total + '/100' });
     aiRows.push({ Dimension: 'Niveau', Score: APP.aiScore.level[0] });
     zip.file('score_ai_readiness.xlsx', rowsToExcel(aiRows, 'AI Readiness'));
 
-    // Recommandations â†’ Excel
+    // Recommandations → Excel
     const recoRows = APP.recommendations.map(([p, t, d]) => ({ "Priorite": p, "Recommandation": t, "Description": d }));
     zip.file('recommandations.xlsx', rowsToExcel(recoRows, 'Recommandations'));
 
-    // Journal des modifications (Data Lineage) â†’ Excel
+    // Journal des modifications (Data Lineage) → Excel
     const histRows = APP.editHistory.map(h => ({ "Date": h.date || '', "Heure": h.time, "Etape": h.step || '', "Utilisateur": h.user || '', "Action": h.action, "Detail": h.detail, "Justification": h.justification || '' }));
     zip.file('journal_modifications.xlsx', rowsToExcel(histRows.length ? histRows : [{ Action: 'Aucune modification' }], 'Lineage'));
 
     // AQI
     const aqi = APP.aqiScore || computeAQI();
-    const aqiRows = [['QualitÃ© intrinsÃ¨que', 30, aqi.dims.intrinseque], ['Documentation & mÃ©tadonnÃ©es', 20, aqi.dims.documentation], ['FAIR', 20, aqi.dims.fair], ['AI Readiness', 20, aqi.dims.ai], ['SÃ©curitÃ© & confidentialitÃ©', 10, aqi.dims.securite]]
+    const aqiRows = [['Qualité intrinsèque', 30, aqi.dims.intrinseque], ['Documentation & métadonnées', 20, aqi.dims.documentation], ['FAIR', 20, aqi.dims.fair], ['AI Readiness', 20, aqi.dims.ai], ['Sécurité & confidentialité', 10, aqi.dims.securite]]
         .map(([n, w, s]) => ({ Dimension: n, Poids: w + '%', Score: Math.round(s) }));
     aqiRows.push({ Dimension: 'AQI GLOBAL', Poids: '100%', Score: aqi.total + '/100 (' + aqi.level[0] + ')' });
     zip.file('rapport_aqi.xlsx', rowsToExcel(aqiRows, 'AQI'));
     zip.file('rapport_aqi.html', buildAQIReport());
 
-    // DonnÃ©es originales
+    // Données originales
     if (APP.originalData) zip.file('donnees_originales.csv', Papa.unparse(APP.originalData));
 
-    // Data Product : mÃ©tadonnÃ©es normatives, README, citation, certificat
+    // Data Product : métadonnées normatives, README, citation, certificat
     zip.file('metadonnees.json', JSON.stringify(APP.metadata, null, 2));
     zip.file('metadata.yaml', buildYAML());
     zip.file('metadata_datacite.xml', buildDataCiteXML());
     zip.file('README.md', buildReadme());
     zip.file('CITATION.cff', buildCitation());
     zip.file('certificat_afridata.html', buildCertificate());
-    zip.file('rapport_modifications.doc', 'ï»¿' + buildWordReport());
+    zip.file('rapport_modifications.doc', '﻿' + buildWordReport());
 
     zip.generateAsync({ type: 'blob' }).then(blob => {
         saveAs(blob, `afridata_ready_${new Date().toISOString().slice(0,10)}.zip`);
     });
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // AfriData Quality Index (AQI)
-// Moyenne pondÃ©rÃ©e inspirÃ©e d'ISO 8000 / ISO 25012 / ISO 11179 /
-// Dublin Core / DataCite / FAIR / RGPD : Ã©valuation interne.
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Moyenne pondérée inspirée d'ISO 8000 / ISO 25012 / ISO 11179 /
+// Dublin Core / DataCite / FAIR / RGPD : évaluation interne.
+// ═══════════════════════════════════════════════════════════════
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 const AQI_WEIGHTS = { intrinseque: 0.30, documentation: 0.20, fair: 0.20, ai: 0.20, securite: 0.10 };
 
@@ -2075,7 +2075,7 @@ function computeAQI() {
     const d = {}; for (const c of cols) if (APP.variableDocs[c]) d[c] = APP.variableDocs[c];
     const n = df.length, nc = cols.length, totalCells = (n * nc) || 1;
 
-    // 1. QualitÃ© intrinsÃ¨que (ISO 8000 / 25012)
+    // 1. Qualité intrinsèque (ISO 8000 / 25012)
     let totalMiss = 0; cols.forEach(c => totalMiss += countMissing(c));
     const completeness = 100 * (1 - totalMiss / totalCells);
     const uniqueness = 100 * (1 - (n > 0 ? countDuplicates() / n : 0));
@@ -2086,22 +2086,22 @@ function computeAQI() {
     const consistency = clamp(100 - consistIssues * 15, 0, 100);
     const intrinseque = (completeness + uniqueness + validity + consistency) / 4;
 
-    // 2. Documentation et mÃ©tadonnÃ©es (ISO 11179 / Dublin Core / DataCite)
+    // 2. Documentation et métadonnées (ISO 11179 / Dublin Core / DataCite)
     const docRatio = nc > 0 ? Object.keys(d).length / nc : 0;
     const metaKeys = ['title', 'author', 'description', 'license', 'keywords', 'version', 'contact', 'collection_method', 'geographic_area', 'citation'];
     const metaRatio = metaKeys.filter(k => m[k]).length / metaKeys.length;
     const documentation = 100 * (0.6 * docRatio + 0.4 * metaRatio);
 
-    // 3 & 4. FAIR + AI Readiness (rÃ©utilisÃ©s)
+    // 3 & 4. FAIR + AI Readiness (réutilisés)
     const fairScore = fair.total;
     const aiScore = ai.total;
 
-    // 5. SÃ©curitÃ© et confidentialitÃ© (RGPD / ISO 25012)
+    // 5. Sécurité et confidentialité (RGPD / ISO 25012)
     const sensitiveKw = ['nom', 'name', 'prenom', 'surname', 'telephone', 'phone', 'email', 'adresse', 'address', 'ssn', 'cin', 'passport', 'ip'];
     const sensitiveCols = cols.filter(c => sensitiveKw.some(k => c.toLowerCase().includes(k)));
     const unhandledPII = sensitiveCols.filter(c => !(APP.anonymizedCols || []).includes(c));
     let securite = 100 - unhandledPII.length * 15;
-    if (APP.editHistory.length > 0) securite += 5; // bonus traÃ§abilitÃ© (lineage)
+    if (APP.editHistory.length > 0) securite += 5; // bonus traçabilité (lineage)
     securite = clamp(securite, 0, 100);
 
     const dims = { intrinseque, documentation, fair: fairScore, ai: aiScore, securite };
@@ -2116,18 +2116,18 @@ function computeAQI() {
 
     const subs = { completeness, uniqueness, validity, consistency, docRatio: docRatio * 100, metaRatio: metaRatio * 100, sensitiveCols, unhandledPII };
     const recos = [];
-    if (intrinseque < 70) recos.push(['QualitÃ© intrinsÃ¨que', 'RÃ©duire les valeurs manquantes/doublons et corriger les formats incohÃ©rents (Ã©tapes 2-3).']);
-    if (documentation < 70) recos.push(['Documentation', 'ComplÃ©ter le dictionnaire des variables et les mÃ©tadonnÃ©es clÃ©s (Ã©tapes 4-5).']);
-    if (fairScore < 70) recos.push(['FAIR', 'Ajouter licence, mots-clÃ©s, contact et citation pour amÃ©liorer le score FAIR (Ã©tape 6).']);
-    if (aiScore < 70) recos.push(['AI Readiness', 'Identifier une variable cible et amÃ©liorer la structure/documentation (Ã©tape 7).']);
-    if (securite < 80 && sensitiveCols.length) recos.push(['SÃ©curitÃ©', `Anonymiser ou pseudonymiser les colonnes sensibles : ${sensitiveCols.join(', ')}.`]);
+    if (intrinseque < 70) recos.push(['Qualité intrinsèque', 'Réduire les valeurs manquantes/doublons et corriger les formats incohérents (étapes 2-3).']);
+    if (documentation < 70) recos.push(['Documentation', 'Compléter le dictionnaire des variables et les métadonnées clés (étapes 4-5).']);
+    if (fairScore < 70) recos.push(['FAIR', 'Ajouter licence, mots-clés, contact et citation pour améliorer le score FAIR (étape 6).']);
+    if (aiScore < 70) recos.push(['AI Readiness', 'Identifier une variable cible et améliorer la structure/documentation (étape 7).']);
+    if (securite < 80 && sensitiveCols.length) recos.push(['Sécurité', `Anonymiser ou pseudonymiser les colonnes sensibles : ${sensitiveCols.join(', ')}.`]);
 
     return { total, dims, weights: AQI_WEIGHTS, level, subs, recos };
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// TOOLKIT GRAPHIQUE : SVG pur (aucune dÃ©pendance, 100% local)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// TOOLKIT GRAPHIQUE : SVG pur (aucune dépendance, 100% local)
+// ═══════════════════════════════════════════════════════════════
 const CHART_COLORS = ['#1B5E20', '#4CAF50', '#FF6F00', '#1565C0', '#6A1B9A', '#00838F', '#C62828', '#558B2F'];
 
 function svgGauge(value, label) {
@@ -2196,7 +2196,7 @@ function svgBarCompare(rows) {
         s += `<rect x="${left}" y="${y}" width="${wb}" height="${bh - 4}" fill="#BDBDBD" rx="3"/><text x="${left + wb + 5}" y="${y + bh - 8}" font-size="11" fill="#888">${r.before}${r.suffix || ''}</text>`;
         s += `<rect x="${left}" y="${y + bh}" width="${wa}" height="${bh - 4}" fill="${r.good === false ? '#C62828' : '#4CAF50'}" rx="3"/><text x="${left + wa + 5}" y="${y + bh * 2 - 8}" font-size="11" font-weight="700" fill="#2E7D32">${r.after}${r.suffix || ''}</text>`;
     });
-    s += `<text x="${left}" y="${h - 2}" font-size="10" fill="#aaa">â–  Avant (gris) &nbsp; â–  AprÃ¨s (vert)</text></svg>`;
+    s += `<text x="${left}" y="${h - 2}" font-size="10" fill="#aaa">■ Avant (gris) &nbsp; ■ Après (vert)</text></svg>`;
     return s;
 }
 
@@ -2270,7 +2270,7 @@ function svgScatter(colX, colY) {
 }
 
 function svgCorrMatrix(numCols) {
-    if (numCols.length < 2) return '<p style="color:#888">Pas assez de colonnes numÃ©riques (min. 2).</p>';
+    if (numCols.length < 2) return '<p style="color:#888">Pas assez de colonnes numériques (min. 2).</p>';
     const cols = numCols.slice(0, 10);
     const data = cols.map(c => APP.data.map(r => parseFloat(r[c])));
     const N = cols.length, cell = Math.min(46, Math.floor(380 / N)), off = 90, top = 90;
@@ -2306,7 +2306,7 @@ function svgMissingHeatmap() {
             s += `<rect x="${j * cw}" y="${top + i * ch}" width="${cw - 1}" height="${ch}" fill="${miss ? '#C62828' : '#E8F5E9'}"/>`;
         });
     }
-    s += `<text x="0" y="${top + rows * ch + 8}" font-size="9" fill="#aaa">â–  manquant (rouge) &nbsp; â–  prÃ©sent (vert) : Ã©chantillon de ${rows} lignes</text></svg>`;
+    s += `<text x="0" y="${top + rows * ch + 8}" font-size="9" fill="#aaa">■ manquant (rouge) &nbsp; ■ présent (vert) : échantillon de ${rows} lignes</text></svg>`;
     return s;
 }
 
@@ -2330,50 +2330,50 @@ function svgAqiProgress(history, current) {
         <polyline points="${line}" fill="none" stroke="#4CAF50" stroke-width="2.5"/>${dots}${labels}</svg>`;
 }
 
-// â”€â”€ InterprÃ©tations automatiques (phrases explicatives) â”€â”€
+// ── Interprétations automatiques (phrases explicatives) ──
 function interpBox(lines) {
     if (!lines || !lines.length) return '';
     return `<div style="background:#E3F2FD;border-left:4px solid #1565C0;border-radius:8px;padding:.7rem 1rem;margin-top:.8rem;font-size:.86rem;line-height:1.5">
-        <strong style="color:#1565C0">ðŸ’¡ Analyse &amp; interprÃ©tation</strong><br>${lines.map(l => 'â€¢ ' + l).join('<br>')}</div>`;
+        <strong style="color:#1565C0">💡 Analyse &amp; interprétation</strong><br>${lines.map(l => '• ' + l).join('<br>')}</div>`;
 }
 
 function interpAQI(aqi) {
     const L = [];
-    L.push(`L'AQI global est de <strong>${aqi.total}/100</strong>, ce qui correspond Ã  un niveau <strong>${aqi.level[0].toLowerCase()}</strong> de maturitÃ© du jeu de donnÃ©es.`);
-    const dimNames = { intrinseque: 'la qualitÃ© intrinsÃ¨que', documentation: 'la documentation', fair: 'le score FAIR', ai: "l'AI Readiness", securite: 'la sÃ©curitÃ©' };
+    L.push(`L'AQI global est de <strong>${aqi.total}/100</strong>, ce qui correspond à un niveau <strong>${aqi.level[0].toLowerCase()}</strong> de maturité du jeu de données.`);
+    const dimNames = { intrinseque: 'la qualité intrinsèque', documentation: 'la documentation', fair: 'le score FAIR', ai: "l'AI Readiness", securite: 'la sécurité' };
     const entries = Object.entries(aqi.dims);
     const best = entries.reduce((a, b) => b[1] > a[1] ? b : a);
     const worst = entries.reduce((a, b) => b[1] < a[1] ? b : a);
-    L.push(`Le point fort est <strong>${dimNames[best[0]]}</strong> (${Math.round(best[1])}/100) ; l'axe Ã  amÃ©liorer en prioritÃ© est <strong>${dimNames[worst[0]]}</strong> (${Math.round(worst[1])}/100).`);
-    if (aqi.total >= 80) L.push('Le jeu de donnÃ©es est prÃªt Ã  Ãªtre publiÃ© et exploitÃ© pour l\'analyse ou l\'IA.');
-    else if (aqi.total >= 60) L.push('Le jeu de donnÃ©es est de bonne qualitÃ© ; quelques amÃ©liorations le rendraient pleinement exploitable.');
-    else L.push('Des amÃ©liorations sont recommandÃ©es avant toute exploitation ou publication.');
+    L.push(`Le point fort est <strong>${dimNames[best[0]]}</strong> (${Math.round(best[1])}/100) ; l'axe à améliorer en priorité est <strong>${dimNames[worst[0]]}</strong> (${Math.round(worst[1])}/100).`);
+    if (aqi.total >= 80) L.push('Le jeu de données est prêt à être publié et exploité pour l\'analyse ou l\'IA.');
+    else if (aqi.total >= 60) L.push('Le jeu de données est de bonne qualité ; quelques améliorations le rendraient pleinement exploitable.');
+    else L.push('Des améliorations sont recommandées avant toute exploitation ou publication.');
     return L;
 }
 
 function interpBeforeAfter(ini, curMiss, docCount, aqi, base) {
     const L = [];
     const missDelta = (ini.missing ?? 0) - curMiss;
-    if (missDelta > 0) L.push(`<strong>${missDelta}</strong> valeur(s) manquante(s) ont Ã©tÃ© traitÃ©es (${ini.missing} â†’ ${curMiss}).`);
-    else if ((ini.missing ?? 0) > 0) L.push(`Il reste <strong>${curMiss}</strong> valeur(s) manquante(s) : envisagez une imputation ou une suppression (Ã©tape 3).`);
-    else L.push('Aucune valeur manquante : complÃ©tude parfaite.');
+    if (missDelta > 0) L.push(`<strong>${missDelta}</strong> valeur(s) manquante(s) ont été traitées (${ini.missing} → ${curMiss}).`);
+    else if ((ini.missing ?? 0) > 0) L.push(`Il reste <strong>${curMiss}</strong> valeur(s) manquante(s) : envisagez une imputation ou une suppression (étape 3).`);
+    else L.push('Aucune valeur manquante : complétude parfaite.');
     const dupDelta = (ini.duplicates ?? 0) - countDuplicates();
-    if (dupDelta > 0) L.push(`<strong>${dupDelta}</strong> doublon(s) supprimÃ©(s).`);
-    if (docCount > (base.docs ?? 0)) L.push(`<strong>${docCount}</strong> variable(s) dÃ©sormais documentÃ©e(s).`);
+    if (dupDelta > 0) L.push(`<strong>${dupDelta}</strong> doublon(s) supprimé(s).`);
+    if (docCount > (base.docs ?? 0)) L.push(`<strong>${docCount}</strong> variable(s) désormais documentée(s).`);
     const aqiDelta = aqi.total - (base.aqi ?? 0);
-    if (aqiDelta > 0) L.push(`GrÃ¢ce Ã  ces corrections, l'AQI a progressÃ© de <strong>+${aqiDelta} points</strong> (${base.aqi ?? 0} â†’ ${aqi.total}).`);
-    else if (aqiDelta === 0) L.push('L\'AQI est inchangÃ© : documentez les variables et complÃ©tez les mÃ©tadonnÃ©es pour le faire progresser.');
+    if (aqiDelta > 0) L.push(`Grâce à ces corrections, l'AQI a progressé de <strong>+${aqiDelta} points</strong> (${base.aqi ?? 0} → ${aqi.total}).`);
+    else if (aqiDelta === 0) L.push('L\'AQI est inchangé : documentez les variables et complétez les métadonnées pour le faire progresser.');
     return L;
 }
 
 function interpMissing(report) {
     const L = [];
     const cols = APP.columns.filter(c => report.missingPerCol[c] > 0).sort((a, b) => report.missingPerCol[b] - report.missingPerCol[a]);
-    if (!cols.length) return ['Aucune valeur manquante : la carte est entiÃ¨rement verte, le jeu de donnÃ©es est complet.'];
+    if (!cols.length) return ['Aucune valeur manquante : la carte est entièrement verte, le jeu de données est complet.'];
     const top = cols[0], topPct = pct(report.missingPerCol[top], APP.data.length);
-    L.push(`La colonne la plus incomplÃ¨te est <strong>${top}</strong> (${topPct}% de valeurs manquantes).`);
-    if (report.emptyCols.length) L.push(`<strong>${report.emptyCols.length}</strong> colonne(s) entiÃ¨rement vide(s) : ${report.emptyCols.join(', ')} : Ã  supprimer.`);
-    L.push(`Au total, ${cols.length} colonne(s) prÃ©sentent des trous. Les zones rouges alignÃ©es verticalement indiquent une variable problÃ©matique ; alignÃ©es horizontalement, une ligne Ã  vÃ©rifier.`);
+    L.push(`La colonne la plus incomplète est <strong>${top}</strong> (${topPct}% de valeurs manquantes).`);
+    if (report.emptyCols.length) L.push(`<strong>${report.emptyCols.length}</strong> colonne(s) entièrement vide(s) : ${report.emptyCols.join(', ')} : à supprimer.`);
+    L.push(`Au total, ${cols.length} colonne(s) présentent des trous. Les zones rouges alignées verticalement indiquent une variable problématique ; alignées horizontalement, une ligne à vérifier.`);
     return L;
 }
 
@@ -2385,10 +2385,10 @@ function interpHistograms(numCols) {
         v.sort((a, b) => a - b);
         const mean = v.reduce((s, x) => s + x, 0) / v.length;
         const median = v[Math.floor(v.length / 2)];
-        const skew = mean > median * 1.1 ? 'Ã©talÃ©e vers la droite (asymÃ©trie positive : quelques grandes valeurs)' : mean < median * 0.9 ? 'Ã©talÃ©e vers la gauche (asymÃ©trie nÃ©gative)' : 'globalement symÃ©trique';
-        L.push(`<strong>${c}</strong> : distribution ${skew} (moyenne ${mean.toFixed(1)}, mÃ©diane ${median.toFixed(1)}).`);
+        const skew = mean > median * 1.1 ? 'étalée vers la droite (asymétrie positive : quelques grandes valeurs)' : mean < median * 0.9 ? 'étalée vers la gauche (asymétrie négative)' : 'globalement symétrique';
+        L.push(`<strong>${c}</strong> : distribution ${skew} (moyenne ${mean.toFixed(1)}, médiane ${median.toFixed(1)}).`);
     }
-    L.push('Une distribution trÃ¨s asymÃ©trique peut justifier une transformation (log) avant modÃ©lisation.');
+    L.push('Une distribution très asymétrique peut justifier une transformation (log) avant modélisation.');
     return L;
 }
 
@@ -2400,10 +2400,10 @@ function interpBoxplots(numCols) {
         if (v.length < 4) continue;
         const q1 = v[Math.floor((v.length - 1) * 0.25)], q3 = v[Math.floor((v.length - 1) * 0.75)], iqr = q3 - q1;
         const out = v.filter(x => x < q1 - 1.5 * iqr || x > q3 + 1.5 * iqr).length;
-        if (out > 0) { anyOut = true; L.push(`<strong>${c}</strong> : ${out} valeur(s) aberrante(s) au-delÃ  des moustaches (points rouges).`); }
+        if (out > 0) { anyOut = true; L.push(`<strong>${c}</strong> : ${out} valeur(s) aberrante(s) au-delà des moustaches (points rouges).`); }
     }
-    if (!anyOut) L.push('Aucune valeur aberrante dÃ©tectÃ©e : les points restent dans les moustaches (rÃ¨gle 1,5Ã—IQR).');
-    else L.push('VÃ©rifiez si ces valeurs sont des erreurs de saisie (Ã  corriger) ou des observations rÃ©elles (Ã  conserver et documenter).');
+    if (!anyOut) L.push('Aucune valeur aberrante détectée : les points restent dans les moustaches (règle 1,5×IQR).');
+    else L.push('Vérifiez si ces valeurs sont des erreurs de saisie (à corriger) ou des observations réelles (à conserver et documenter).');
     return L;
 }
 
@@ -2417,12 +2417,12 @@ function interpCorr(numCols) {
     }
     strong.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
     if (strong.length) {
-        for (const [a, b, r] of strong.slice(0, 3)) L.push(`<strong>${a}</strong> et <strong>${b}</strong> sont ${r > 0 ? 'positivement' : 'nÃ©gativement'} corrÃ©lÃ©es (r = ${r.toFixed(2)}) : ${r > 0 ? 'elles augmentent ensemble' : "l'une augmente quand l'autre diminue"}.`);
-        L.push('Des variables trÃ¨s corrÃ©lÃ©es (|r|>0,8) peuvent Ãªtre redondantes pour un modÃ¨le (multicolinÃ©aritÃ©).');
+        for (const [a, b, r] of strong.slice(0, 3)) L.push(`<strong>${a}</strong> et <strong>${b}</strong> sont ${r > 0 ? 'positivement' : 'négativement'} corrélées (r = ${r.toFixed(2)}) : ${r > 0 ? 'elles augmentent ensemble' : "l'une augmente quand l'autre diminue"}.`);
+        L.push('Des variables très corrélées (|r|>0,8) peuvent être redondantes pour un modèle (multicolinéarité).');
     } else {
-        L.push('Aucune corrÃ©lation forte (|r|â‰¥0,5) entre les variables : elles apportent chacune une information distincte.');
+        L.push('Aucune corrélation forte (|r|≥0,5) entre les variables : elles apportent chacune une information distincte.');
     }
-    L.push('Vert = corrÃ©lation positive, rouge = nÃ©gative ; plus la couleur est intense, plus le lien est fort.');
+    L.push('Vert = corrélation positive, rouge = négative ; plus la couleur est intense, plus le lien est fort.');
     return L;
 }
 
@@ -2434,17 +2434,17 @@ function interpScatter(numCols) {
         const pts = APP.data.map(r => [parseFloat(r[x]), parseFloat(r[y])]).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
         const r = pearson(pts.map(p => p[0]), pts.map(p => p[1]));
         if (isNaN(r)) continue;
-        const force = Math.abs(r) >= 0.7 ? 'forte' : Math.abs(r) >= 0.4 ? 'modÃ©rÃ©e' : 'faible';
-        L.push(`<strong>${x}</strong> vs <strong>${y}</strong> : relation ${force} (r = ${r.toFixed(2)}). ${Math.abs(r) >= 0.4 ? 'Une tendance ' + (r > 0 ? 'croissante' : 'dÃ©croissante') + ' se dÃ©gage.' : 'Les points sont dispersÃ©s, sans tendance nette.'}`);
+        const force = Math.abs(r) >= 0.7 ? 'forte' : Math.abs(r) >= 0.4 ? 'modérée' : 'faible';
+        L.push(`<strong>${x}</strong> vs <strong>${y}</strong> : relation ${force} (r = ${r.toFixed(2)}). ${Math.abs(r) >= 0.4 ? 'Une tendance ' + (r > 0 ? 'croissante' : 'décroissante') + ' se dégage.' : 'Les points sont dispersés, sans tendance nette.'}`);
     }
     return L;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// PAGE : ANALYSE DES DONNÃ‰ES (dashboard EDA + AQI)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// PAGE : ANALYSE DES DONNÉES (dashboard EDA + AQI)
+// ═══════════════════════════════════════════════════════════════
 function renderAnalysis() {
-    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier (Ã©tape 1).</p></div>';
+    if (!APP.data) return '<div class="card"><p>Veuillez d\'abord importer un fichier (étape 1).</p></div>';
     APP.qualityReport = analyzeQuality();
     APP.fairScore = computeFAIR();
     APP.aiScore = computeAI();
@@ -2455,97 +2455,97 @@ function renderAnalysis() {
     let curMiss = 0; APP.columns.forEach(c => curMiss += countMissing(c));
     const docCount = APP.columns.filter(c => APP.variableDocs[c]).length;
 
-    let html = `<div class="page-header"><h2>Ã‰tape 8 : Tableau de bord AQI</h2><p>Score global, progression et visualisations de votre jeu de donnÃ©es</p></div>`;
+    let html = `<div class="page-header"><h2>Étape 8 : Tableau de bord AQI</h2><p>Score global, progression et visualisations de votre jeu de données</p></div>`;
 
     // AQI
-    html += `<div class="card"><h3>ðŸ… AfriData Quality Index (AQI)</h3>
+    html += `<div class="card"><h3>🏅 AfriData Quality Index (AQI)</h3>
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-around;gap:1rem">
             <div style="text-align:center">${svgGauge(aqi.total, aqi.level[0])}</div>
-            <div style="text-align:center">${svgRadar({ 'QualitÃ©': aqi.dims.intrinseque, 'Documentation': aqi.dims.documentation, 'FAIR': aqi.dims.fair, 'AI Ready': aqi.dims.ai, 'SÃ©curitÃ©': aqi.dims.securite })}</div>
+            <div style="text-align:center">${svgRadar({ 'Qualité': aqi.dims.intrinseque, 'Documentation': aqi.dims.documentation, 'FAIR': aqi.dims.fair, 'AI Ready': aqi.dims.ai, 'Sécurité': aqi.dims.securite })}</div>
         </div>
         <div class="table-wrap"><table><tr><th>Dimension</th><th>Poids</th><th>Score /100</th></tr>
-            <tr><td>QualitÃ© intrinsÃ¨que <span style="color:#888">(ISO 8000/25012)</span></td><td>30%</td><td>${Math.round(aqi.dims.intrinseque)}</td></tr>
-            <tr><td>Documentation & mÃ©tadonnÃ©es <span style="color:#888">(ISO 11179, Dublin Core)</span></td><td>20%</td><td>${Math.round(aqi.dims.documentation)}</td></tr>
+            <tr><td>Qualité intrinsèque <span style="color:#888">(ISO 8000/25012)</span></td><td>30%</td><td>${Math.round(aqi.dims.intrinseque)}</td></tr>
+            <tr><td>Documentation & métadonnées <span style="color:#888">(ISO 11179, Dublin Core)</span></td><td>20%</td><td>${Math.round(aqi.dims.documentation)}</td></tr>
             <tr><td>FAIR</td><td>20%</td><td>${Math.round(aqi.dims.fair)}</td></tr>
             <tr><td>AI Readiness</td><td>20%</td><td>${Math.round(aqi.dims.ai)}</td></tr>
-            <tr><td>SÃ©curitÃ© & confidentialitÃ© <span style="color:#888">(RGPD)</span></td><td>10%</td><td>${Math.round(aqi.dims.securite)}</td></tr>
+            <tr><td>Sécurité & confidentialité <span style="color:#888">(RGPD)</span></td><td>10%</td><td>${Math.round(aqi.dims.securite)}</td></tr>
             <tr style="background:#E8F5E9;font-weight:700"><td>AQI global</td><td>100%</td><td style="color:${aqi.level[1]}">${aqi.total} : ${aqi.level[0]}</td></tr>
         </table></div>`;
     if (aqi.recos.length) {
-        html += `<h4 style="margin-top:.8rem;font-size:.9rem;color:#555">Recommandations personnalisÃ©es</h4>`;
-        for (const [dim, txt] of aqi.recos) html += `<div class="issue warning" style="margin:.3rem 0">ðŸŸ¡ <strong>${dim} :</strong> ${txt}</div>`;
+        html += `<h4 style="margin-top:.8rem;font-size:.9rem;color:#555">Recommandations personnalisées</h4>`;
+        for (const [dim, txt] of aqi.recos) html += `<div class="issue warning" style="margin:.3rem 0">🟡 <strong>${dim} :</strong> ${txt}</div>`;
     }
     html += interpBox(interpAQI(aqi));
-    html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Ã‰valuation interne inspirÃ©e de standards internationaux : ne constitue pas une certification officielle.</p></div>`;
+    html += `<p class="small" style="color:#999;margin-top:.6rem;font-style:italic">Évaluation interne inspirée de standards internationaux : ne constitue pas une certification officielle.</p></div>`;
 
     // Progression de l'AQI
-    html += `<div class="card"><h3>ðŸ“ˆ Progression de l'AQI</h3>${svgAqiProgress(APP.aqiHistory, aqi.total)}
-        ${APP.aqiHistory.length > 1 || aqi.total !== (APP.aqiHistory[0] ? APP.aqiHistory[0].score : aqi.total) ? interpBox([`Vous Ãªtes passÃ© de <strong>${APP.aqiHistory[0] ? APP.aqiHistory[0].score : aqi.total}</strong> Ã  <strong>${aqi.total}</strong> : ${aqi.total >= AQI_TARGET ? 'objectif atteint ðŸŽ‰' : `encore ${AQI_TARGET - aqi.total} point(s) pour atteindre l'objectif de ${AQI_TARGET}`}.`]) : ''}</div>`;
+    html += `<div class="card"><h3>📈 Progression de l'AQI</h3>${svgAqiProgress(APP.aqiHistory, aqi.total)}
+        ${APP.aqiHistory.length > 1 || aqi.total !== (APP.aqiHistory[0] ? APP.aqiHistory[0].score : aqi.total) ? interpBox([`Vous êtes passé de <strong>${APP.aqiHistory[0] ? APP.aqiHistory[0].score : aqi.total}</strong> à <strong>${aqi.total}</strong> : ${aqi.total >= AQI_TARGET ? 'objectif atteint 🎉' : `encore ${AQI_TARGET - aqi.total} point(s) pour atteindre l'objectif de ${AQI_TARGET}`}.`]) : ''}</div>`;
 
     // Before / After
-    html += `<div class="card"><h3>ðŸ“ˆ Comparaison Avant / AprÃ¨s</h3>${svgBarCompare([
+    html += `<div class="card"><h3>📈 Comparaison Avant / Après</h3>${svgBarCompare([
         { label: 'Valeurs manquantes', before: ini.missing ?? 0, after: curMiss, good: false, max: Math.max(ini.missing || 1, curMiss, 1) },
         { label: 'Doublons', before: ini.duplicates ?? 0, after: countDuplicates(), good: false, max: Math.max(ini.duplicates || 1, 1) },
-        { label: 'Variables documentÃ©es', before: base.docs ?? 0, after: docCount, good: true, max: APP.columns.length },
+        { label: 'Variables documentées', before: base.docs ?? 0, after: docCount, good: true, max: APP.columns.length },
         { label: 'Score FAIR', before: base.fair ?? 0, after: APP.fairScore.total, good: true, max: 100, suffix: '/100' },
         { label: 'Score AI Readiness', before: base.ai ?? 0, after: APP.aiScore.total, good: true, max: 100, suffix: '/100' },
         { label: 'AQI', before: base.aqi ?? 0, after: aqi.total, good: true, max: 100, suffix: '/100' }
     ])}${interpBox(interpBeforeAfter(ini, curMiss, docCount, aqi, base))}</div>`;
 
     // Missing heatmap
-    html += `<div class="card"><h3>ðŸ—ºï¸ Carte thermique des valeurs manquantes</h3>${svgMissingHeatmap()}${interpBox(interpMissing(APP.qualityReport))}</div>`;
+    html += `<div class="card"><h3>🗺️ Carte thermique des valeurs manquantes</h3>${svgMissingHeatmap()}${interpBox(interpMissing(APP.qualityReport))}</div>`;
 
     // Distributions
     if (numCols.length) {
-        html += `<div class="card"><h3>ðŸ“Š Distributions (histogrammes)</h3><div style="text-align:center">`;
+        html += `<div class="card"><h3>📊 Distributions (histogrammes)</h3><div style="text-align:center">`;
         for (const c of numCols.slice(0, 6)) html += svgHistogram(numericValues(c), c);
         html += `</div>${interpBox(interpHistograms(numCols))}</div>`;
-        html += `<div class="card"><h3>ðŸ“¦ Boxplots (valeurs aberrantes)</h3><div style="text-align:center">`;
+        html += `<div class="card"><h3>📦 Boxplots (valeurs aberrantes)</h3><div style="text-align:center">`;
         for (const c of numCols.slice(0, 6)) html += svgBoxplot(c);
         html += `</div>${interpBox(interpBoxplots(numCols))}</div>`;
-        html += `<div class="card"><h3>ðŸ”— Matrice de corrÃ©lation</h3>${svgCorrMatrix(numCols)}${interpBox(interpCorr(numCols))}</div>`;
+        html += `<div class="card"><h3>🔗 Matrice de corrélation</h3>${svgCorrMatrix(numCols)}${interpBox(interpCorr(numCols))}</div>`;
         if (numCols.length >= 2) {
-            html += `<div class="card"><h3>âœ¦ Nuage de points</h3><div style="text-align:center">${svgScatter(numCols[0], numCols[1])}`;
+            html += `<div class="card"><h3>✦ Nuage de points</h3><div style="text-align:center">${svgScatter(numCols[0], numCols[1])}`;
             if (numCols.length >= 3) html += svgScatter(numCols[0], numCols[2]);
             html += `</div>${interpBox(interpScatter(numCols))}</div>`;
         }
     } else {
-        html += `<div class="card"><p style="color:#888">Aucune colonne numÃ©rique : histogrammes, boxplots et corrÃ©lations non disponibles.</p></div>`;
+        html += `<div class="card"><p style="color:#888">Aucune colonne numérique : histogrammes, boxplots et corrélations non disponibles.</p></div>`;
     }
 
-    html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(7)">â† Gouvernance</button></div>
-        <div><button class="btn btn-primary" onclick="goStep(9)">Exporter â†’</button></div></div>`;
+    html += `<div class="nav-buttons"><div><button class="btn btn-secondary" onclick="goStep(7)">← Gouvernance</button></div>
+        <div><button class="btn btn-primary" onclick="goStep(9)">Exporter →</button></div></div>`;
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// PAGE : RÃ‰FÃ‰RENTIEL UTILISÃ‰
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// PAGE : RÉFÉRENTIEL UTILISÉ
+// ═══════════════════════════════════════════════════════════════
 function renderReferentiel() {
-    let html = `<div class="page-header"><h2>ðŸ“– RÃ©fÃ©rentiel utilisÃ©</h2><p>Standards internationaux mobilisÃ©s par AfriData Ready</p></div>`;
+    let html = `<div class="page-header"><h2>📖 Référentiel utilisé</h2><p>Standards internationaux mobilisés par AfriData Ready</p></div>`;
     const stds = [
-        ['ISO 8000', 'QualitÃ© des donnÃ©es', 'Dimensions de qualitÃ© et gouvernance (complÃ©tude, exactitude, cohÃ©rence).'],
-        ['ISO/IEC 25012', 'ModÃ¨le de qualitÃ© des donnÃ©es', 'CaractÃ©ristiques de qualitÃ© inhÃ©rentes et dÃ©pendantes du systÃ¨me.'],
-        ['ISO/IEC 11179', 'Registre de mÃ©tadonnÃ©es', 'Structure du dictionnaire de donnÃ©es et description des variables.'],
-        ['Dublin Core', 'MÃ©tadonnÃ©es descriptives', 'Ã‰lÃ©ments standards de description (titre, auteur, sujet, dateâ€¦).'],
-        ['DataCite', 'Citation & DOI', 'SchÃ©ma de mÃ©tadonnÃ©es pour l\'attribution de DOI et la citation.'],
-        ['DCAT', 'InteropÃ©rabilitÃ© des catalogues', 'Description des jeux de donnÃ©es pour les portails ouverts (CKANâ€¦).'],
-        ['Principes FAIR', 'Findable, Accessible, Interoperable, Reusable', 'Bonnes pratiques de gestion des donnÃ©es de recherche (Wilkinson 2016).'],
-        ['RGPD / ISO 25012', 'Protection des donnÃ©es', 'DÃ©tection des donnÃ©es personnelles (PII) et traÃ§abilitÃ©.']
+        ['ISO 8000', 'Qualité des données', 'Dimensions de qualité et gouvernance (complétude, exactitude, cohérence).'],
+        ['ISO/IEC 25012', 'Modèle de qualité des données', 'Caractéristiques de qualité inhérentes et dépendantes du système.'],
+        ['ISO/IEC 11179', 'Registre de métadonnées', 'Structure du dictionnaire de données et description des variables.'],
+        ['Dublin Core', 'Métadonnées descriptives', 'Éléments standards de description (titre, auteur, sujet, date…).'],
+        ['DataCite', 'Citation & DOI', 'Schéma de métadonnées pour l\'attribution de DOI et la citation.'],
+        ['DCAT', 'Interopérabilité des catalogues', 'Description des jeux de données pour les portails ouverts (CKAN…).'],
+        ['Principes FAIR', 'Findable, Accessible, Interoperable, Reusable', 'Bonnes pratiques de gestion des données de recherche (Wilkinson 2016).'],
+        ['RGPD / ISO 25012', 'Protection des données', 'Détection des données personnelles (PII) et traçabilité.']
     ];
     html += `<div class="card"><div class="table-wrap"><table><tr><th>Standard</th><th>Domaine</th><th>Utilisation dans AfriData Ready</th></tr>`;
     for (const [s, dom, use] of stds) html += `<tr><td><strong>${s}</strong></td><td>${dom}</td><td>${use}</td></tr>`;
     html += `</table></div></div>`;
-    html += `<div class="issue warning" style="font-size:.9rem"><strong>âš ï¸ Avertissement important :</strong> Les Ã©valuations produites par AfriData Ready (scores AQI, FAIR, AI Readiness) sont <strong>inspirÃ©es</strong> de ces standards internationaux mais constituent une <strong>Ã©valuation interne automatisÃ©e</strong>. Elles ne constituent en aucun cas une certification officielle dÃ©livrÃ©e par un organisme accrÃ©ditÃ©.</div>`;
+    html += `<div class="issue warning" style="font-size:.9rem"><strong>⚠️ Avertissement important :</strong> Les évaluations produites par AfriData Ready (scores AQI, FAIR, AI Readiness) sont <strong>inspirées</strong> de ces standards internationaux mais constituent une <strong>évaluation interne automatisée</strong>. Elles ne constituent en aucun cas une certification officielle délivrée par un organisme accrédité.</div>`;
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ASSISTANT AfriData : objectif AQI, gains simulÃ©s, corrections auto
-// Les gains affichÃ©s sont calculÃ©s par SIMULATION RÃ‰ELLE : l'action
-// est appliquÃ©e sur une copie de l'Ã©tat, l'AQI recalculÃ©, puis
-// l'Ã©tat restaurÃ©. Jamais d'estimation codÃ©e en dur.
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// ASSISTANT AfriData : objectif AQI, gains simulés, corrections auto
+// Les gains affichés sont calculés par SIMULATION RÉELLE : l'action
+// est appliquée sur une copie de l'état, l'AQI recalculé, puis
+// l'état restauré. Jamais d'estimation codée en dur.
+// ═══════════════════════════════════════════════════════════════
 
 // Description automatique d'une variable (heuristique locale)
 function autoDescribe(col) {
@@ -2555,19 +2555,19 @@ function autoDescribe(col) {
         if (v.length) {
             const mn = Math.min(...v), mx = Math.max(...v);
             const mean = v.reduce((s, x) => s + x, 0) / v.length;
-            return { description: `Variable numÃ©rique (min ${+mn.toFixed(2)}, max ${+mx.toFixed(2)}, moyenne ${+mean.toFixed(2)})${unitGuess ? ' : ' + unitGuess : ''} [suggestion automatique]`, data_type: 'NumÃ©rique', unit: unitGuess, example: String(v[0]) };
+            return { description: `Variable numérique (min ${+mn.toFixed(2)}, max ${+mx.toFixed(2)}, moyenne ${+mean.toFixed(2)})${unitGuess ? ' : ' + unitGuess : ''} [suggestion automatique]`, data_type: 'Numérique', unit: unitGuess, example: String(v[0]) };
         }
     }
     const vals = APP.data.map(r => r[col]).filter(v => !isNull(v)).map(String);
     const uniq = [...new Set(vals)];
     if (uniq.length) {
         const isDate = /date|annee|year|mois/i.test(col);
-        return { description: `Variable ${isDate ? 'de date' : 'catÃ©gorielle'} (${uniq.length} modalitÃ©(s)${uniq.length <= 6 ? ' : ' + uniq.slice(0, 6).join(', ') : ''}) [suggestion automatique]`, data_type: isDate ? 'Date' : 'Texte/CatÃ©gorie', example: vals[0] };
+        return { description: `Variable ${isDate ? 'de date' : 'catégorielle'} (${uniq.length} modalité(s)${uniq.length <= 6 ? ' : ' + uniq.slice(0, 6).join(', ') : ''}) [suggestion automatique]`, data_type: isDate ? 'Date' : 'Texte/Catégorie', example: vals[0] };
     }
     return { description: 'Colonne vide [suggestion automatique]', data_type: 'Inconnu' };
 }
 
-// Simule une mutation, recalcule l'AQI, restaure l'Ã©tat, retourne le score
+// Simule une mutation, recalcule l'AQI, restaure l'état, retourne le score
 function simulateAQI(mutator) {
     const snap = {
         data: APP.data, columns: APP.columns, variableDocs: APP.variableDocs,
@@ -2576,7 +2576,7 @@ function simulateAQI(mutator) {
     };
     try {
         mutator(); // doit produire de NOUVEAUX objets/tableaux, jamais muter les existants
-        // L'application rÃ©elle crÃ©era une entrÃ©e de journal (bonus traÃ§abilitÃ©) : on la simule aussi
+        // L'application réelle créera une entrée de journal (bonus traçabilité) : on la simule aussi
         APP.editHistory = APP.editHistory.concat([{ sim: true }]);
         APP.qualityReport = null; APP.fairScore = null; APP.aiScore = null;
         APP.qualityReport = analyzeQuality();
@@ -2588,7 +2588,7 @@ function simulateAQI(mutator) {
     }
 }
 
-// â”€â”€ Mutateurs : version simulable (copie) et version appliquÃ©e â”€â”€
+// ── Mutateurs : version simulable (copie) et version appliquée ──
 function mutDropEmptyCols() {
     const empty = APP.columns.filter(c => countMissing(c) === APP.data.length);
     APP.columns = APP.columns.filter(c => !empty.includes(c));
@@ -2607,10 +2607,10 @@ function mutImputeMissing() {
     const fills = {};
     for (const c of APP.columns) {
         const m = countMissing(c);
-        if (m === 0 || m === n) continue; // colonnes complÃ¨tes ou vides ignorÃ©es
+        if (m === 0 || m === n) continue; // colonnes complètes ou vides ignorées
         if (isNumericCol(c)) {
             const v = numericValues(c).sort((a, b) => a - b);
-            fills[c] = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2; // mÃ©diane
+            fills[c] = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2; // médiane
         } else {
             const freq = {};
             for (const r of APP.data) { const x = r[c]; if (!isNull(x)) freq[x] = (freq[x] || 0) + 1; }
@@ -2635,7 +2635,7 @@ function mutLicense() { APP.metadata = { ...APP.metadata, license: APP.metadata.
 function mutMetaPlaceholder() {
     const keys = ['title', 'author', 'description', 'keywords', 'version', 'contact', 'collection_method', 'geographic_area', 'citation', 'access_conditions'];
     const m = { ...APP.metadata };
-    for (const k of keys) if (!m[k]) m[k] = 'Â·';
+    for (const k of keys) if (!m[k]) m[k] = '·';
     APP.metadata = m;
 }
 function sensitiveColumns() {
@@ -2663,7 +2663,7 @@ function mutAnonymize(cols) {
     return targets;
 }
 
-// â”€â”€ Catalogue d'actions : gains calculÃ©s par simulation â”€â”€
+// ── Catalogue d'actions : gains calculés par simulation ──
 function buildAssistantActions() {
     const fp = [APP.editCount, APP.data.length, APP.columns.length, Object.keys(APP.variableDocs).length,
         Object.values(APP.metadata).filter(Boolean).length, (APP.anonymizedCols || []).length].join('|');
@@ -2678,47 +2678,47 @@ function buildAssistantActions() {
 
     const emptyCols = APP.columns.filter(c => countMissing(c) === n);
     if (emptyCols.length) actions.push({
-        id: 'empty', icon: 'ðŸ—‘ï¸', label: `Supprimer ${emptyCols.length} colonne(s) vide(s)`,
-        why: `${emptyCols.join(', ')} : aucune information, dÃ©grade la structure.`,
+        id: 'empty', icon: '🗑️', label: `Supprimer ${emptyCols.length} colonne(s) vide(s)`,
+        why: `${emptyCols.join(', ')} : aucune information, dégrade la structure.`,
         gain: simulateAQI(mutDropEmptyCols) - current, auto: true, manualStep: 2
     });
 
     if (countDuplicates() > 0) actions.push({
-        id: 'dup', icon: 'â™»ï¸', label: `Supprimer ${countDuplicates()} doublon(s)`,
-        why: 'Des lignes identiques biaisent les statistiques et les modÃ¨les.',
+        id: 'dup', icon: '♻️', label: `Supprimer ${countDuplicates()} doublon(s)`,
+        why: 'Des lignes identiques biaisent les statistiques et les modèles.',
         gain: simulateAQI(mutDedupe) - current, auto: true, manualStep: 2
     });
 
     let totalMiss = 0; APP.columns.forEach(c => { const m = countMissing(c); if (m < n) totalMiss += m; });
     if (totalMiss > 0) actions.push({
-        id: 'missing', icon: 'ðŸ§©', label: `Imputer ${totalMiss} valeur(s) manquante(s)`,
-        why: 'MÃ©diane pour les numÃ©riques, mode pour les catÃ©gorielles.',
+        id: 'missing', icon: '🧩', label: `Imputer ${totalMiss} valeur(s) manquante(s)`,
+        why: 'Médiane pour les numériques, mode pour les catégorielles.',
         gain: simulateAQI(mutImputeMissing) - current, auto: true, manualStep: 2
     });
 
     const undoc = APP.columns.filter(c => !APP.variableDocs[c] || !APP.variableDocs[c].description);
     if (undoc.length) actions.push({
-        id: 'doc', icon: 'ðŸ“–', label: `Documenter ${undoc.length} variable(s) (suggestions auto)`,
-        why: 'Descriptions gÃ©nÃ©rÃ©es depuis les donnÃ©es, modifiables Ã  l\'Ã©tape 3.',
+        id: 'doc', icon: '📖', label: `Documenter ${undoc.length} variable(s) (suggestions auto)`,
+        why: 'Descriptions générées depuis les données, modifiables à l\'étape 3.',
         gain: simulateAQI(mutAutoDoc) - current, auto: true, manualStep: 3
     });
 
     if (!APP.metadata.license) actions.push({
-        id: 'license', icon: 'âš–ï¸', label: 'Ajouter une licence (CC-BY 4.0)',
-        why: 'Sans licence, les donnÃ©es ne sont ni FAIR ni rÃ©utilisables.',
+        id: 'license', icon: '⚖️', label: 'Ajouter une licence (CC-BY 4.0)',
+        why: 'Sans licence, les données ne sont ni FAIR ni réutilisables.',
         gain: simulateAQI(mutLicense) - current, auto: true, manualStep: 4
     });
 
     const metaMissing = ['title', 'author', 'description', 'keywords', 'contact'].filter(k => !APP.metadata[k]);
     if (metaMissing.length) actions.push({
-        id: 'meta', icon: 'ðŸ“‹', label: `ComplÃ©ter ${metaMissing.length} mÃ©tadonnÃ©e(s) clÃ©(s)`,
-        why: `${metaMissing.join(', ')} : Ã  renseigner vous-mÃªme (Ã©tape 4).`,
+        id: 'meta', icon: '📋', label: `Compléter ${metaMissing.length} métadonnée(s) clé(s)`,
+        why: `${metaMissing.join(', ')} : à renseigner vous-même (étape 4).`,
         gain: simulateAQI(mutMetaPlaceholder) - current, auto: false, manualStep: 4
     });
 
     const piiPending = sensitiveColumns().filter(c => !(APP.anonymizedCols || []).includes(c));
     if (piiPending.length) actions.push({
-        id: 'anon', icon: 'ðŸ”’', label: `Pseudonymiser ${piiPending.length} colonne(s) sensible(s)`,
+        id: 'anon', icon: '🔒', label: `Pseudonymiser ${piiPending.length} colonne(s) sensible(s)`,
         why: `${piiPending.join(', ')} : remplace les valeurs identifiantes par des codes (RGPD).`,
         gain: simulateAQI(() => mutAnonymize(piiPending)) - current, auto: true, manualStep: 7
     });
@@ -2735,14 +2735,14 @@ function pushAqiHistory(label) {
     APP.aqiHistory.push({ label, score });
 }
 
-// Applique rÃ©ellement une action de l'assistant
+// Applique réellement une action de l'assistant
 function applyAssistAction(id) {
-    if (id === 'empty') { const dropped = mutDropEmptyCols(); addHistory('Assistant : colonnes vides supprimÃ©es', dropped.join(', '), 'Correction automatique'); }
-    else if (id === 'dup') { const before = APP.data.length; mutDedupe(); addHistory('Assistant : doublons supprimÃ©s', `${before - APP.data.length} ligne(s)`, 'Correction automatique'); }
-    else if (id === 'missing') { const fills = mutImputeMissing(); addHistory('Assistant : valeurs manquantes imputÃ©es', Object.keys(fills).map(c => `${c}â†’${fills[c]}`).join(' ; '), 'MÃ©diane/mode automatique'); }
-    else if (id === 'doc') { const added = mutAutoDoc(); addHistory('Assistant : variables documentÃ©es', `${added.length} suggestion(s) automatique(s)`, 'Ã€ relire Ã  l\'Ã©tape 3'); }
-    else if (id === 'license') { mutLicense(); addHistory('Assistant : licence ajoutÃ©e', 'CC-BY 4.0', 'Correction automatique'); }
-    else if (id === 'anon') { const done = mutAnonymize(); addHistory('Assistant : pseudonymisation', done.join(', '), 'Valeurs remplacÃ©es par des codes (RGPD)'); }
+    if (id === 'empty') { const dropped = mutDropEmptyCols(); addHistory('Assistant : colonnes vides supprimées', dropped.join(', '), 'Correction automatique'); }
+    else if (id === 'dup') { const before = APP.data.length; mutDedupe(); addHistory('Assistant : doublons supprimés', `${before - APP.data.length} ligne(s)`, 'Correction automatique'); }
+    else if (id === 'missing') { const fills = mutImputeMissing(); addHistory('Assistant : valeurs manquantes imputées', Object.keys(fills).map(c => `${c}→${fills[c]}`).join(' ; '), 'Médiane/mode automatique'); }
+    else if (id === 'doc') { const added = mutAutoDoc(); addHistory('Assistant : variables documentées', `${added.length} suggestion(s) automatique(s)`, 'À relire à l\'étape 3'); }
+    else if (id === 'license') { mutLicense(); addHistory('Assistant : licence ajoutée', 'CC-BY 4.0', 'Correction automatique'); }
+    else if (id === 'anon') { const done = mutAnonymize(); addHistory('Assistant : pseudonymisation', done.join(', '), 'Valeurs remplacées par des codes (RGPD)'); }
     APP._assistCache = null;
     pushAqiHistory('Assistant');
     renderNav(); renderStep();
@@ -2764,7 +2764,7 @@ function applyAllAssistActions() {
     renderNav(); renderStep();
 }
 
-// â”€â”€ Barre Objectif AQI (permanente en haut de chaque Ã©tape) â”€â”€
+// ── Barre Objectif AQI (permanente en haut de chaque étape) ──
 function renderObjectiveBar() {
     if (!APP.data || !APP.data.length) return '';
     const { current, actions } = buildAssistantActions();
@@ -2776,41 +2776,41 @@ function renderObjectiveBar() {
     let html = `<div class="card" style="border-left:5px solid ${color};margin-bottom:1.2rem">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between">
             <div style="flex:1;min-width:220px">
-                <div style="font-size:.8rem;color:#888;font-weight:600">ðŸŽ¯ Objectif recommandÃ© : AQI â‰¥ ${AQI_TARGET}</div>
+                <div style="font-size:.8rem;color:#888;font-weight:600">🎯 Objectif recommandé : AQI ≥ ${AQI_TARGET}</div>
                 <div style="background:#eee;border-radius:8px;height:14px;margin:.4rem 0;overflow:hidden">
                     <div style="width:${ratio * 100}%;height:100%;background:${color};border-radius:8px;transition:width .4s"></div>
                 </div>
                 <div style="font-size:.85rem"><strong style="color:${color};font-size:1.05rem">AQI actuel : ${current}/100</strong>
-                ${current >= AQI_TARGET ? ' Â· ðŸŽ‰ Objectif atteint !' : ` Â· encore <strong>${remaining} point(s)</strong> Ã  gagner`}</div>
+                ${current >= AQI_TARGET ? ' · 🎉 Objectif atteint !' : ` · encore <strong>${remaining} point(s)</strong> à gagner`}</div>
             </div>`;
     if (actions.length) {
-        html += `<button class="btn btn-primary" onclick="applyAllAssistActions()" title="Applique toutes les corrections automatiques">âš¡ Tout corriger auto (+${actions.filter(a => a.auto).reduce((s, a) => s + a.gain, 0)})</button>`;
+        html += `<button class="btn btn-primary" onclick="applyAllAssistActions()" title="Applique toutes les corrections automatiques">⚡ Tout corriger auto (+${actions.filter(a => a.auto).reduce((s, a) => s + a.gain, 0)})</button>`;
     }
     html += `</div>`;
 
     if (actions.length) {
-        html += `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-size:.88rem;font-weight:600;color:#2E7D32">ðŸ’¡ ${actions.length} action(s) prioritaire(s) : gain potentiel +${totalGain} point(s)</summary>
+        html += `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-size:.88rem;font-weight:600;color:#2E7D32">💡 ${actions.length} action(s) prioritaire(s) : gain potentiel +${totalGain} point(s)</summary>
         <div style="margin-top:.6rem">`;
         for (const a of actions) {
             html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.5rem .7rem;background:#f8faf8;border-radius:8px;margin:.3rem 0">
                 <span style="font-size:1.1rem">${a.icon}</span>
                 <div style="flex:1;min-width:200px"><strong style="font-size:.87rem">${a.label}</strong> <span style="color:${a.gain > 0 ? 'var(--primary)' : '#888'};font-weight:700">+${a.gain}</span><br>
                 <span style="font-size:.78rem;color:#777">${a.why}</span></div>
-                ${a.auto ? `<button class="btn btn-primary btn-sm" onclick="applyAssistAction('${a.id}')">âœ… Corriger auto</button>` : ''}
-                <button class="btn btn-secondary btn-sm" onclick="goStep(${a.manualStep})">âœï¸ Manuel</button>
+                ${a.auto ? `<button class="btn btn-primary btn-sm" onclick="applyAssistAction('${a.id}')">✅ Corriger auto</button>` : ''}
+                <button class="btn btn-secondary btn-sm" onclick="goStep(${a.manualStep})">✏️ Manuel</button>
             </div>`;
         }
         html += `</div></details>`;
     } else if (current < AQI_TARGET) {
-        html += `<p style="font-size:.82rem;color:#888;margin-top:.4rem">Les points restants nÃ©cessitent des actions manuelles (mÃ©tadonnÃ©es, documentation fine, anonymisation).</p>`;
+        html += `<p style="font-size:.82rem;color:#888;margin-top:.4rem">Les points restants nécessitent des actions manuelles (métadonnées, documentation fine, anonymisation).</p>`;
     }
     html += `</div>`;
     return html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // MODE PROJET : persistance locale (IndexedDB, 100% sur l'appareil)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 const DB_NAME = 'afridata_projects', DB_STORE = 'projects';
 
 function openDB() {
@@ -2863,7 +2863,7 @@ async function dbDelete(id) {
     });
 }
 
-// InstantanÃ© complet de l'Ã©tat de travail (workbook exclu : trop lourd, reconstruit Ã  l'import)
+// Instantané complet de l'état de travail (workbook exclu : trop lourd, reconstruit à l'import)
 function serializeState() {
     return {
         step: typeof APP.step === 'number' ? APP.step : 1,
@@ -2912,7 +2912,7 @@ async function saveProject(silent) {
     });
     APP.lastSaved = new Date().toLocaleTimeString('fr-FR');
     const el = document.getElementById('save-indicator');
-    if (el) el.textContent = 'ðŸ’¾ SauvegardÃ© Ã  ' + APP.lastSaved;
+    if (el) el.textContent = '💾 Sauvegardé à ' + APP.lastSaved;
     if (!silent) renderNav();
 }
 
@@ -2945,7 +2945,7 @@ async function openProject(id) {
 }
 
 async function deleteProject(id, name) {
-    if (!confirm(`Supprimer dÃ©finitivement le projet Â« ${name} Â» ?`)) return;
+    if (!confirm(`Supprimer définitivement le projet « ${name} » ?`)) return;
     await dbDelete(id);
     if (APP.projectId === id) { APP.projectId = null; APP.projectName = ''; APP.mode = null; }
     goStep('projects');
@@ -2957,7 +2957,7 @@ function saveAsProject() {
     createProject(name, '', true);
 }
 
-// â”€â”€ Export / import de projet (fichier .afridata, transfÃ©rable) â”€â”€
+// ── Export / import de projet (fichier .afridata, transférable) ──
 async function exportProjectFile(id) {
     const p = await dbGet(id);
     if (!p) { alert('Projet introuvable.'); return; }
@@ -2974,12 +2974,12 @@ function importProjectFile(file) {
             const payload = JSON.parse(e.target.result);
             if (payload.format !== 'afridata-project' || !payload.project) throw new Error('Ce fichier n\'est pas un projet AfriData Ready valide.');
             const p = payload.project;
-            // Nouvel identifiant pour Ã©viter d'Ã©craser un projet existant
+            // Nouvel identifiant pour éviter d'écraser un projet existant
             p.id = 'prj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-            p.name = (p.name || 'Projet importÃ©') + ' (importÃ©)';
+            p.name = (p.name || 'Projet importé') + ' (importé)';
             p.updatedAt = new Date().toISOString();
             await dbPut(p);
-            alert(`Projet Â« ${p.name} Â» importÃ© avec succÃ¨s.`);
+            alert(`Projet « ${p.name} » importé avec succès.`);
             loadProjectsList();
         } catch (err) { alert('Import impossible : ' + err.message); }
     };
@@ -2992,42 +2992,42 @@ function startQuick() {
     renderNav(); renderStep();
 }
 
-// â”€â”€ Ã‰cran d'accueil : choix du mode â”€â”€
+// ── Écran d'accueil : choix du mode ──
 function renderWelcome() {
-    return `<div class="page-header"><h2>ðŸŒ Bienvenue dans AfriData Ready</h2><p>From Raw Data to FAIR &amp; AI-Ready Data : choisissez votre mode de travail</p></div>
+    return `<div class="page-header"><h2>🌍 Bienvenue dans AfriData Ready</h2><p>From Raw Data to FAIR &amp; AI-Ready Data : choisissez votre mode de travail</p></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;max-width:900px;margin:0 auto">
         <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="startQuick()">
-            <div style="font-size:3rem">ðŸš€</div>
-            <h3 style="border:none;justify-content:center;display:flex">DÃ©marrage rapide</h3>
-            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Importer un fichier, le traiter, exporter les rÃ©sultats. Simple et direct, sans sauvegarde.</p>
-            <button class="btn btn-primary">Commencer â†’</button>
+            <div style="font-size:3rem">🚀</div>
+            <h3 style="border:none;justify-content:center;display:flex">Démarrage rapide</h3>
+            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Importer un fichier, le traiter, exporter les résultats. Simple et direct, sans sauvegarde.</p>
+            <button class="btn btn-primary">Commencer →</button>
         </div>
         <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="goStep('projects')">
-            <div style="font-size:3rem">ðŸ“‚</div>
+            <div style="font-size:3rem">📂</div>
             <h3 style="border:none;justify-content:center;display:flex">Projet AfriData Ready</h3>
-            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Travailler sur plusieurs jours : sauvegarde automatique sur votre ordinateur, reprise exacte lÃ  oÃ¹ vous vous Ãªtes arrÃªtÃ©.</p>
-            <button class="btn btn-accent">Mes projets â†’</button>
+            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Travailler sur plusieurs jours : sauvegarde automatique sur votre ordinateur, reprise exacte là où vous vous êtes arrêté.</p>
+            <button class="btn btn-accent">Mes projets →</button>
         </div>
     </div>
-    <p style="text-align:center;color:#999;font-size:.82rem;margin-top:1.5rem">ðŸ”’ Dans les deux modes, vos donnÃ©es restent exclusivement sur votre ordinateur : aucun envoi sur Internet.</p>`;
+    <p style="text-align:center;color:#999;font-size:.82rem;margin-top:1.5rem">🔒 Dans les deux modes, vos données restent exclusivement sur votre ordinateur : aucun envoi sur Internet.</p>`;
 }
 
-// â”€â”€ Page : liste des projets â”€â”€
+// ── Page : liste des projets ──
 function renderProjects() {
-    // Le contenu rÃ©el est chargÃ© de faÃ§on asynchrone
+    // Le contenu réel est chargé de façon asynchrone
     setTimeout(loadProjectsList, 30);
-    return `<div class="page-header"><h2>ðŸ“‚ Mes projets</h2><p>Vos projets sont stockÃ©s localement dans ce navigateur</p></div>
-    <div class="card"><h3>âž• Nouveau projet</h3>
+    return `<div class="page-header"><h2>📂 Mes projets</h2><p>Vos projets sont stockés localement dans ce navigateur</p></div>
+    <div class="card"><h3>➕ Nouveau projet</h3>
         <div class="form-row">
-            <div class="form-group"><label>Nom du projet :</label><input id="new-prj-name" placeholder="ex : EnquÃªte mÃ©nages 2026"></div>
+            <div class="form-group"><label>Nom du projet :</label><input id="new-prj-name" placeholder="ex : Enquête ménages 2026"></div>
             <div class="form-group"><label>Description (optionnel) :</label><input id="new-prj-desc" placeholder="Courte description"></div>
         </div>
-        <button class="btn btn-primary" onclick="createProject(document.getElementById('new-prj-name').value, document.getElementById('new-prj-desc').value, false)">CrÃ©er le projet</button>
-        <button class="btn btn-secondary" style="margin-left:.6rem" onclick="document.getElementById('import-prj-input').click()">ðŸ“¥ Importer un projet (.afridata)</button>
+        <button class="btn btn-primary" onclick="createProject(document.getElementById('new-prj-name').value, document.getElementById('new-prj-desc').value, false)">Créer le projet</button>
+        <button class="btn btn-secondary" style="margin-left:.6rem" onclick="document.getElementById('import-prj-input').click()">📥 Importer un projet (.afridata)</button>
         <input type="file" id="import-prj-input" accept=".afridata,application/json" style="display:none" onchange="if(this.files[0])importProjectFile(this.files[0]);this.value=''">
     </div>
-    <div id="projects-list"><div class="card"><p style="color:#888">Chargementâ€¦</p></div></div>
-    <div class="nav-buttons"><div><button class="btn btn-secondary" onclick="APP.mode=null;APP.step='welcome';renderNav();renderStep()">â† Accueil</button></div><div></div></div>`;
+    <div id="projects-list"><div class="card"><p style="color:#888">Chargement…</p></div></div>
+    <div class="nav-buttons"><div><button class="btn btn-secondary" onclick="APP.mode=null;APP.step='welcome';renderNav();renderStep()">← Accueil</button></div><div></div></div>`;
 }
 
 async function loadProjectsList() {
@@ -3036,8 +3036,8 @@ async function loadProjectsList() {
     let projects = [];
     try { projects = await dbGetAll(); } catch (e) { el.innerHTML = `<div class="card"><p style="color:var(--danger)">Stockage local indisponible : ${e.message}</p></div>`; return; }
     projects.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-    if (!projects.length) { el.innerHTML = '<div class="card"><p style="color:#888">Aucun projet pour le moment. CrÃ©ez-en un ci-dessus, ou commencez en DÃ©marrage rapide puis cliquez Â« Enregistrer comme projet Â».</p></div>'; return; }
-    let html = '<div class="card"><h3>Projets existants</h3><div class="table-wrap"><table><tr><th>Nom</th><th>Description</th><th>DonnÃ©es</th><th>DerniÃ¨re modification</th><th></th></tr>';
+    if (!projects.length) { el.innerHTML = '<div class="card"><p style="color:#888">Aucun projet pour le moment. Créez-en un ci-dessus, ou commencez en Démarrage rapide puis cliquez « Enregistrer comme projet ».</p></div>'; return; }
+    let html = '<div class="card"><h3>Projets existants</h3><div class="table-wrap"><table><tr><th>Nom</th><th>Description</th><th>Données</th><th>Dernière modification</th><th></th></tr>';
     for (const p of projects) {
         const rows = p.state && p.state.data ? `${p.state.data.length} lignes` : '<span style="color:#aaa">vide</span>';
         const upd = p.updatedAt ? new Date(p.updatedAt).toLocaleString('fr-FR') : '';
@@ -3048,17 +3048,17 @@ async function loadProjectsList() {
             <td>${rows}</td><td>${upd}</td>
             <td style="white-space:nowrap">
                 <button class="btn btn-primary btn-sm" onclick="openProject('${p.id}')">Ouvrir</button>
-                <button class="btn btn-secondary btn-sm" onclick="exportProjectFile('${p.id}')" title="Exporter en fichier .afridata">ðŸ“¤</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}','${safeName}')">âœ•</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportProjectFile('${p.id}')" title="Exporter en fichier .afridata">📤</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}','${safeName}')">✕</button>
             </td></tr>`;
     }
     html += '</table></div></div>';
     el.innerHTML = html;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // RENDER ENGINE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 function renderStep() {
     const container = document.getElementById('main-content');
     const renderers = {
@@ -3085,7 +3085,7 @@ function renderStep() {
     }
 }
 
-// Init : Ã©cran d'accueil (choix du mode)
+// Init : écran d'accueil (choix du mode)
 APP.step = 'welcome';
 renderNav();
 renderStep();

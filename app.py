@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ from pathlib import Path
 
 st.set_page_config(
     page_title="AfriData Ready",
-    page_icon="ðŸ“Š",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -72,9 +72,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # SESSION STATE INITIALIZATION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def init_state():
     defaults = {
@@ -99,11 +99,11 @@ def init_state():
 init_state()
 
 STEPS = [
-    "Importer les donnÃ©es",
-    "QualitÃ© des donnÃ©es",
-    "Modifier les donnÃ©es",
+    "Importer les données",
+    "Qualité des données",
+    "Modifier les données",
     "Documenter les variables",
-    "MÃ©tadonnÃ©es",
+    "Métadonnées",
     "Score FAIR",
     "Score AI Readiness",
     "Recommandations",
@@ -111,9 +111,9 @@ STEPS = [
 ]
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # DATA LOADING
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def load_file(uploaded_file):
     name = uploaded_file.name.lower()
@@ -122,7 +122,7 @@ def load_file(uploaded_file):
         for enc in ["utf-8", "latin-1", "cp1252"]:
             try:
                 df = pd.read_csv(uploaded_file, encoding=enc)
-                sheets["DonnÃ©es"] = df
+                sheets["Données"] = df
                 break
             except Exception:
                 uploaded_file.seek(0)
@@ -139,17 +139,17 @@ def load_file(uploaded_file):
         try:
             data = json.load(uploaded_file)
             if isinstance(data, list):
-                sheets["DonnÃ©es"] = pd.DataFrame(data)
+                sheets["Données"] = pd.DataFrame(data)
             elif isinstance(data, dict):
-                sheets["DonnÃ©es"] = pd.DataFrame(data)
+                sheets["Données"] = pd.DataFrame(data)
         except Exception as e:
             st.error(f"Erreur JSON : {e}")
     return sheets
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # QUALITY ANALYSIS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def analyze_quality(df):
     issues = []
@@ -175,7 +175,7 @@ def analyze_quality(df):
     empty_cols = [c for c in df.columns if df[c].isnull().all()]
     if empty_cols:
         issues.append({"type": "empty_cols", "severity": "critical",
-                       "message": f"{len(empty_cols)} colonne(s) entiÃ¨rement vide(s)",
+                       "message": f"{len(empty_cols)} colonne(s) entièrement vide(s)",
                        "detail": empty_cols})
 
     # Bad column names
@@ -186,7 +186,7 @@ def analyze_quality(df):
             bad_names.append(s)
     if bad_names:
         issues.append({"type": "bad_names", "severity": "warning",
-                       "message": f"{len(bad_names)} nom(s) de colonne(s) mal dÃ©fini(s)",
+                       "message": f"{len(bad_names)} nom(s) de colonne(s) mal défini(s)",
                        "detail": bad_names})
 
     # Inconsistent formats
@@ -203,12 +203,12 @@ def analyze_quality(df):
                 non_forms = set(vals) & {"non","no","0","false","n","faux"}
                 if len(oui_forms) > 1 or len(non_forms) > 1:
                     issues.append({"type": "inconsistent", "severity": "warning",
-                                   "message": f"Colonne '{col}' : codage binaire incohÃ©rent ({', '.join(vals)})"})
+                                   "message": f"Colonne '{col}' : codage binaire incohérent ({', '.join(vals)})"})
 
     # Date format issues
     for col in df.columns:
         col_lower = str(col).lower()
-        if any(k in col_lower for k in ["date","annee","annÃ©e","mois","year","period"]):
+        if any(k in col_lower for k in ["date","annee","année","mois","year","period"]):
             serie = df[col].dropna().astype(str)
             patterns_found = set()
             for v in serie.head(50):
@@ -243,9 +243,9 @@ def analyze_quality(df):
     }
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # FAIR SCORE
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def compute_fair_score(df, metadata, variable_docs):
     scores = {"F": 0, "A": 0, "I": 0, "R": 0}
@@ -254,50 +254,50 @@ def compute_fair_score(df, metadata, variable_docs):
 
     # F - Findable (25 pts)
     if metadata.get("title"):
-        scores["F"] += 5; details["F"].append(("ok", "Titre renseignÃ©"))
+        scores["F"] += 5; details["F"].append(("ok", "Titre renseigné"))
     else:
         details["F"].append(("missing", "Titre manquant"))
 
     if metadata.get("description"):
-        scores["F"] += 5; details["F"].append(("ok", "Description renseignÃ©e"))
+        scores["F"] += 5; details["F"].append(("ok", "Description renseignée"))
     else:
         details["F"].append(("missing", "Description manquante"))
 
     if metadata.get("keywords"):
-        scores["F"] += 5; details["F"].append(("ok", "Mots-clÃ©s renseignÃ©s"))
+        scores["F"] += 5; details["F"].append(("ok", "Mots-clés renseignés"))
     else:
-        details["F"].append(("missing", "Mots-clÃ©s manquants"))
+        details["F"].append(("missing", "Mots-clés manquants"))
 
     if metadata.get("author"):
-        scores["F"] += 5; details["F"].append(("ok", "Auteur renseignÃ©"))
+        scores["F"] += 5; details["F"].append(("ok", "Auteur renseigné"))
     else:
         details["F"].append(("missing", "Auteur manquant"))
 
     if metadata.get("version"):
-        scores["F"] += 5; details["F"].append(("ok", "Version renseignÃ©e"))
+        scores["F"] += 5; details["F"].append(("ok", "Version renseignée"))
     else:
         details["F"].append(("missing", "Version manquante"))
 
     # A - Accessible (25 pts)
     if metadata.get("license"):
-        scores["A"] += 8; details["A"].append(("ok", "Licence dÃ©finie"))
+        scores["A"] += 8; details["A"].append(("ok", "Licence définie"))
     else:
         details["A"].append(("missing", "Licence manquante"))
 
     if metadata.get("access_conditions"):
-        scores["A"] += 7; details["A"].append(("ok", "Conditions d'accÃ¨s dÃ©finies"))
+        scores["A"] += 7; details["A"].append(("ok", "Conditions d'accès définies"))
     else:
-        details["A"].append(("missing", "Conditions d'accÃ¨s manquantes"))
+        details["A"].append(("missing", "Conditions d'accès manquantes"))
 
     if metadata.get("contact"):
-        scores["A"] += 5; details["A"].append(("ok", "Contact renseignÃ©"))
+        scores["A"] += 5; details["A"].append(("ok", "Contact renseigné"))
     else:
         details["A"].append(("missing", "Contact manquant"))
 
     if metadata.get("citation"):
-        scores["A"] += 5; details["A"].append(("ok", "Citation recommandÃ©e dÃ©finie"))
+        scores["A"] += 5; details["A"].append(("ok", "Citation recommandée définie"))
     else:
-        details["A"].append(("missing", "Citation recommandÃ©e manquante"))
+        details["A"].append(("missing", "Citation recommandée manquante"))
 
     # I - Interoperable (25 pts)
     # Column names quality
@@ -312,7 +312,7 @@ def compute_fair_score(df, metadata, variable_docs):
     type_ratio = 1 - (n_object / len(df.columns)) if len(df.columns) > 0 else 0
     type_score = int(type_ratio * 7)
     scores["I"] += type_score
-    details["I"].append(("ok" if type_ratio > 0.5 else "missing", f"Colonnes avec types structurÃ©s : {len(df.columns) - n_object}/{len(df.columns)}"))
+    details["I"].append(("ok" if type_ratio > 0.5 else "missing", f"Colonnes avec types structurés : {len(df.columns) - n_object}/{len(df.columns)}"))
 
     # Standard format (CSV/Excel)
     scores["I"] += 5; details["I"].append(("ok", "Format standard (CSV/Excel)"))
@@ -321,43 +321,43 @@ def compute_fair_score(df, metadata, variable_docs):
     doc_ratio = len(variable_docs) / len(df.columns) if len(df.columns) > 0 else 0
     doc_score = int(doc_ratio * 5)
     scores["I"] += doc_score
-    details["I"].append(("ok" if doc_ratio > 0.5 else "missing", f"Variables documentÃ©es : {len(variable_docs)}/{len(df.columns)}"))
+    details["I"].append(("ok" if doc_ratio > 0.5 else "missing", f"Variables documentées : {len(variable_docs)}/{len(df.columns)}"))
 
     # R - Reusable (25 pts)
     if metadata.get("license"):
-        scores["R"] += 6; details["R"].append(("ok", "Licence dÃ©finie pour rÃ©utilisation"))
+        scores["R"] += 6; details["R"].append(("ok", "Licence définie pour réutilisation"))
     else:
-        details["R"].append(("missing", "Licence nÃ©cessaire pour la rÃ©utilisation"))
+        details["R"].append(("missing", "Licence nécessaire pour la réutilisation"))
 
     if metadata.get("collection_method"):
-        scores["R"] += 5; details["R"].append(("ok", "MÃ©thode de collecte documentÃ©e"))
+        scores["R"] += 5; details["R"].append(("ok", "Méthode de collecte documentée"))
     else:
-        details["R"].append(("missing", "MÃ©thode de collecte manquante"))
+        details["R"].append(("missing", "Méthode de collecte manquante"))
 
     if metadata.get("geographic_area"):
-        scores["R"] += 4; details["R"].append(("ok", "Zone gÃ©ographique renseignÃ©e"))
+        scores["R"] += 4; details["R"].append(("ok", "Zone géographique renseignée"))
     else:
-        details["R"].append(("missing", "Zone gÃ©ographique manquante"))
+        details["R"].append(("missing", "Zone géographique manquante"))
 
     missing_pct = df.isnull().sum().sum() / (df.shape[0] * df.shape[1]) * 100 if df.shape[0] * df.shape[1] > 0 else 100
     if missing_pct < 5:
-        scores["R"] += 5; details["R"].append(("ok", f"ComplÃ©tude Ã©levÃ©e ({100-missing_pct:.1f}%)"))
+        scores["R"] += 5; details["R"].append(("ok", f"Complétude élevée ({100-missing_pct:.1f}%)"))
     elif missing_pct < 20:
-        scores["R"] += 3; details["R"].append(("partial", f"ComplÃ©tude moyenne ({100-missing_pct:.1f}%)"))
+        scores["R"] += 3; details["R"].append(("partial", f"Complétude moyenne ({100-missing_pct:.1f}%)"))
     else:
-        details["R"].append(("missing", f"ComplÃ©tude faible ({100-missing_pct:.1f}%)"))
+        details["R"].append(("missing", f"Complétude faible ({100-missing_pct:.1f}%)"))
 
     doc_score_r = int(doc_ratio * 5)
     scores["R"] += doc_score_r
-    details["R"].append(("ok" if doc_ratio > 0.5 else "missing", f"Dictionnaire de donnÃ©es : {len(variable_docs)}/{len(df.columns)} variables"))
+    details["R"].append(("ok" if doc_ratio > 0.5 else "missing", f"Dictionnaire de données : {len(variable_docs)}/{len(df.columns)} variables"))
 
     total = sum(scores.values())
     return {"scores": scores, "details": details, "total": total, "max": 100, "max_scores": max_scores}
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # AI READINESS SCORE
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def compute_ai_readiness(df, metadata, variable_docs):
     dims = {}
@@ -372,8 +372,8 @@ def compute_ai_readiness(df, metadata, variable_docs):
     elif missing_pct <= 20: s = 8
     elif missing_pct <= 35: s = 4
     else: s = 0
-    dims["ComplÃ©tude"] = s
-    details["ComplÃ©tude"] = [f"Taux de valeurs manquantes : {missing_pct:.1f}%", f"Score : {s}/20"]
+    dims["Complétude"] = s
+    details["Complétude"] = [f"Taux de valeurs manquantes : {missing_pct:.1f}%", f"Score : {s}/20"]
 
     # 2. Consistency (15 pts)
     n_dup = df.duplicated().sum()
@@ -391,8 +391,8 @@ def compute_ai_readiness(df, metadata, variable_docs):
         except Exception:
             pass
     s2 = max(0, s2)
-    dims["CohÃ©rence"] = s2
-    details["CohÃ©rence"] = [f"Doublons : {n_dup} ({dup_pct:.1f}%)", f"Score : {s2}/15"]
+    dims["Cohérence"] = s2
+    details["Cohérence"] = [f"Doublons : {n_dup} ({dup_pct:.1f}%)", f"Score : {s2}/15"]
 
     # 3. Documentation (15 pts)
     doc_ratio = len(variable_docs) / len(df.columns) if len(df.columns) > 0 else 0
@@ -401,7 +401,7 @@ def compute_ai_readiness(df, metadata, variable_docs):
     if metadata.get("collection_method"): s3 += 2
     s3 = min(15, s3)
     dims["Documentation"] = s3
-    details["Documentation"] = [f"Variables documentÃ©es : {len(variable_docs)}/{len(df.columns)}", f"Score : {s3}/15"]
+    details["Documentation"] = [f"Variables documentées : {len(variable_docs)}/{len(df.columns)}", f"Score : {s3}/15"]
 
     # 4. Variable quality (15 pts)
     good_names = sum(1 for c in df.columns if len(str(c)) > 3 and not str(c).startswith("Unnamed"))
@@ -410,8 +410,8 @@ def compute_ai_readiness(df, metadata, variable_docs):
     feat_ratio = n_numeric / len(df.columns) if len(df.columns) > 0 else 0
     s4 = int(name_ratio * 8) + int(feat_ratio * 7)
     s4 = min(15, s4)
-    dims["QualitÃ© des variables"] = s4
-    details["QualitÃ© des variables"] = [f"Noms explicites : {good_names}/{len(df.columns)}", f"Features numÃ©riques : {n_numeric}/{len(df.columns)}", f"Score : {s4}/15"]
+    dims["Qualité des variables"] = s4
+    details["Qualité des variables"] = [f"Noms explicites : {good_names}/{len(df.columns)}", f"Features numériques : {n_numeric}/{len(df.columns)}", f"Score : {s4}/15"]
 
     # 5. Target variable (10 pts)
     has_target = False
@@ -427,7 +427,7 @@ def compute_ai_readiness(df, metadata, variable_docs):
             break
     s5 = 10 if has_target else 0
     dims["Variable cible"] = s5
-    details["Variable cible"] = [f"Variable cible identifiÃ©e : {'Oui' if has_target else 'Non'}", f"Score : {s5}/10"]
+    details["Variable cible"] = [f"Variable cible identifiée : {'Oui' if has_target else 'Non'}", f"Score : {s5}/10"]
 
     # 6. Structure (15 pts)
     s6 = 15
@@ -448,38 +448,38 @@ def compute_ai_readiness(df, metadata, variable_docs):
     if sensitive_found:
         s7 -= min(10, len(sensitive_found) * 3)
     s7 = max(0, s7)
-    dims["DonnÃ©es sensibles"] = s7
-    details["DonnÃ©es sensibles"] = [f"Colonnes potentiellement sensibles : {', '.join(sensitive_found) if sensitive_found else 'Aucune'}", f"Score : {s7}/10"]
+    dims["Données sensibles"] = s7
+    details["Données sensibles"] = [f"Colonnes potentiellement sensibles : {', '.join(sensitive_found) if sensitive_found else 'Aucune'}", f"Score : {s7}/10"]
 
     total = sum(dims.values())
     max_total = 100
     if total <= 39: level = ("Faible", "#C62828")
     elif total <= 69: level = ("Moyen", "#FF6F00")
-    else: level = ("Ã‰levÃ©", "#1B5E20")
+    else: level = ("Élevé", "#1B5E20")
 
     return {"dims": dims, "details": details, "total": total, "max": max_total, "level": level,
-            "max_dims": {"ComplÃ©tude": 20, "CohÃ©rence": 15, "Documentation": 15,
-                         "QualitÃ© des variables": 15, "Variable cible": 10, "Structure": 15, "DonnÃ©es sensibles": 10}}
+            "max_dims": {"Complétude": 20, "Cohérence": 15, "Documentation": 15,
+                         "Qualité des variables": 15, "Variable cible": 10, "Structure": 15, "Données sensibles": 10}}
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # RECOMMENDATIONS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def generate_recommendations(df, metadata, variable_docs, quality_report, fair_score, ai_score):
     recos = []
 
     missing_pct = quality_report["missing_pct"]
     if missing_pct > 20:
-        recos.append(("urgent", "ComplÃ©ter les donnÃ©es", f"Taux de valeurs manquantes Ã©levÃ© ({missing_pct}%). Appliquer une stratÃ©gie d'imputation ou documenter les raisons."))
+        recos.append(("urgent", "Compléter les données", f"Taux de valeurs manquantes élevé ({missing_pct}%). Appliquer une stratégie d'imputation ou documenter les raisons."))
     elif missing_pct > 5:
-        recos.append(("important", "RÃ©duire les valeurs manquantes", f"{missing_pct}% de valeurs manquantes. VÃ©rifier les colonnes critiques."))
+        recos.append(("important", "Réduire les valeurs manquantes", f"{missing_pct}% de valeurs manquantes. Vérifier les colonnes critiques."))
 
     if quality_report["n_duplicates"] > 0:
-        recos.append(("important", "Supprimer les doublons", f"{quality_report['n_duplicates']} ligne(s) en doublon dÃ©tectÃ©e(s)."))
+        recos.append(("important", "Supprimer les doublons", f"{quality_report['n_duplicates']} ligne(s) en doublon détectée(s)."))
 
     if quality_report["empty_cols"]:
-        recos.append(("urgent", "Supprimer les colonnes vides", f"{len(quality_report['empty_cols'])} colonne(s) entiÃ¨rement vide(s) : {', '.join(quality_report['empty_cols'][:5])}"))
+        recos.append(("urgent", "Supprimer les colonnes vides", f"{len(quality_report['empty_cols'])} colonne(s) entièrement vide(s) : {', '.join(quality_report['empty_cols'][:5])}"))
 
     # Metadata
     missing_meta = []
@@ -487,39 +487,39 @@ def generate_recommendations(df, metadata, variable_docs, quality_report, fair_s
         if not metadata.get(field):
             missing_meta.append(field)
     if missing_meta:
-        recos.append(("urgent" if len(missing_meta) > 3 else "important", "ComplÃ©ter les mÃ©tadonnÃ©es", f"Champs manquants : {', '.join(missing_meta)}"))
+        recos.append(("urgent" if len(missing_meta) > 3 else "important", "Compléter les métadonnées", f"Champs manquants : {', '.join(missing_meta)}"))
 
     # Variable documentation
     n_undoc = len(df.columns) - len(variable_docs)
     if n_undoc > 0:
-        recos.append(("important", "Documenter les variables", f"{n_undoc} variable(s) non documentÃ©e(s) sur {len(df.columns)}."))
+        recos.append(("important", "Documenter les variables", f"{n_undoc} variable(s) non documentée(s) sur {len(df.columns)}."))
 
     # License
     if not metadata.get("license"):
-        recos.append(("urgent", "Ajouter une licence", "Aucune licence dÃ©finie. CC-BY 4.0 est recommandÃ©e pour les donnÃ©es ouvertes."))
+        recos.append(("urgent", "Ajouter une licence", "Aucune licence définie. CC-BY 4.0 est recommandée pour les données ouvertes."))
 
     # Column names
     bad = sum(1 for c in df.columns if len(str(c)) <= 2 or str(c).startswith("Unnamed"))
     if bad > 0:
-        recos.append(("important", "AmÃ©liorer les noms de colonnes", f"{bad} colonne(s) avec des noms peu explicites."))
+        recos.append(("important", "Améliorer les noms de colonnes", f"{bad} colonne(s) avec des noms peu explicites."))
 
     # Sensitive data
     sensitive_keywords = ["nom","name","prenom","telephone","phone","email","adresse","address"]
     sensitive = [c for c in df.columns if any(k in str(c).lower() for k in sensitive_keywords)]
     if sensitive:
-        recos.append(("important", "Anonymiser les donnÃ©es sensibles", f"Colonnes potentiellement sensibles : {', '.join(sensitive[:5])}"))
+        recos.append(("important", "Anonymiser les données sensibles", f"Colonnes potentiellement sensibles : {', '.join(sensitive[:5])}"))
 
     # FAIR
-    recos.append(("improve", "DÃ©poser sur un entrepÃ´t", "DÃ©poser le dataset sur Zenodo, Dataverse ou DataSuds pour obtenir un DOI pÃ©renne (principe FAIR)."))
+    recos.append(("improve", "Déposer sur un entrepôt", "Déposer le dataset sur Zenodo, Dataverse ou DataSuds pour obtenir un DOI pérenne (principe FAIR)."))
 
     order = {"urgent": 0, "important": 1, "improve": 2}
     recos.sort(key=lambda x: order.get(x[0], 3))
     return recos
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # CHARTS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def plot_radar(labels, values, max_values, title=""):
     n = len(labels)
@@ -566,9 +566,9 @@ def plot_gauge(score, max_score=100):
     return fig
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # EXPORT
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def generate_html_report(df, metadata, variable_docs, quality_report, fair_score, ai_score, recommendations, edit_history):
     meta_rows = ""
@@ -630,21 +630,21 @@ tr:nth-child(even) {{ background: #F5F5F5; }}
 <div class="header">
 <h1>AfriData Ready - Rapport Final</h1>
 <p><em>From Raw Data to FAIR & AI-Ready Data</em></p>
-<p>GÃ©nÃ©rÃ© le {datetime.now().strftime('%d/%m/%Y Ã  %H:%M')}</p>
+<p>Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')}</p>
 </div>
 
-<h2>1. MÃ©tadonnÃ©es du jeu de donnÃ©es</h2>
+<h2>1. Métadonnées du jeu de données</h2>
 <table><tr><th>Champ</th><th>Valeur</th></tr>{meta_rows}</table>
 
-<h2>2. AperÃ§u des donnÃ©es</h2>
+<h2>2. Aperçu des données</h2>
 <p><strong>Lignes :</strong> {df.shape[0]} | <strong>Colonnes :</strong> {df.shape[1]}</p>
 
-<h2>3. Rapport qualitÃ©</h2>
+<h2>3. Rapport qualité</h2>
 <p>Valeurs manquantes : {quality_report['missing_total']} ({quality_report['missing_pct']}%) | Doublons : {quality_report['n_duplicates']}</p>
-<table><tr><th>SÃ©vÃ©ritÃ©</th><th>ProblÃ¨me</th></tr>{issue_rows}</table>
+<table><tr><th>Sévérité</th><th>Problème</th></tr>{issue_rows}</table>
 
-<h2>4. Dictionnaire de donnÃ©es</h2>
-<table><tr><th>Variable</th><th>Type</th><th>Description</th><th>UnitÃ©</th><th>Format</th><th>Exemple</th></tr>{var_rows}</table>
+<h2>4. Dictionnaire de données</h2>
+<table><tr><th>Variable</th><th>Type</th><th>Description</th><th>Unité</th><th>Format</th><th>Exemple</th></tr>{var_rows}</table>
 
 <h2>5. Score FAIR</h2>
 <div class="score-box" style="background:#E8F5E9;font-size:2rem;font-weight:800;color:#1B5E20">{fair_score['total']}/100</div>
@@ -655,10 +655,10 @@ tr:nth-child(even) {{ background: #F5F5F5; }}
 <table><tr><th>Dimension</th><th>Score</th></tr>{ai_rows}</table>
 
 <h2>7. Recommandations</h2>
-<table><tr><th>PrioritÃ©</th><th>Recommandation</th></tr>{reco_rows}</table>
+<table><tr><th>Priorité</th><th>Recommandation</th></tr>{reco_rows}</table>
 
 <h2>8. Historique des modifications</h2>
-<table><tr><th>Date</th><th>Action</th><th>DÃ©tail</th></tr>{history_rows}</table>
+<table><tr><th>Date</th><th>Action</th><th>Détail</th></tr>{history_rows}</table>
 
 <hr><p style="text-align:center;color:#888;font-size:0.8rem">AfriData Ready &mdash; From Raw Data to FAIR & AI-Ready Data</p>
 </body></html>"""
@@ -726,9 +726,9 @@ def create_export_zip(df, metadata, variable_docs, quality_report, fair_score, a
     return buf
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # UI: SIDEBAR
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def render_sidebar():
     with st.sidebar:
@@ -736,10 +736,10 @@ def render_sidebar():
         for i, step_name in enumerate(STEPS, 1):
             if i == st.session_state.step:
                 css = "active"
-                icon = "â–¶"
+                icon = "▶"
             elif st.session_state.df is not None and i < st.session_state.step:
                 css = "done"
-                icon = "âœ“"
+                icon = "✓"
             else:
                 css = ""
                 icon = f"{i}"
@@ -756,16 +756,16 @@ def render_sidebar():
             st.markdown(f"**Modifications :** {len(st.session_state.edit_history)}")
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 1: IMPORT
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_import():
-    st.markdown("### Ã‰tape 1 : Importer les donnÃ©es")
-    st.markdown("DÃ©posez votre fichier de donnÃ©es brut. L'application affichera un aperÃ§u immÃ©diat.")
+    st.markdown("### Étape 1 : Importer les données")
+    st.markdown("Déposez votre fichier de données brut. L'application affichera un aperçu immédiat.")
 
     uploaded = st.file_uploader("Choisir un fichier", type=["csv", "xlsx", "xls", "json"],
-                                help="Formats acceptÃ©s : CSV, Excel (.xlsx, .xls), JSON")
+                                help="Formats acceptés : CSV, Excel (.xlsx, .xls), JSON")
 
     if uploaded:
         sheets = load_file(uploaded)
@@ -775,7 +775,7 @@ def step_import():
 
             sheet_names = list(sheets.keys())
             if len(sheet_names) > 1:
-                selected = st.selectbox("SÃ©lectionner la feuille Ã  analyser :", sheet_names)
+                selected = st.selectbox("Sélectionner la feuille à analyser :", sheet_names)
             else:
                 selected = sheet_names[0]
             st.session_state.selected_sheet = selected
@@ -783,7 +783,7 @@ def step_import():
             st.session_state.df = df.copy()
             st.session_state.df_original = df.copy()
 
-            st.success(f"Fichier chargÃ© : **{uploaded.name}**")
+            st.success(f"Fichier chargé : **{uploaded.name}**")
 
             c1, c2, c3, c4 = st.columns(4)
             c1.markdown(f'<div class="metric-card"><div class="metric-val">{df.shape[0]}</div><div class="metric-label">Lignes</div></div>', unsafe_allow_html=True)
@@ -791,7 +791,7 @@ def step_import():
             c3.markdown(f'<div class="metric-card"><div class="metric-val">{df.isnull().sum().sum()}</div><div class="metric-label">Valeurs manquantes</div></div>', unsafe_allow_html=True)
             c4.markdown(f'<div class="metric-card"><div class="metric-val">{df.duplicated().sum()}</div><div class="metric-label">Doublons</div></div>', unsafe_allow_html=True)
 
-            st.markdown("**AperÃ§u des donnÃ©es :**")
+            st.markdown("**Aperçu des données :**")
             st.dataframe(df.head(10), use_container_width=True)
 
             st.markdown("**Types des colonnes :**")
@@ -800,17 +800,17 @@ def step_import():
                                      "Manquants (%)": (df.isnull().mean()*100).round(1).values})
             st.dataframe(type_df, use_container_width=True, hide_index=True)
 
-            if st.button("Passer Ã  l'analyse qualitÃ© â†’", type="primary"):
+            if st.button("Passer à l'analyse qualité →", type="primary"):
                 st.session_state.step = 2
                 st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 2: QUALITY
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_quality():
-    st.markdown("### Ã‰tape 2 : ProblÃ¨mes de qualitÃ© dÃ©tectÃ©s")
+    st.markdown("### Étape 2 : Problèmes de qualité détectés")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
@@ -823,22 +823,22 @@ def step_quality():
     c1.metric("Valeurs manquantes", f"{report['missing_total']} ({report['missing_pct']}%)")
     c2.metric("Doublons", report['n_duplicates'])
     c3.metric("Colonnes vides", len(report['empty_cols']))
-    c4.metric("ProblÃ¨mes dÃ©tectÃ©s", len(report['issues']))
+    c4.metric("Problèmes détectés", len(report['issues']))
 
     if not report["issues"]:
-        st.markdown('<div class="quality-issue good"><strong>Aucun problÃ¨me majeur dÃ©tectÃ©.</strong></div>', unsafe_allow_html=True)
+        st.markdown('<div class="quality-issue good"><strong>Aucun problème majeur détecté.</strong></div>', unsafe_allow_html=True)
     else:
         for issue in report["issues"]:
             css = "critical" if issue["severity"] == "critical" else ""
-            icon = "ðŸ”´" if issue["severity"] == "critical" else "ðŸŸ¡" if issue["severity"] == "warning" else "â„¹ï¸"
+            icon = "🔴" if issue["severity"] == "critical" else "🟡" if issue["severity"] == "warning" else "ℹ️"
             st.markdown(f'<div class="quality-issue {css}"><strong>{icon} {issue["message"]}</strong></div>', unsafe_allow_html=True)
             if "detail" in issue:
                 if isinstance(issue["detail"], dict):
-                    with st.expander("Voir le dÃ©tail"):
+                    with st.expander("Voir le détail"):
                         for k, v in list(issue["detail"].items())[:10]:
                             st.write(f"- `{k}` : {v}")
                 elif isinstance(issue["detail"], list):
-                    with st.expander("Voir le dÃ©tail"):
+                    with st.expander("Voir le détail"):
                         st.write(", ".join(str(x) for x in issue["detail"][:10]))
 
     # Missing values heatmap
@@ -861,25 +861,25 @@ def step_quality():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="q_back"):
+        if st.button("← Retour", key="q_back"):
             st.session_state.step = 1; st.rerun()
     with col2:
-        if st.button("Modifier les donnÃ©es â†’", type="primary", key="q_next"):
+        if st.button("Modifier les données →", type="primary", key="q_next"):
             st.session_state.step = 3; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 3: EDIT DATA
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_edit():
-    st.markdown("### Ã‰tape 3 : Modifier les donnÃ©es")
+    st.markdown("### Étape 3 : Modifier les données")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
         return
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Ã‰diter les cellules", "Colonnes", "Lignes", "Valeurs manquantes", "Doublons"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Éditer les cellules", "Colonnes", "Lignes", "Valeurs manquantes", "Doublons"])
 
     with tab1:
         st.markdown("Modifiez directement les valeurs dans le tableau ci-dessous :")
@@ -887,27 +887,27 @@ def step_edit():
         if st.button("Appliquer les modifications", key="apply_edit"):
             changes = (edited_df != df).sum().sum() if edited_df.shape == df.shape else -1
             st.session_state.df = edited_df
-            st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Ã‰dition directe", "detail": f"Modifications appliquÃ©es"})
-            st.success("Modifications appliquÃ©es.")
+            st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Édition directe", "detail": f"Modifications appliquées"})
+            st.success("Modifications appliquées.")
             st.rerun()
 
     with tab2:
         st.markdown("**Renommer une colonne :**")
-        col_to_rename = st.selectbox("Colonne Ã  renommer :", df.columns, key="rename_col")
+        col_to_rename = st.selectbox("Colonne à renommer :", df.columns, key="rename_col")
         new_name = st.text_input("Nouveau nom :", key="new_col_name")
         if st.button("Renommer", key="btn_rename"):
             if new_name and new_name != col_to_rename:
                 st.session_state.df = st.session_state.df.rename(columns={col_to_rename: new_name})
-                st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Renommer colonne", "detail": f"{col_to_rename} â†’ {new_name}"})
-                st.success(f"Colonne renommÃ©e : {col_to_rename} â†’ {new_name}")
+                st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Renommer colonne", "detail": f"{col_to_rename} → {new_name}"})
+                st.success(f"Colonne renommée : {col_to_rename} → {new_name}")
                 st.rerun()
 
         st.markdown("**Supprimer une colonne :**")
-        cols_to_delete = st.multiselect("Colonnes Ã  supprimer :", df.columns, key="del_cols")
+        cols_to_delete = st.multiselect("Colonnes à supprimer :", df.columns, key="del_cols")
         if st.button("Supprimer", key="btn_del_col") and cols_to_delete:
             st.session_state.df = st.session_state.df.drop(columns=cols_to_delete)
             st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Supprimer colonnes", "detail": ", ".join(cols_to_delete)})
-            st.success(f"Colonnes supprimÃ©es : {', '.join(cols_to_delete)}")
+            st.success(f"Colonnes supprimées : {', '.join(cols_to_delete)}")
             st.rerun()
 
         st.markdown("**Standardiser les noms de colonnes :**")
@@ -916,30 +916,30 @@ def step_edit():
         if st.button("Appliquer la standardisation", key="btn_std"):
             st.session_state.df = st.session_state.df.rename(columns=preview)
             st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Standardiser noms", "detail": f"{len(preview)} colonnes"})
-            st.success("Noms standardisÃ©s.")
+            st.success("Noms standardisés.")
             st.rerun()
 
     with tab3:
         st.markdown("**Supprimer des lignes :**")
-        row_indices = st.text_input("Indices des lignes Ã  supprimer (sÃ©parÃ©s par des virgules) :", key="del_rows")
+        row_indices = st.text_input("Indices des lignes à supprimer (séparés par des virgules) :", key="del_rows")
         if st.button("Supprimer les lignes", key="btn_del_rows") and row_indices:
             try:
                 indices = [int(i.strip()) for i in row_indices.split(",")]
                 valid = [i for i in indices if i in st.session_state.df.index]
                 st.session_state.df = st.session_state.df.drop(index=valid).reset_index(drop=True)
                 st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Supprimer lignes", "detail": f"Lignes {valid}"})
-                st.success(f"{len(valid)} ligne(s) supprimÃ©e(s).")
+                st.success(f"{len(valid)} ligne(s) supprimée(s).")
                 st.rerun()
             except ValueError:
-                st.error("Format invalide. Utilisez des nombres sÃ©parÃ©s par des virgules.")
+                st.error("Format invalide. Utilisez des nombres séparés par des virgules.")
 
-        st.markdown("**Supprimer les lignes entiÃ¨rement vides :**")
+        st.markdown("**Supprimer les lignes entièrement vides :**")
         n_empty = df.isnull().all(axis=1).sum()
-        st.write(f"{n_empty} ligne(s) entiÃ¨rement vide(s)")
+        st.write(f"{n_empty} ligne(s) entièrement vide(s)")
         if n_empty > 0 and st.button("Supprimer les lignes vides", key="btn_empty_rows"):
             st.session_state.df = st.session_state.df.dropna(how='all').reset_index(drop=True)
             st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Supprimer lignes vides", "detail": f"{n_empty} lignes"})
-            st.success(f"{n_empty} ligne(s) vide(s) supprimÃ©e(s).")
+            st.success(f"{n_empty} ligne(s) vide(s) supprimée(s).")
             st.rerun()
 
     with tab4:
@@ -949,25 +949,25 @@ def step_edit():
             st.success("Aucune valeur manquante.")
         else:
             col_fill = st.selectbox("Colonne :", cols_with_missing, key="fill_col")
-            method = st.selectbox("MÃ©thode :", ["Moyenne", "MÃ©diane", "Mode", "Valeur personnalisÃ©e", "Supprimer les lignes"], key="fill_method")
+            method = st.selectbox("Méthode :", ["Moyenne", "Médiane", "Mode", "Valeur personnalisée", "Supprimer les lignes"], key="fill_method")
             custom_val = None
-            if method == "Valeur personnalisÃ©e":
+            if method == "Valeur personnalisée":
                 custom_val = st.text_input("Valeur :", key="custom_fill")
             if st.button("Appliquer", key="btn_fill"):
                 if method == "Moyenne" and pd.api.types.is_numeric_dtype(df[col_fill]):
                     st.session_state.df[col_fill] = st.session_state.df[col_fill].fillna(df[col_fill].mean())
-                elif method == "MÃ©diane" and pd.api.types.is_numeric_dtype(df[col_fill]):
+                elif method == "Médiane" and pd.api.types.is_numeric_dtype(df[col_fill]):
                     st.session_state.df[col_fill] = st.session_state.df[col_fill].fillna(df[col_fill].median())
                 elif method == "Mode":
                     mode_val = df[col_fill].mode()
                     if len(mode_val) > 0:
                         st.session_state.df[col_fill] = st.session_state.df[col_fill].fillna(mode_val.iloc[0])
-                elif method == "Valeur personnalisÃ©e" and custom_val is not None:
+                elif method == "Valeur personnalisée" and custom_val is not None:
                     st.session_state.df[col_fill] = st.session_state.df[col_fill].fillna(custom_val)
                 elif method == "Supprimer les lignes":
                     st.session_state.df = st.session_state.df.dropna(subset=[col_fill]).reset_index(drop=True)
                 st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": f"Valeurs manquantes ({method})", "detail": col_fill})
-                st.success(f"Valeurs manquantes traitÃ©es pour '{col_fill}'.")
+                st.success(f"Valeurs manquantes traitées pour '{col_fill}'.")
                 st.rerun()
 
     with tab5:
@@ -978,67 +978,67 @@ def step_edit():
             if st.button("Supprimer les doublons", key="btn_dup"):
                 st.session_state.df = st.session_state.df.drop_duplicates().reset_index(drop=True)
                 st.session_state.edit_history.append({"time": datetime.now().strftime("%H:%M:%S"), "action": "Supprimer doublons", "detail": f"{n_dup} doublons"})
-                st.success(f"{n_dup} doublon(s) supprimÃ©(s).")
+                st.success(f"{n_dup} doublon(s) supprimé(s).")
                 st.rerun()
 
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="e_back"):
+        if st.button("← Retour", key="e_back"):
             st.session_state.step = 2; st.rerun()
     with col2:
-        if st.button("Documenter les variables â†’", type="primary", key="e_next"):
+        if st.button("Documenter les variables →", type="primary", key="e_next"):
             st.session_state.step = 4; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 4: VARIABLE DOCUMENTATION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_variable_docs():
-    st.markdown("### Ã‰tape 4 : Documenter les variables")
+    st.markdown("### Étape 4 : Documenter les variables")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
         return
 
-    st.markdown("Pour chaque variable, renseignez sa description, son type, son unitÃ© et d'autres informations utiles.")
+    st.markdown("Pour chaque variable, renseignez sa description, son type, son unité et d'autres informations utiles.")
 
     n_documented = len(st.session_state.variable_docs)
     n_total = len(df.columns)
-    st.progress(n_documented / n_total if n_total > 0 else 0, text=f"{n_documented}/{n_total} variables documentÃ©es")
+    st.progress(n_documented / n_total if n_total > 0 else 0, text=f"{n_documented}/{n_total} variables documentées")
 
-    selected_col = st.selectbox("SÃ©lectionner une variable :", df.columns, key="doc_col_select")
+    selected_col = st.selectbox("Sélectionner une variable :", df.columns, key="doc_col_select")
 
     existing = st.session_state.variable_docs.get(selected_col, {})
 
-    with st.expander(f"AperÃ§u de '{selected_col}'", expanded=True):
+    with st.expander(f"Aperçu de '{selected_col}'", expanded=True):
         serie = df[selected_col]
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Type dÃ©tectÃ©", str(serie.dtype))
+        c1.metric("Type détecté", str(serie.dtype))
         c2.metric("Non-null", int(serie.notnull().sum()))
         c3.metric("Uniques", int(serie.nunique()))
         c4.metric("Manquants", int(serie.isnull().sum()))
         if pd.api.types.is_numeric_dtype(serie):
             st.write(serie.describe().round(2))
         else:
-            st.write(f"Valeurs frÃ©quentes : {', '.join(str(v) for v in serie.value_counts().head(5).index)}")
+            st.write(f"Valeurs fréquentes : {', '.join(str(v) for v in serie.value_counts().head(5).index)}")
 
     with st.form(f"doc_form_{selected_col}"):
         description = st.text_area("Description de la variable :", value=existing.get("description", ""), key=f"desc_{selected_col}")
         c1, c2 = st.columns(2)
         with c1:
-            data_type = st.selectbox("Type de donnÃ©e :", ["NumÃ©rique continu", "NumÃ©rique discret", "CatÃ©goriel nominal", "CatÃ©goriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"],
-                                     index=["NumÃ©rique continu", "NumÃ©rique discret", "CatÃ©goriel nominal", "CatÃ©goriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"].index(existing.get("data_type", "NumÃ©rique continu")) if existing.get("data_type") in ["NumÃ©rique continu", "NumÃ©rique discret", "CatÃ©goriel nominal", "CatÃ©goriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"] else 0,
+            data_type = st.selectbox("Type de donnée :", ["Numérique continu", "Numérique discret", "Catégoriel nominal", "Catégoriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"],
+                                     index=["Numérique continu", "Numérique discret", "Catégoriel nominal", "Catégoriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"].index(existing.get("data_type", "Numérique continu")) if existing.get("data_type") in ["Numérique continu", "Numérique discret", "Catégoriel nominal", "Catégoriel ordinal", "Date/Temps", "Texte libre", "Binaire", "Identifiant"] else 0,
                                      key=f"dtype_{selected_col}")
-            unit = st.text_input("UnitÃ© de mesure :", value=existing.get("unit", ""), key=f"unit_{selected_col}")
+            unit = st.text_input("Unité de mesure :", value=existing.get("unit", ""), key=f"unit_{selected_col}")
             fmt = st.text_input("Format attendu :", value=existing.get("format", ""), placeholder="ex: YYYY-MM-DD, nombre entier...", key=f"fmt_{selected_col}")
         with c2:
             values = st.text_input("Valeurs possibles :", value=existing.get("values", ""), placeholder="ex: 0-100, Oui/Non...", key=f"vals_{selected_col}")
-            validation = st.text_input("RÃ¨gle de validation :", value=existing.get("validation", ""), placeholder="ex: > 0, non vide...", key=f"valid_{selected_col}")
+            validation = st.text_input("Règle de validation :", value=existing.get("validation", ""), placeholder="ex: > 0, non vide...", key=f"valid_{selected_col}")
             example = st.text_input("Exemple de valeur :", value=existing.get("example", ""), key=f"ex_{selected_col}")
 
-        utility = st.text_input("UtilitÃ© pour l'analyse / l'IA :", value=existing.get("utility", ""), key=f"util_{selected_col}")
+        utility = st.text_input("Utilité pour l'analyse / l'IA :", value=existing.get("utility", ""), key=f"util_{selected_col}")
         is_target = st.checkbox("Variable cible (target) pour l'IA", value=existing.get("is_target", False), key=f"target_{selected_col}")
 
         if st.form_submit_button("Enregistrer la documentation", type="primary"):
@@ -1047,61 +1047,61 @@ def step_variable_docs():
                 "format": fmt, "values": values, "validation": validation,
                 "example": example, "utility": utility, "is_target": is_target,
             }
-            st.success(f"Documentation enregistrÃ©e pour '{selected_col}'.")
+            st.success(f"Documentation enregistrée pour '{selected_col}'.")
             st.rerun()
 
     # Summary table
     if st.session_state.variable_docs:
-        st.markdown("**RÃ©sumÃ© de la documentation :**")
+        st.markdown("**Résumé de la documentation :**")
         rows = []
         for col in df.columns:
             doc = st.session_state.variable_docs.get(col, {})
-            rows.append({"Variable": col, "Description": doc.get("description", "âŒ"), "Type": doc.get("data_type", "â€”"), "UnitÃ©": doc.get("unit", "â€”")})
+            rows.append({"Variable": col, "Description": doc.get("description", "❌"), "Type": doc.get("data_type", "—"), "Unité": doc.get("unit", "—")})
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="d_back"):
+        if st.button("← Retour", key="d_back"):
             st.session_state.step = 3; st.rerun()
     with col2:
-        if st.button("MÃ©tadonnÃ©es â†’", type="primary", key="d_next"):
+        if st.button("Métadonnées →", type="primary", key="d_next"):
             st.session_state.step = 5; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 5: METADATA
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_metadata():
-    st.markdown("### Ã‰tape 5 : MÃ©tadonnÃ©es du jeu de donnÃ©es")
-    st.markdown("Renseignez les informations gÃ©nÃ©rales sur votre jeu de donnÃ©es.")
+    st.markdown("### Étape 5 : Métadonnées du jeu de données")
+    st.markdown("Renseignez les informations générales sur votre jeu de données.")
 
     meta = st.session_state.metadata
 
     with st.form("metadata_form"):
         c1, c2 = st.columns(2)
         with c1:
-            title = st.text_input("Titre du jeu de donnÃ©es :", value=meta.get("title", ""))
+            title = st.text_input("Titre du jeu de données :", value=meta.get("title", ""))
             author = st.text_input("Auteur(s) :", value=meta.get("author", ""))
             organization = st.text_input("Organisation :", value=meta.get("organization", ""))
             country = st.text_input("Pays :", value=meta.get("country", ""))
-            geographic_area = st.text_input("Zone gÃ©ographique :", value=meta.get("geographic_area", ""))
-            collection_period = st.text_input("PÃ©riode de collecte :", value=meta.get("collection_period", ""), placeholder="ex: Janvier - Mars 2024")
+            geographic_area = st.text_input("Zone géographique :", value=meta.get("geographic_area", ""))
+            collection_period = st.text_input("Période de collecte :", value=meta.get("collection_period", ""), placeholder="ex: Janvier - Mars 2024")
             version = st.text_input("Version :", value=meta.get("version", ""), placeholder="ex: 1.0")
 
         with c2:
             description = st.text_area("Description :", value=meta.get("description", ""), height=100)
-            collection_method = st.text_area("MÃ©thode de collecte :", value=meta.get("collection_method", ""), height=68)
+            collection_method = st.text_area("Méthode de collecte :", value=meta.get("collection_method", ""), height=68)
             target_population = st.text_input("Population cible :", value=meta.get("target_population", ""))
             license_val = st.selectbox("Licence :", ["", "CC-BY 4.0", "CC-BY-SA 4.0", "CC-BY-NC 4.0", "CC0 1.0", "ODC-ODbL", "Autre"],
                                        index=["", "CC-BY 4.0", "CC-BY-SA 4.0", "CC-BY-NC 4.0", "CC0 1.0", "ODC-ODbL", "Autre"].index(meta.get("license", "")) if meta.get("license", "") in ["", "CC-BY 4.0", "CC-BY-SA 4.0", "CC-BY-NC 4.0", "CC0 1.0", "ODC-ODbL", "Autre"] else 0)
-            access_conditions = st.text_input("Conditions d'accÃ¨s :", value=meta.get("access_conditions", ""), placeholder="ex: Libre, Sur demande...")
-            keywords = st.text_input("Mots-clÃ©s :", value=meta.get("keywords", ""), placeholder="sÃ©parÃ©s par des virgules")
+            access_conditions = st.text_input("Conditions d'accès :", value=meta.get("access_conditions", ""), placeholder="ex: Libre, Sur demande...")
+            keywords = st.text_input("Mots-clés :", value=meta.get("keywords", ""), placeholder="séparés par des virgules")
             contact = st.text_input("Contact :", value=meta.get("contact", ""))
 
-        citation = st.text_area("Citation recommandÃ©e :", value=meta.get("citation", ""), height=68)
+        citation = st.text_area("Citation recommandée :", value=meta.get("citation", ""), height=68)
 
-        if st.form_submit_button("Enregistrer les mÃ©tadonnÃ©es", type="primary"):
+        if st.form_submit_button("Enregistrer les métadonnées", type="primary"):
             st.session_state.metadata = {
                 "title": title, "author": author, "organization": organization,
                 "country": country, "geographic_area": geographic_area,
@@ -1110,29 +1110,29 @@ def step_metadata():
                 "license": license_val, "access_conditions": access_conditions,
                 "keywords": keywords, "contact": contact, "version": version, "citation": citation,
             }
-            st.success("MÃ©tadonnÃ©es enregistrÃ©es.")
+            st.success("Métadonnées enregistrées.")
             st.rerun()
 
     # Progress
     filled = sum(1 for v in st.session_state.metadata.values() if v)
     total_fields = 15
-    st.progress(filled / total_fields, text=f"{filled}/{total_fields} champs renseignÃ©s")
+    st.progress(filled / total_fields, text=f"{filled}/{total_fields} champs renseignés")
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="m_back"):
+        if st.button("← Retour", key="m_back"):
             st.session_state.step = 4; st.rerun()
     with col2:
-        if st.button("Score FAIR â†’", type="primary", key="m_next"):
+        if st.button("Score FAIR →", type="primary", key="m_next"):
             st.session_state.step = 6; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 6: FAIR SCORE
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_fair():
-    st.markdown("### Ã‰tape 6 : Ã‰valuation de la conformitÃ© FAIR")
+    st.markdown("### Étape 6 : Évaluation de la conformité FAIR")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
@@ -1149,7 +1149,7 @@ def step_fair():
 
     with col_d:
         st.markdown("**Scores par principe FAIR :**")
-        for letter, full_name in [("F","Findable (Trouvable)"), ("A","Accessible"), ("I","Interoperable (InteropÃ©rable)"), ("R","Reusable (RÃ©utilisable)")]:
+        for letter, full_name in [("F","Findable (Trouvable)"), ("A","Accessible"), ("I","Interoperable (Interopérable)"), ("R","Reusable (Réutilisable)")]:
             s = fair["scores"][letter]
             m = fair["max_scores"][letter]
             pct = s/m if m > 0 else 0
@@ -1162,9 +1162,9 @@ def step_fair():
 
     # Details
     for letter, full_name in [("F","Findable"), ("A","Accessible"), ("I","Interoperable"), ("R","Reusable")]:
-        with st.expander(f"{letter} â€” {full_name}"):
+        with st.expander(f"{letter} — {full_name}"):
             for status, msg in fair["details"][letter]:
-                icon = "âœ…" if status == "ok" else "âš ï¸" if status == "partial" else "âŒ"
+                icon = "✅" if status == "ok" else "⚠️" if status == "partial" else "❌"
                 st.write(f"{icon} {msg}")
 
     # Radar
@@ -1176,19 +1176,19 @@ def step_fair():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="f_back"):
+        if st.button("← Retour", key="f_back"):
             st.session_state.step = 5; st.rerun()
     with col2:
-        if st.button("Score AI Readiness â†’", type="primary", key="f_next"):
+        if st.button("Score AI Readiness →", type="primary", key="f_next"):
             st.session_state.step = 7; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 7: AI READINESS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_ai_readiness():
-    st.markdown("### Ã‰tape 7 : Ã‰valuation AI Readiness")
+    st.markdown("### Étape 7 : Évaluation AI Readiness")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
@@ -1226,25 +1226,25 @@ def step_ai_readiness():
 
     # Details
     for dim in ai["dims"]:
-        with st.expander(f"{dim} â€” {ai['dims'][dim]}/{ai['max_dims'][dim]}"):
+        with st.expander(f"{dim} — {ai['dims'][dim]}/{ai['max_dims'][dim]}"):
             for line in ai["details"][dim]:
                 st.write(line)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="ai_back"):
+        if st.button("← Retour", key="ai_back"):
             st.session_state.step = 6; st.rerun()
     with col2:
-        if st.button("Recommandations â†’", type="primary", key="ai_next"):
+        if st.button("Recommandations →", type="primary", key="ai_next"):
             st.session_state.step = 8; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 8: RECOMMENDATIONS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_recommendations():
-    st.markdown("### Ã‰tape 8 : Recommandations")
+    st.markdown("### Étape 8 : Recommandations")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
@@ -1268,32 +1268,32 @@ def step_recommendations():
     c1, c2, c3 = st.columns(3)
     c1.metric("Urgentes", n_urgent)
     c2.metric("Importantes", n_important)
-    c3.metric("AmÃ©liorations", n_improve)
+    c3.metric("Améliorations", n_improve)
 
     for prio, title, desc in recos:
         if prio == "urgent":
-            css, icon = "reco-urgent", "ðŸ”´"
+            css, icon = "reco-urgent", "🔴"
         elif prio == "important":
-            css, icon = "reco-important", "ðŸŸ¡"
+            css, icon = "reco-important", "🟡"
         else:
-            css, icon = "reco-improve", "ðŸŸ¢"
+            css, icon = "reco-improve", "🟢"
         st.markdown(f'<div class="reco-card {css}"><strong>{icon} {title}</strong><br>{desc}</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("â† Retour", key="r_back"):
+        if st.button("← Retour", key="r_back"):
             st.session_state.step = 7; st.rerun()
     with col2:
-        if st.button("Exporter â†’", type="primary", key="r_next"):
+        if st.button("Exporter →", type="primary", key="r_next"):
             st.session_state.step = 9; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # STEP 9: EXPORT
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def step_export():
-    st.markdown("### Ã‰tape 9 : Exporter la version finale")
+    st.markdown("### Étape 9 : Exporter la version finale")
     df = st.session_state.df
     if df is None:
         st.warning("Veuillez d'abord importer un fichier.")
@@ -1312,10 +1312,10 @@ def step_export():
 
     st.markdown("Le dossier d'export contient :")
     items = [
-        "La base de donnÃ©es corrigÃ©e (CSV)",
-        "Les mÃ©tadonnÃ©es (JSON)",
-        "Le dictionnaire de donnÃ©es (CSV + JSON)",
-        "Le rapport qualitÃ© (JSON)",
+        "La base de données corrigée (CSV)",
+        "Les métadonnées (JSON)",
+        "Le dictionnaire de données (CSV + JSON)",
+        "Le rapport qualité (JSON)",
         "Le score FAIR (JSON)",
         "Le score AI Readiness (JSON)",
         "Les recommandations (JSON)",
@@ -1344,7 +1344,7 @@ def step_export():
                                  st.session_state.edit_history)
 
     st.download_button(
-        label="TÃ©lÃ©charger le dossier complet (ZIP)",
+        label="Télécharger le dossier complet (ZIP)",
         data=zip_buf,
         file_name=f"agridata_ready_{datetime.now().strftime('%Y%m%d_%H%M')}.zip",
         mime="application/zip",
@@ -1358,10 +1358,10 @@ def step_export():
     with c1:
         csv_buf = io.StringIO()
         df.to_csv(csv_buf, index=False)
-        st.download_button("DonnÃ©es corrigÃ©es (CSV)", csv_buf.getvalue().encode("utf-8-sig"),
+        st.download_button("Données corrigées (CSV)", csv_buf.getvalue().encode("utf-8-sig"),
                            "donnees_corrigees.csv", "text/csv", key="dl_csv")
     with c2:
-        st.download_button("MÃ©tadonnÃ©es (JSON)", json.dumps(st.session_state.metadata, ensure_ascii=False, indent=2),
+        st.download_button("Métadonnées (JSON)", json.dumps(st.session_state.metadata, ensure_ascii=False, indent=2),
                            "metadonnees.json", "application/json", key="dl_meta")
     with c3:
         html = generate_html_report(df, st.session_state.metadata, st.session_state.variable_docs,
@@ -1370,13 +1370,13 @@ def step_export():
                                      st.session_state.edit_history)
         st.download_button("Rapport final (HTML)", html, "rapport_final.html", "text/html", key="dl_html")
 
-    if st.button("â† Retour", key="x_back"):
+    if st.button("← Retour", key="x_back"):
         st.session_state.step = 8; st.rerun()
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 # MAIN
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════
 
 def logo_data_uri():
     logo_path = Path(__file__).parent / "assets" / "logo_afridata_ready_white.png"
