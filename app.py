@@ -1393,7 +1393,7 @@ def main():
     <div class="main-header">
         {logo_html}
         <p class="slogan">From Raw Data to FAIR & AI-Ready Data</p>
-        <p class="sub">Transformez vos donnees brutes en donnees propres, documentees et exploitables</p>
+        <p class="sub">Transformez vos données brutes en données propres, documentées et exploitables</p>
     </div>
     """, unsafe_allow_html=True)
 
