@@ -12,7 +12,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#263238;background:#f6fafb;min-height:100vh;display:flex}
-:root{--primary:#00345F;--primary-hover:#00527A;--primary-light:#00A6B2;--accent:#FF8A00;--danger:#C62828;--warn:#F57F17;--bg:#f6fafb;--card:#fff;--soft:#E8F7F8;--soft-accent:#FFF4E5;--radius:10px}
+:root{--primary:#00345F;--primary-hover:#00527A;--primary-light:#00A6B2;--accent:#FF8A00;--danger:#C62828;--warn:#F57F17;--bg:#f6fafb;--card:#fff;--soft:#E8F7F8;--soft-accent:#FFF4E5;--border:#DCEBED;--text-muted:#607D86;--radius:10px}
 
 /* Sidebar */
 .sidebar{width:260px;background:linear-gradient(180deg,#00345F 0%,#00527A 58%,#007C89 100%);color:#fff;padding:1.5rem 1rem;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100}
@@ -35,17 +35,33 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#263238;bac
 .step-view.active{display:block}
 
 /* Header */
-.page-header{background:linear-gradient(135deg,#00345F 0%,#006C82 58%,#00A6B2 100%);color:#fff;padding:1.5rem 2rem;border-radius:var(--radius);margin-bottom:1.5rem;text-align:center}
+.page-header{background:linear-gradient(135deg,#00345F 0%,#006C82 58%,#00A6B2 100%);color:#fff;padding:1.5rem 2rem;border-radius:var(--radius);margin-bottom:1.5rem;text-align:center;box-shadow:0 10px 26px rgba(0,52,95,.14)}
 .page-header h2{font-size:1.5rem;margin-bottom:.3rem}
 .page-header p{opacity:.85;font-size:.9rem}
+.welcome-hero{text-align:left;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:1.4rem;align-items:center}
+.welcome-hero h2{font-size:1.8rem}
+.welcome-hero p{max-width:720px}
+.welcome-panel{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:1rem}
+.welcome-panel strong{display:block;font-size:.86rem;margin-bottom:.5rem}
+.welcome-panel span{display:block;font-size:.82rem;opacity:.9;margin:.25rem 0}
+.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:1rem;max-width:980px;margin:0 auto}
+.mode-card{cursor:pointer;border:1px solid var(--border);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;min-height:250px;display:flex;flex-direction:column;justify-content:space-between}
+.mode-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,52,95,.11);border-color:var(--primary-light)}
+.mode-card.static-card:hover{transform:none;box-shadow:0 2px 8px rgba(0,0,0,.06);border-color:#EEF5F6}
+.mode-card .mode-icon{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--soft);font-size:1.45rem;margin-bottom:.8rem}
+.mode-card h3{border:none;padding:0;margin-bottom:.45rem;font-size:1.08rem}
+.mode-card p{font-size:.9rem;color:var(--text-muted);line-height:1.45;margin-bottom:1rem}
+.mode-card .mode-points{display:grid;gap:.35rem;margin:.4rem 0 1rem;font-size:.82rem;color:#49666E}
+.mode-card .mode-points span{display:flex;gap:.4rem;align-items:flex-start}
+.trust-note{text-align:center;color:var(--text-muted);font-size:.84rem;margin-top:1.2rem}
 
 /* Cards & metrics */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
-.metric{background:var(--card);border-radius:var(--radius);padding:1rem;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border-top:4px solid var(--primary-light)}
+.metric{background:var(--card);border-radius:var(--radius);padding:1rem;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border-top:4px solid var(--primary-light);border-left:1px solid #EEF5F6;border-right:1px solid #EEF5F6;border-bottom:1px solid #EEF5F6}
 .metric .val{font-size:1.8rem;font-weight:800;color:var(--primary)}
 .metric .label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.05em}
 
-.card{background:var(--card);border-radius:var(--radius);padding:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.card{background:var(--card);border-radius:var(--radius);padding:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem;border:1px solid #EEF5F6}
 .card h3{color:var(--primary);font-size:1rem;margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:2px solid var(--soft)}
 
 /* Table */
@@ -125,7 +141,7 @@ td input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 2
 .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
 
 /* Upload zone */
-.upload-zone{border:3px dashed #BDECEF;border-radius:12px;padding:3rem;text-align:center;cursor:pointer;transition:all .3s;background:#fbfeff}
+.upload-zone{border:2px dashed #BDECEF;border-radius:12px;padding:3rem;text-align:center;cursor:pointer;transition:all .3s;background:linear-gradient(180deg,#fbfeff,#f3fbfc)}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--primary-light);background:var(--soft)}
 .upload-zone .icon{font-size:3rem;margin-bottom:.5rem;display:block}
 .upload-zone input{display:none}
@@ -157,6 +173,8 @@ textarea{min-height:64px}
 .metrics{grid-template-columns:repeat(2,1fr)}
 .page-header{padding:1rem}
 .page-header h2{font-size:1.15rem}
+.welcome-hero{grid-template-columns:1fr;text-align:left}
+.mode-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -405,47 +423,6 @@ function onDataLoaded() {
     scheduleAutosave();
 }
 
-function loadDemoData() {
-    APP.fileName = 'demo_webinaire_afridata_ready.xlsx';
-    APP.inputFormat = 'xlsx';
-    APP.workbook = null;
-    APP.sheetNames = [];
-    APP.activeSheet = 'Données_démo';
-    APP.columns = ['id_enquete','prenom','sexe','age','ville','niveau_etude','revenu_mensuel','nombre_eleves_classe','score_satisfaction','email','date_collecte','commentaire'];
-    APP.data = [
-        {id_enquete:'E001',prenom:'Aicha',sexe:'femme',age:28,ville:'Abidjan',niveau_etude:'Secondaire',revenu_mensuel:185000,nombre_eleves_classe:42,score_satisfaction:4,email:'aicha@example.org',date_collecte:'2026-06-01',commentaire:'Ligne correcte'},
-        {id_enquete:'E002',prenom:'Aïcha',sexe:'Femme',age:29,ville:'abidjan',niveau_etude:'secondaire',revenu_mensuel:182000,nombre_eleves_classe:44,score_satisfaction:4,email:'aicha2@example.org',date_collecte:'01/06/2026',commentaire:'Variante proche'},
-        {id_enquete:'E003',prenom:'Franc',sexe:'homme',age:35,ville:'Bouaké',niveau_etude:'Supérieur',revenu_mensuel:320000,nombre_eleves_classe:38,score_satisfaction:5,email:'franc@example.org',date_collecte:'2026-06-02',commentaire:'Orthographe à vérifier'},
-        {id_enquete:'E004',prenom:'Fanck',sexe:'Homme',age:36,ville:'Bouake',niveau_etude:'Superieur',revenu_mensuel:315000,nombre_eleves_classe:39,score_satisfaction:5,email:'fanck@example.org',date_collecte:'02/06/2026',commentaire:'Valeur proche de Franck'},
-        {id_enquete:'E005',prenom:'Franck',sexe:'homme',age:36,ville:'Bouaké',niveau_etude:'Supérieur',revenu_mensuel:315000,nombre_eleves_classe:39,score_satisfaction:5,email:'franck@example.org',date_collecte:'2026-06-02',commentaire:'Doublon volontaire'},
-        {id_enquete:'E005',prenom:'Franck',sexe:'homme',age:36,ville:'Bouaké',niveau_etude:'Supérieur',revenu_mensuel:315000,nombre_eleves_classe:39,score_satisfaction:5,email:'franck@example.org',date_collecte:'2026-06-02',commentaire:'Doublon volontaire'},
-        {id_enquete:'E006',prenom:'Mariam',sexe:' famme ',age:24,ville:'Yamoussoukro',niveau_etude:'Primaire',revenu_mensuel:95000,nombre_eleves_classe:51,score_satisfaction:3,email:'mariam@example.org',date_collecte:'03-06-2026',commentaire:'Sexe mal saisi'},
-        {id_enquete:'E007',prenom:'Mariam',sexe:'femme',age:null,ville:'Yamoussoukro',niveau_etude:'primaire',revenu_mensuel:97000,nombre_eleves_classe:49,score_satisfaction:3,email:'mariam7@example.org',date_collecte:'2026-06-03',commentaire:'Age manquant'},
-        {id_enquete:'E008',prenom:'Kouassi',sexe:'hommme',age:42,ville:'Abidjan',niveau_etude:'Universitaire',revenu_mensuel:450000,nombre_eleves_classe:46,score_satisfaction:4,email:'kouassi@example.org',date_collecte:'2026/06/04',commentaire:'Genre a normaliser'},
-        {id_enquete:'E009',prenom:'Kuassi',sexe:'homme',age:43,ville:'Abijan',niveau_etude:'Universitaire',revenu_mensuel:455000,nombre_eleves_classe:47,score_satisfaction:4,email:'kuassi@example.org',date_collecte:'04/06/2026',commentaire:'Ville proche'},
-        {id_enquete:'E010',prenom:'Fatou',sexe:'femme',age:31,ville:'San Pedro',niveau_etude:'Secondaire',revenu_mensuel:null,nombre_eleves_classe:41,score_satisfaction:2,email:'fatou@example.org',date_collecte:'2026-06-05',commentaire:'Revenu manquant'},
-        {id_enquete:'E011',prenom:'Yao',sexe:'homme',age:999,ville:'Korhogo',niveau_etude:'Primaire',revenu_mensuel:120000,nombre_eleves_classe:37,score_satisfaction:3,email:'yao@example.org',date_collecte:'2026-06-06',commentaire:'Age aberrant'},
-        {id_enquete:'E012',prenom:'Aya',sexe:'femme',age:22,ville:'Korhogo',niveau_etude:null,revenu_mensuel:88000,nombre_eleves_classe:414,score_satisfaction:4,email:'aya@example.org',date_collecte:'2026-06-06',commentaire:'Classe aberrante'},
-        {id_enquete:'E013',prenom:'Paul',sexe:'homme',age:39,ville:'Daloa',niveau_etude:'Secondaire',revenu_mensuel:9999999,nombre_eleves_classe:45,score_satisfaction:99,email:'paul@example.org',date_collecte:'07/06/2026',commentaire:'Revenu et score aberrants'},
-        {id_enquete:'E014',prenom:'Nadia',sexe:'femme',age:27,ville:null,niveau_etude:'Supérieur',revenu_mensuel:260000,nombre_eleves_classe:43,score_satisfaction:5,email:'nadia@example.org',date_collecte:'2026-06-08',commentaire:'Ville manquante'}
-    ];
-    APP.originalData = JSON.parse(JSON.stringify(APP.data));
-    onDataLoaded();
-    APP.metadata = {
-        title: 'Jeu de données démo AfriData Ready',
-        author: 'AfriData Ready',
-        description: 'Base de démonstration avec valeurs manquantes, doublons, valeurs aberrantes et catégories similaires.',
-        license: 'CC-BY 4.0',
-        contact: 'demo@afridata-ready.org',
-        keywords: 'démo, qualité des données, webinaire',
-        version: '1.0'
-    };
-    notify("Jeu de données démo chargé. Tu peux tester les valeurs manquantes, aberrantes, similaires, les doublons et l'export.", 'info');
-    APP.step = 2;
-    renderNav();
-    renderStep();
-}
-
 // ═══════════════════════════════════════════════════════════════
 // UTILITY FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
@@ -682,11 +659,24 @@ function renderStep1() {
         <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" onchange="if(this.files[0])handleFile(this.files[0])">
     </div>`;
 
-    html += `<div class="card" style="margin-top:1rem;border-left:5px solid var(--accent);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem">
-        <div><h3 style="border:none;margin:0 0 .2rem">Mode webinaire</h3>
-        <p style="font-size:.88rem;color:#666;margin:0">Charge une base démo avec valeurs manquantes, doublons, valeurs aberrantes et catégories similaires.</p></div>
-        <button class="btn btn-accent" onclick="loadDemoData()">Charger les données démo</button>
-    </div>`;
+    if (!APP.data) {
+        html += `<div class="mode-grid" style="max-width:none;margin-top:1rem">
+            <div class="card mode-card static-card" style="min-height:160px;cursor:default">
+                <div>
+                    <div class="mode-icon">📄</div>
+                    <h3>Formats acceptés</h3>
+                    <p>CSV, Excel et JSON. Les fichiers restent traités localement dans votre navigateur.</p>
+                </div>
+            </div>
+            <div class="card mode-card static-card" style="min-height:160px;cursor:default">
+                <div>
+                    <div class="mode-icon">🧭</div>
+                    <h3>Après import</h3>
+                    <p>AfriData Ready analyse les manquants, doublons, valeurs aberrantes, formats et valeurs similaires.</p>
+                </div>
+            </div>
+        </div>`;
+    }
 
     if (APP.data) {
         const totalCells = APP.data.length * APP.columns.length;
@@ -3526,28 +3516,47 @@ function startQuick() {
 
 // ── Écran d'accueil : choix du mode ──
 function renderWelcome() {
-    return `<div class="page-header"><h2>🌍 Bienvenue dans AfriData Ready</h2><p>From Raw Data to FAIR &amp; AI-Ready Data : choisissez votre mode de travail</p></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;max-width:900px;margin:0 auto">
-        <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="startQuick()">
-            <div style="font-size:3rem">🚀</div>
-            <h3 style="border:none;justify-content:center;display:flex">Démarrage rapide</h3>
-            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Importer un fichier, le traiter, exporter les résultats. Simple et direct, sans sauvegarde.</p>
-            <button class="btn btn-primary">Commencer →</button>
+    return `<div class="page-header welcome-hero">
+        <div>
+            <h2>AfriData Ready</h2>
+            <p>Transformez un fichier brut en base propre, documentée et prête pour l'analyse ou l'IA.</p>
         </div>
-        <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--primary-light)'" onmouseout="this.style.borderColor='transparent'" onclick="goStep('projects')">
-            <div style="font-size:3rem">📂</div>
-            <h3 style="border:none;justify-content:center;display:flex">Projet AfriData Ready</h3>
-            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Travailler sur plusieurs jours : sauvegarde automatique sur votre ordinateur, reprise exacte là où vous vous êtes arrêté.</p>
-            <button class="btn btn-accent">Mes projets →</button>
-        </div>
-        <div class="card" style="cursor:pointer;text-align:center;border:2px solid transparent;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'" onclick="APP.mode='quick';loadDemoData()">
-            <div style="font-size:3rem">Demo</div>
-            <h3 style="border:none;justify-content:center;display:flex">Demo webinaire</h3>
-            <p style="font-size:.9rem;color:#666;margin:.5rem 0 1rem">Charger une base prête à tester : manquants, doublons, aberrantes, valeurs similaires et export.</p>
-            <button class="btn btn-accent">Charger la démo</button>
+        <div class="welcome-panel">
+            <strong>Flux de travail</strong>
+            <span>1. Importer un fichier CSV, Excel ou JSON</span>
+            <span>2. Corriger la qualité des données</span>
+            <span>3. Documenter, scorer et exporter</span>
         </div>
     </div>
-    <p style="text-align:center;color:#999;font-size:.82rem;margin-top:1.5rem">🔒 Dans les deux modes, vos données restent exclusivement sur votre ordinateur : aucun envoi sur Internet.</p>`;
+    <div class="mode-grid">
+        <div class="card mode-card" onclick="startQuick()">
+            <div>
+                <div class="mode-icon">⚡</div>
+                <h3>Démarrage rapide</h3>
+                <p>Idéal pour traiter un fichier en une session et obtenir rapidement une base corrigée avec ses rapports.</p>
+                <div class="mode-points">
+                    <span>✓ Import direct du fichier</span>
+                    <span>✓ Corrections qualité guidées</span>
+                    <span>✓ Export final complet</span>
+                </div>
+            </div>
+            <button class="btn btn-primary">Commencer →</button>
+        </div>
+        <div class="card mode-card" onclick="goStep('projects')">
+            <div>
+                <div class="mode-icon">📂</div>
+                <h3>Projet AfriData Ready</h3>
+                <p>Recommandé pour un travail en plusieurs étapes avec sauvegarde locale et reprise du traitement plus tard.</p>
+                <div class="mode-points">
+                    <span>✓ Sauvegarde automatique locale</span>
+                    <span>✓ Historique des corrections</span>
+                    <span>✓ Import/export de projets</span>
+                </div>
+            </div>
+            <button class="btn btn-accent">Ouvrir mes projets →</button>
+        </div>
+    </div>
+    <p class="trust-note">🔒 Vos données restent sur votre ordinateur : aucun envoi sur Internet.</p>`;
 }
 
 // ── Page : liste des projets ──
@@ -3574,7 +3583,16 @@ async function loadProjectsList() {
     let projects = [];
     try { projects = await dbGetAll(); } catch (e) { el.innerHTML = `<div class="card"><p style="color:var(--danger)">Stockage local indisponible : ${e.message}</p></div>`; return; }
     projects.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-    if (!projects.length) { el.innerHTML = '<div class="card"><p style="color:#888">Aucun projet pour le moment. Créez-en un ci-dessus, ou commencez en Démarrage rapide puis cliquez « Enregistrer comme projet ».</p></div>'; return; }
+    if (!projects.length) {
+        el.innerHTML = `<div class="card" style="text-align:center;padding:2rem">
+            <div style="font-size:2rem;margin-bottom:.5rem">📁</div>
+            <h3 style="border:none;margin-bottom:.35rem">Aucun projet enregistré</h3>
+            <p style="color:var(--text-muted);max-width:560px;margin:0 auto 1rem">Créez un projet pour sauvegarder votre travail automatiquement, ou utilisez le démarrage rapide pour traiter un fichier immédiatement.</p>
+            <button class="btn btn-primary" onclick="document.getElementById('new-prj-name').focus()">Créer un projet</button>
+            <button class="btn btn-secondary" onclick="startQuick()" style="margin-left:.5rem">Démarrage rapide</button>
+        </div>`;
+        return;
+    }
     let html = '<div class="card"><h3>Projets existants</h3><div class="table-wrap"><table><tr><th>Nom</th><th>Description</th><th>Données</th><th>Dernière modification</th><th></th></tr>';
     for (const p of projects) {
         const rows = p.state && p.state.data ? `${p.state.data.length} lignes` : '<span style="color:#aaa">vide</span>';
