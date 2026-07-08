@@ -442,6 +442,48 @@ function escapeHtml(value) {
 function jsString(value) {
     return JSON.stringify(String(value ?? ''));
 }
+function normalizeCategoryValue(value) {
+    return String(value ?? '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[’']/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function levenshtein(a, b) {
+    a = String(a); b = String(b);
+    const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            dp[i][j] = Math.min(
+                dp[i - 1][j] + 1,
+                dp[i][j - 1] + 1,
+                dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+            );
+        }
+    }
+    return dp[a.length][b.length];
+}
+function chooseCanonicalValue(items) {
+    const enriched = items.map(item => {
+        const norm = normalizeCategoryValue(item.value);
+        const avgDistance = items.length > 1
+            ? items.reduce((s, other) => s + levenshtein(norm, normalizeCategoryValue(other.value)), 0) / (items.length - 1)
+            : 0;
+        return { ...item, norm, avgDistance };
+    });
+    return enriched.sort((a, b) =>
+        b.count - a.count ||
+        (a.firstIndex ?? 0) - (b.firstIndex ?? 0) ||
+        a.avgDistance - b.avgDistance ||
+        a.norm.length - b.norm.length ||
+        String(a.value).localeCompare(String(b.value), 'fr')
+    )[0]?.value || '';
+}
 function notify(message, type = 'success') {
     APP.notice = { message, type };
 }
@@ -631,7 +673,8 @@ function analyzeQuality() {
         }
     }
 
-    // Outliers + descriptive stats
+    // Similar categorical values + descriptive stats + outliers
+    const similarValueDetails = {};
     const outlierDetails = {};
     const descStats = {};
     for (const col of APP.columns) {
@@ -658,13 +701,65 @@ function analyzeQuality() {
         } else if (!isNumericCol(col)) {
             const allVals = APP.data.map(r => r[col]).filter(v => !isNull(v)).map(v => String(v));
             const freq = {};
-            for (const v of allVals) freq[v] = (freq[v] || 0) + 1;
-            const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+            const firstIndex = {};
+            allVals.forEach((v, i) => { freq[v] = (freq[v] || 0) + 1; if (firstIndex[v] === undefined) firstIndex[v] = i; });
+            const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1] || firstIndex[a[0]] - firstIndex[b[0]]);
             descStats[col] = { type: 'categorical', count: allVals.length, unique: sorted.length, topValues: sorted.slice(0, 5) };
+            const candidates = sorted.map(([value, count]) => ({ value, count, firstIndex: firstIndex[value], norm: normalizeCategoryValue(value) }))
+                .filter(x => x.norm && x.norm.length >= 2);
+            if (candidates.length >= 2 && candidates.length <= 80) {
+                const groups = [];
+                const seen = new Set();
+                const itemByValue = Object.fromEntries(candidates.map(x => [x.value, x]));
+                const byNorm = {};
+                for (const item of candidates) (byNorm[item.norm] ||= []).push(item);
+                for (const same of Object.values(byNorm)) {
+                    if (same.length < 2) continue;
+                    const values = same.map(x => x.value);
+                    values.forEach(v => seen.add(v));
+                    groups.push({ type: 'format', values, target: chooseCanonicalValue(same), count: same.reduce((s, x) => s + x.count, 0) });
+                }
+
+                const parent = new Map(candidates.map(x => [x.value, x.value]));
+                const find = x => parent.get(x) === x ? x : (parent.set(x, find(parent.get(x))), parent.get(x));
+                const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(rb, ra); };
+                for (let i = 0; i < candidates.length; i++) {
+                    for (let j = i + 1; j < candidates.length; j++) {
+                        const a = candidates[i], b = candidates[j];
+                        if (a.norm === b.norm) continue;
+                        const maxLen = Math.max(a.norm.length, b.norm.length);
+                        if (maxLen < 4) continue;
+                        const d = levenshtein(a.norm, b.norm);
+                        const similar = d <= (maxLen <= 5 ? 1 : 2) || d / maxLen <= 0.22;
+                        if (similar) union(a.value, b.value);
+                    }
+                }
+                const fuzzy = {};
+                for (const item of candidates) (fuzzy[find(item.value)] ||= []).push(item);
+                for (const groupItems of Object.values(fuzzy)) {
+                    const values = groupItems.map(x => x.value);
+                    if (values.length < 2 || values.every(v => seen.has(v))) continue;
+                    const existing = groups.find(g => g.values.some(v => values.includes(v)));
+                    if (existing) {
+                        existing.values = [...new Set([...existing.values, ...values])];
+                        const mergedItems = existing.values.map(v => itemByValue[v]).filter(Boolean);
+                        existing.type = 'similar';
+                        existing.target = chooseCanonicalValue(mergedItems);
+                        existing.count = mergedItems.reduce((s, x) => s + x.count, 0);
+                    } else {
+                        groups.push({ type: 'similar', values, target: chooseCanonicalValue(groupItems), count: groupItems.reduce((s, x) => s + x.count, 0) });
+                    }
+                    values.forEach(v => seen.add(v));
+                }
+                if (groups.length) {
+                    similarValueDetails[col] = groups.slice(0, 12);
+                    issues.push({ type: 'similar_values', severity: 'warning', message: `Colonne '${col}' : ${groups.length} groupe(s) de valeurs similaires à harmoniser` });
+                }
+            }
         }
     }
 
-    return { n_rows: n, n_cols: nc, totalMissing, missingPct, n_duplicates: nDup, emptyCols, issues, missingPerCol, outlierDetails, descStats };
+    return { n_rows: n, n_cols: nc, totalMissing, missingPct, n_duplicates: nDup, emptyCols, issues, missingPerCol, similarValueDetails, outlierDetails, descStats };
 }
 
 function renderStep2() {
@@ -672,6 +767,7 @@ function renderStep2() {
     const report = analyzeQuality();
     APP.qualityReport = report;
     const nOutlierCols = Object.keys(report.outlierDetails || {}).length;
+    const nSimilarGroups = Object.values(report.similarValueDetails || {}).reduce((s, groups) => s + groups.length, 0);
 
     let html = `<div class="page-header"><h2>Étape 2 : Qualité des données</h2><p>Diagnostiquer, comprendre, puis corriger — automatiquement ou à la main</p></div>`;
     html += `<div class="metrics">
@@ -679,12 +775,14 @@ function renderStep2() {
         <div class="metric"><div class="val">${report.n_duplicates}</div><div class="label">Doublons</div></div>
         <div class="metric"><div class="val">${report.emptyCols.length}</div><div class="label">Colonnes vides</div></div>
         <div class="metric"><div class="val">${nOutlierCols}</div><div class="label">Cols. aberrantes</div></div>
+        <div class="metric"><div class="val">${nSimilarGroups}</div><div class="label">Valeurs similaires</div></div>
         <div class="metric"><div class="val">${report.issues.length}</div><div class="label">Problèmes totaux</div></div>
     </div>`;
 
     html += `<div class="tab-scope"><div class="tabs">
         <div class="tab active" data-edit-tab="q-issues" onclick="showEditTab('q-issues',this)">🔍 Problèmes (${report.issues.length})</div>
         <div class="tab" data-edit-tab="q-stats" onclick="showEditTab('q-stats',this)">📊 Statistiques descriptives</div>
+        <div class="tab" data-edit-tab="q-similar" onclick="showEditTab('q-similar',this)">🔤 Valeurs similaires (${nSimilarGroups})</div>
         <div class="tab" data-edit-tab="q-outliers" onclick="showEditTab('q-outliers',this)">⚠️ Valeurs aberrantes (${nOutlierCols})</div>
     </div>`;
 
@@ -749,7 +847,35 @@ function renderStep2() {
     html += '</table></div></div>';
     html += '</div>';
 
-    // === TAB 3: Outliers ===
+    // === TAB 3: Similar categorical values ===
+    html += `<div id="q-similar" class="edit-tab" style="display:none">`;
+    if (nSimilarGroups === 0) {
+        html += '<div class="issue info">✅ <strong>Aucune valeur catégorielle proche détectée.</strong></div>';
+    } else {
+        html += `<p style="margin-bottom:1rem;font-size:.88rem;color:#555">Ces propositions repèrent les valeurs écrites différemment dans une même colonne. Vérifiez la cible avant d'appliquer, surtout pour les noms propres.</p>`;
+        for (const [col, groups] of Object.entries(report.similarValueDetails || {})) {
+            html += `<div class="card"><h3>🔤 ${escapeHtml(col)} : ${groups.length} groupe(s) à vérifier</h3>
+                <div class="table-wrap"><table>
+                <tr><th>Type</th><th>Valeurs détectées</th><th>Lignes concernées</th><th>Valeur cible</th><th>Action</th></tr>`;
+            for (const group of groups) {
+                const valuesJson = escapeHtml(JSON.stringify(group.values));
+                const typeLabel = group.type === 'format' ? 'Format' : 'Orthographe proche';
+                html += `<tr class="similar-row" data-col="${escapeHtml(col)}" data-values="${valuesJson}">
+                    <td>${typeLabel}</td>
+                    <td>${group.values.map(v => `<span style="background:#E8F5E9;padding:2px 6px;border-radius:4px;margin:2px;display:inline-block">${escapeHtml(v)}</span>`).join('')}</td>
+                    <td>${group.count}</td>
+                    <td><input class="similar-target" value="${escapeHtml(group.target)}" style="min-width:140px"></td>
+                    <td><button class="btn btn-primary btn-sm similar-action" type="button">Appliquer</button></td>
+                </tr>`;
+            }
+            html += `</table></div>
+                <p style="font-size:.78rem;color:#888;margin-top:.5rem">Astuce : le traitement remplace uniquement les valeurs listées par la valeur cible et ajoute une ligne dans le journal des modifications.</p>
+            </div>`;
+        }
+    }
+    html += '</div>';
+
+    // === TAB 4: Outliers ===
     html += `<div id="q-outliers" class="edit-tab" style="display:none">`;
     if (nOutlierCols === 0) {
         html += '<div class="issue info">✅ <strong>Aucune valeur aberrante détectée.</strong></div>';
@@ -1042,6 +1168,44 @@ function removeDuplicates() {
     APP.data = newData;
     addHistory('Supprimer doublons', `${removed} lignes`);
     renderStep();
+}
+
+function reopenSimilarTab() {
+    const t = [...document.querySelectorAll('.tab')].find(x => x.textContent.includes('similaires'));
+    if (t) showEditTab('q-similar', t);
+}
+
+function applySimilarValues(col, values, target) {
+    if (!col || !Array.isArray(values) || !values.length) {
+        alert('Aucun groupe de valeurs à harmoniser.');
+        return;
+    }
+    target = String(target ?? '').trim();
+    if (!target) {
+        alert('Veuillez saisir une valeur cible non vide.');
+        return;
+    }
+    const originals = new Set(values.map(v => String(v)));
+    let changed = 0;
+    APP.data = APP.data.map(row => {
+        const current = row[col];
+        if (isNull(current) || !originals.has(String(current)) || String(current) === target) return row;
+        changed++;
+        return { ...row, [col]: target };
+    });
+    if (changed === 0) {
+        alert(`Aucune valeur à modifier dans "${col}".`);
+        return;
+    }
+    addHistory('Harmoniser valeurs similaires', `${col} : ${values.join(', ')} → ${target} (${changed} ligne(s))`, 'Correction des catégories incohérentes');
+    APP.qualityReport = null;
+    APP.fairScore = null;
+    APP.aiScore = null;
+    APP.aqiScore = null;
+    APP._assistCache = null;
+    notify(`"${col}" harmonisée : ${changed} valeur(s) remplacée(s) par "${target}".`);
+    renderStep();
+    setTimeout(reopenSimilarTab, 20);
 }
 
 // ── Correction des valeurs aberrantes en un clic (règle 1.5×IQR) ──
@@ -3244,6 +3408,17 @@ function renderStep() {
             const method = document.getElementById('fill-method')?.value;
             const custom = document.getElementById('fill-custom')?.value ?? '';
             fillMissing(col, method, custom);
+        });
+    });
+    document.querySelectorAll('.similar-action').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const row = btn.closest('.similar-row');
+            if (!row) return;
+            let values = [];
+            try { values = JSON.parse(row.dataset.values || '[]'); }
+            catch (e) { alert('Impossible de lire le groupe de valeurs.'); return; }
+            const target = row.querySelector('.similar-target')?.value ?? '';
+            applySimilarValues(row.dataset.col, values, target);
         });
     });
     document.querySelectorAll('.governance-anonymize').forEach(btn => {
