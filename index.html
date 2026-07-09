@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AfriData Ready : From Raw Data to FAIR & AI-Ready Data</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+<!-- PWA : installable et 100% hors-ligne -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#00345F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AfriData Ready">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="libs/papaparse.min.js" defer></script>
 <script src="libs/xlsx.full.min.js" defer></script>
 <script src="libs/jszip.min.js" defer></script>
@@ -266,6 +274,35 @@ function hideLoading() {
     if (o) o.classList.remove('show');
 }
 
+// ── PWA : service worker (hors-ligne) + invite d'installation ──
+let deferredInstallPrompt = null;
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+}
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (typeof renderNav === 'function') renderNav();
+    if (!sessionStorage.getItem('installHintShown')) {
+        sessionStorage.setItem('installHintShown', '1');
+        setTimeout(() => { if (deferredInstallPrompt) toast('💡 Installez AfriData Ready pour l\'utiliser hors-ligne (menu : « Installer l\'application »).', 'info', 5000); }, 1500);
+    }
+});
+window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    toast('AfriData Ready est installée. 🎉', 'success');
+    if (typeof renderNav === 'function') renderNav();
+});
+async function promptInstall() {
+    if (!deferredInstallPrompt) { toast('L\'application est déjà installée ou l\'installation n\'est pas disponible sur ce navigateur.', 'info', 4000); return; }
+    deferredInstallPrompt.prompt();
+    try { await deferredInstallPrompt.userChoice; } catch (e) {}
+    deferredInstallPrompt = null;
+    renderNav();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // APPLICATION STATE
 // ═══════════════════════════════════════════════════════════════
@@ -358,6 +395,13 @@ function renderNav() {
         } else if (APP.mode === 'quick' && APP.data) {
             h += `<div style="margin-top:.8rem">
                 <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;width:100%;border:1px dashed rgba(255,255,255,.5)" onclick="saveAsProject()">💾 Enregistrer ce travail comme projet</button>
+            </div>`;
+        }
+
+        // Bouton d'installation (PWA) : visible uniquement si le navigateur le propose
+        if (deferredInstallPrompt) {
+            h += `<div style="margin-top:.6rem">
+                <button class="btn btn-sm" style="background:var(--accent);color:#fff;width:100%" onclick="promptInstall()">📲 Installer l'application</button>
             </div>`;
         }
         aux.innerHTML = h;
