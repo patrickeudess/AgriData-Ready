@@ -343,7 +343,7 @@ async function promptInstall() {
 const I18N = {
     fr: {
         steps: ['Importer les données', 'Qualité des données', 'Documenter les variables', 'Métadonnées', 'Score FAIR', 'AI Readiness', 'Gouvernance', 'Tableau de bord AQI', 'Exporter'],
-        aux: { home: 'Accueil', projects: 'Mes projets', reference: 'Référentiel utilisé' },
+        aux: { home: 'Accueil', projects: 'Mes projets', reference: 'Référentiel utilisé', about: 'À propos' },
         btnBack: 'Retour', btnNext: 'Suivant',
         install: "Installer l'application",
         founder: 'Fondateur',
@@ -360,13 +360,14 @@ const I18N = {
             8: ['Étape 8 : Tableau de bord AQI', 'Score global, progression et visualisations de votre jeu de données'],
             9: ['Étape 9 : Exporter le Data Product', 'Téléchargez votre jeu de données documenté, certifié et conforme'],
             referentiel: ['📖 Référentiel utilisé', 'Standards internationaux mobilisés par AfriData Ready'],
-            projects: ['📂 Mes projets', 'Vos projets sont stockés localement dans ce navigateur']
+            projects: ['📂 Mes projets', 'Vos projets sont stockés localement dans ce navigateur'],
+            about: ["ℹ️ À propos d'AfriData Ready", 'Un outil local pour améliorer la qualité, la documentation et la réutilisation des données']
         },
         welcome: {
             subtitle: "Transformez un fichier brut en base propre, documentée et prête pour l'analyse ou l'IA.",
             flow: 'Flux de travail', flow1: '1. Importer un fichier CSV, Excel ou JSON', flow2: '2. Corriger la qualité des données', flow3: '3. Documenter, scorer et exporter',
             quickTitle: 'Démarrage rapide', quickDesc: 'Idéal pour traiter un fichier en une session et obtenir rapidement une base corrigée avec ses rapports.',
-            quickP1: '✓ Import direct du fichier', quickP2: '✓ Corrections qualité guidées', quickP3: '✓ Export final complet', quickBtn: 'Commencer →',
+            quickP1: '✓ Import direct du fichier', quickP2: '✓ Corrections qualité guidées', quickP3: '✓ Export final complet', quickBtn: 'Commencer →', sampleBtn: 'Fichier exemple',
             projTitle: 'Projet AfriData Ready', projDesc: 'Recommandé pour un travail en plusieurs étapes avec sauvegarde locale et reprise du traitement plus tard.',
             projP1: '✓ Sauvegarde automatique locale', projP2: '✓ Historique des corrections', projP3: '✓ Import/export de projets', projBtn: 'Ouvrir mes projets →',
             trust: '🔒 Vos données restent sur votre ordinateur : aucun envoi sur Internet.'
@@ -374,7 +375,7 @@ const I18N = {
     },
     en: {
         steps: ['Import data', 'Data quality', 'Document variables', 'Metadata', 'FAIR score', 'AI Readiness', 'Governance', 'AQI dashboard', 'Export'],
-        aux: { home: 'Home', projects: 'My projects', reference: 'Standards used' },
+        aux: { home: 'Home', projects: 'My projects', reference: 'Standards used', about: 'About' },
         btnBack: 'Back', btnNext: 'Next',
         install: 'Install the app',
         founder: 'Founder',
@@ -391,13 +392,14 @@ const I18N = {
             8: ['Step 8: AQI dashboard', 'Overall score, progress and visualisations of your dataset'],
             9: ['Step 9: Export the Data Product', 'Download your documented, certified, compliant dataset'],
             referentiel: ['📖 Standards used', 'International standards leveraged by AfriData Ready'],
-            projects: ['📂 My projects', 'Your projects are stored locally in this browser']
+            projects: ['📂 My projects', 'Your projects are stored locally in this browser'],
+            about: ['ℹ️ About AfriData Ready', 'A local tool to improve data quality, documentation and reuse']
         },
         welcome: {
             subtitle: 'Turn a raw file into a clean, documented dataset ready for analysis or AI.',
             flow: 'Workflow', flow1: '1. Import a CSV, Excel or JSON file', flow2: '2. Fix data quality', flow3: '3. Document, score and export',
             quickTitle: 'Quick start', quickDesc: 'Ideal to process a file in one session and quickly get a corrected dataset with its reports.',
-            quickP1: '✓ Direct file import', quickP2: '✓ Guided quality fixes', quickP3: '✓ Complete final export', quickBtn: 'Start →',
+            quickP1: '✓ Direct file import', quickP2: '✓ Guided quality fixes', quickP3: '✓ Complete final export', quickBtn: 'Start →', sampleBtn: 'Sample file',
             projTitle: 'AfriData Ready Project', projDesc: 'Recommended for multi-step work with local saving and resuming later.',
             projP1: '✓ Automatic local saving', projP2: '✓ Correction history', projP3: '✓ Project import/export', projBtn: 'Open my projects →',
             trust: '🔒 Your data stays on your computer: nothing is sent to the Internet.'
@@ -500,7 +502,8 @@ function renderNav() {
         const auxItems = [
             ['welcome', '🏠', L().aux.home, false],
             ['projects', '📂', L().aux.projects, false],
-            ['referentiel', '📖', L().aux.reference, false]
+            ['referentiel', '📖', L().aux.reference, false],
+            ['about', 'ℹ️', L().aux.about, false]
         ];
         let h = auxItems.map(([id, icon, label, dis]) => {
             let cls = 'nav-item'; if (id === APP.step) cls += ' active';
@@ -930,6 +933,7 @@ function renderStep1() {
                     <div class="mode-icon">📄</div>
                     <h3>Formats acceptés</h3>
                     <p>CSV, Excel et JSON. Les fichiers restent traités localement dans votre navigateur.</p>
+                    <a class="btn btn-secondary btn-sm" href="samples/afridata_ready_exemple_qualite.xlsx" download>Télécharger un exemple</a>
                 </div>
             </div>
             <div class="card mode-card static-card" style="min-height:160px;cursor:default">
@@ -3326,6 +3330,43 @@ function renderReferentiel() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PAGE : À PROPOS / CONFIDENTIALITÉ
+// ═══════════════════════════════════════════════════════════════
+function renderAbout() {
+    return `${stepHeaderHTML("about")}
+    <div class="card">
+        <h3>Présentation</h3>
+        <p style="line-height:1.6;color:#455A64">AfriData Ready aide les utilisateurs à transformer des fichiers bruts en jeux de données plus propres, documentés et exploitables pour l'analyse, la publication ou les projets d'intelligence artificielle.</p>
+        <p style="line-height:1.6;color:#455A64;margin-top:.6rem">L'application a été développée par <strong>Patrick-Eudess Zatty ALLA</strong> dans le cadre du mémoire DU Données - UCAD/EBAD 2026.</p>
+    </div>
+    <div class="metrics">
+        <div class="metric"><div class="val" style="font-size:1.4rem">Local</div><div class="label">Traitement navigateur</div></div>
+        <div class="metric"><div class="val" style="font-size:1.4rem">FAIR</div><div class="label">Principes mobilisés</div></div>
+        <div class="metric"><div class="val" style="font-size:1.4rem">AQI</div><div class="label">Score indicatif</div></div>
+        <div class="metric"><div class="val" style="font-size:1.4rem">MIT</div><div class="label">Licence du code</div></div>
+    </div>
+    <div class="card">
+        <h3>Confidentialité</h3>
+        <div class="issue info"><strong>🔒 Données locales :</strong> dans la version statique, les fichiers importés sont traités dans votre navigateur.</div>
+        <div class="issue info"><strong>💾 Projets locaux :</strong> les projets sauvegardés restent dans le stockage local du navigateur utilisé.</div>
+        <div class="issue warning"><strong>⚠️ Données sensibles :</strong> vérifiez toujours les colonnes personnelles ou confidentielles avant d'exporter ou de partager un fichier.</div>
+    </div>
+    <div class="card">
+        <h3>Avertissement</h3>
+        <p style="line-height:1.6;color:#455A64">Les scores AQI, FAIR, AI Readiness et les recommandations sont des évaluations internes indicatives. Ils aident à prioriser les améliorations, mais ne constituent pas une certification officielle délivrée par un organisme accrédité.</p>
+    </div>
+    <div class="card">
+        <h3>Ressources</h3>
+        <div class="btn-group">
+            <a class="btn btn-primary" href="samples/afridata_ready_exemple_qualite.xlsx" download>📥 Télécharger le fichier exemple</a>
+            <a class="btn btn-secondary" href="GUIDE_UTILISATEUR.md" target="_blank" rel="noopener">📘 Guide utilisateur</a>
+            <a class="btn btn-secondary" href="LICENSE" target="_blank" rel="noopener">⚖️ Licence MIT</a>
+        </div>
+        <p style="font-size:.84rem;color:var(--text-muted);margin-top:.8rem">Contact : Patrick-Eudess Zatty ALLA</p>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ASSISTANT AfriData : objectif AQI, gains simulés, corrections auto
 // Les gains affichés sont calculés par SIMULATION RÉELLE : l'action
 // est appliquée sur une copie de l'état, l'AQI recalculé, puis
@@ -3808,7 +3849,10 @@ function renderWelcome() {
                     <span>${w.quickP3}</span>
                 </div>
             </div>
-            <button class="btn btn-primary">${w.quickBtn}</button>
+            <div class="btn-group">
+                <button class="btn btn-primary">${w.quickBtn}</button>
+                <a class="btn btn-secondary" href="samples/afridata_ready_exemple_qualite.xlsx" download onclick="event.stopPropagation()">${w.sampleBtn}</a>
+            </div>
         </div>
         <div class="card mode-card" onclick="goStep('projects')">
             <div>
@@ -3888,7 +3932,7 @@ function renderStep() {
     const renderers = {
         1: renderStep1, 2: renderStep2, 3: renderStep4, 4: renderStep5,
         5: renderStep6, 6: renderStep7, 7: renderGovernance, 8: renderAnalysis, 9: renderStep9,
-        analysis: renderAnalysis, referentiel: renderReferentiel,
+        analysis: renderAnalysis, referentiel: renderReferentiel, about: renderAbout,
         welcome: renderWelcome, projects: renderProjects
     };
     const showBar = APP.data && APP.data.length && (typeof APP.step === 'number' || APP.step === 'analysis');
