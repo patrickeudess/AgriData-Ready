@@ -40,6 +40,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#263238;bac
 .sidebar .nav-item.done .num{background:#98EEF2;color:var(--primary)}
 .sidebar .file-info{margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.2);font-size:.78rem;opacity:.8}
 .sidebar .file-info p{margin:.2rem 0}
+.founder-credit{margin-top:1.2rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.2);text-align:center;font-size:.75rem;color:rgba(255,255,255,.65);line-height:1.5}
+.founder-credit strong{color:#fff;font-size:.9rem;letter-spacing:.02em}
+.founder-credit span{text-transform:uppercase;letter-spacing:.08em;font-size:.65rem}
 
 /* Main */
 .main{margin-left:260px;flex:1;padding:1.5rem 2rem 3rem;min-height:100vh}
@@ -247,6 +250,10 @@ textarea{min-height:64px}
         <p><strong>Colonnes :</strong> <span id="info-cols"></span></p>
         <p><strong>Modifications :</strong> <span id="info-edits">0</span></p>
     </div>
+    <div class="founder-credit">
+        <span id="founder-label">Fondateur</span><br>
+        <strong>Patrick ALLA</strong>
+    </div>
 </nav>
 
 <div class="main" id="main-content"></div>
@@ -339,6 +346,7 @@ const I18N = {
         aux: { home: 'Accueil', projects: 'Mes projets', reference: 'Référentiel utilisé' },
         btnBack: 'Retour', btnNext: 'Suivant',
         install: "Installer l'application",
+        founder: 'Fondateur',
         saveAsProject: 'Enregistrer ce travail comme projet',
         saveNow: 'Enregistrer maintenant',
         headers: {
@@ -369,6 +377,7 @@ const I18N = {
         aux: { home: 'Home', projects: 'My projects', reference: 'Standards used' },
         btnBack: 'Back', btnNext: 'Next',
         install: 'Install the app',
+        founder: 'Founder',
         saveAsProject: 'Save this work as a project',
         saveNow: 'Save now',
         headers: {
@@ -482,6 +491,9 @@ function renderNav() {
     if (langEl) langEl.innerHTML =
         `<button class="lang-btn ${APP.lang === 'fr' ? 'active' : ''}" onclick="setLang('fr')">FR</button>
          <button class="lang-btn ${APP.lang === 'en' ? 'active' : ''}" onclick="setLang('en')">EN</button>`;
+
+    const founderLabel = document.getElementById('founder-label');
+    if (founderLabel) founderLabel.textContent = L().founder;
 
     const aux = document.getElementById('aux-nav');
     if (aux) {
