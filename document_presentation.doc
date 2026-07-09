@@ -1,0 +1,101 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><title>Document de présentation : AfriData Ready</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:'Calibri',sans-serif;color:#263238;margin:2.2cm;line-height:1.5}
+h1{color:#00345F;font-size:22pt;text-align:center;margin-bottom:2pt}
+.sub{color:#607D86;font-style:italic;text-align:center;font-size:12pt;margin-bottom:18pt}
+h2{color:#00A6B2;font-size:13.5pt;margin-top:16pt;border-bottom:1.5pt solid #00A6B2;padding-bottom:3pt}
+p{font-size:11pt;margin:5pt 0}
+ul{font-size:11pt;margin:5pt 0 5pt 18pt}
+li{margin:3pt 0}
+table{width:100%;border-collapse:collapse;margin:8pt 0}
+th{background:#00345F;color:#fff;padding:6pt 8pt;text-align:left;font-size:10.5pt}
+td{padding:5pt 8pt;border:1pt solid #ccc;font-size:10.5pt;vertical-align:top}
+tr:nth-child(even){background:#F5F7F8}
+.time{color:#FF8A00;font-weight:bold}
+.say{background:#F1F8F9;border-left:4pt solid #00A6B2;padding:6pt 10pt;margin:5pt 0;font-size:10.5pt}
+.small{font-size:9.5pt;color:#888}
+.def{background:#FFF6E9;border-left:4pt solid #FF8A00;padding:6pt 10pt;margin:5pt 0;font-size:10.5pt}
+</style></head><body>
+
+<h1>AfriData Ready</h1>
+<p class="sub">Document de présentation : déroulé de l'exposé de 10 minutes</p>
+
+<p><strong>Support :</strong> présentation_afridata_ready.pptx (12 diapositives)<br>
+<strong>Démonstration :</strong> patrickeudess.github.io/AfriData-Ready<br>
+<strong>Fondateur :</strong> Patrick ALLA</p>
+
+<h2>Minutage global (10 minutes)</h2>
+<table>
+<tr><th>Temps</th><th>Diapo</th><th>Contenu</th></tr>
+<tr><td class="time">0:00 : 0:45</td><td>1</td><td>Accroche et présentation</td></tr>
+<tr><td class="time">0:45 : 2:00</td><td>2 : 3</td><td>Le problème et la solution</td></tr>
+<tr><td class="time">2:00 : 4:00</td><td>4 : 6</td><td>Les concepts : FAIR, AI Readiness, AQI</td></tr>
+<tr><td class="time">4:00 : 6:00</td><td>7 : 8</td><td>Le parcours et l'assistant</td></tr>
+<tr><td class="time">6:00 : 8:00</td><td>9</td><td>Démonstration en direct</td></tr>
+<tr><td class="time">8:00 : 9:30</td><td>10 : 11</td><td>Différenciateurs et cas d'usage</td></tr>
+<tr><td class="time">9:30 : 10:00</td><td>12</td><td>Conclusion et appel</td></tr>
+</table>
+
+<h2>Définitions à connaître (à expliquer simplement)</h2>
+<div class="def"><strong>FAIR</strong> : quatre principes pour rendre des données <em>Faciles à trouver (Findable), Accessibles, Interopérables et Réutilisables</em>. Objectif : que la donnée serve au-delà de celui qui l'a produite.<br>
+<span class="small">Source : Wilkinson et al. (2016), « The FAIR Guiding Principles for scientific data management and stewardship », Scientific Data.</span></div>
+<div class="def"><strong>AI Readiness (préparation à l'IA)</strong> : mesure du degré de préparation d'un jeu de données à être utilisé par un modèle d'intelligence artificielle (complétude, cohérence, qualité des variables, variable cible, structure, encodage).<br>
+<span class="small">Sources : Sambasivan et al. (2021), « Data Cascades in High-Stakes AI », Google Research / CHI ; Andrew Ng, mouvement « Data-Centric AI » (2021).</span></div>
+<div class="def"><strong>AQI : AfriData Quality Index</strong> : notre indice propriétaire, un score sur 100 qui agrège 5 dimensions (qualité intrinsèque, documentation, FAIR, AI Readiness, sécurité). Inspiré de standards internationaux ; il s'agit d'une évaluation interne indicative, pas d'une certification officielle.<br>
+<span class="small">Standards mobilisés : ISO 8000, ISO/IEC 25012, ISO/IEC 11179, Dublin Core, DataCite, principes FAIR, RGPD.</span></div>
+
+<h2>Diapo 1 : Accroche (0:00 : 0:45)</h2>
+<div class="say">« Bonjour à tous. Aujourd'hui, la donnée est partout. Mais une donnée de mauvaise qualité mène à de mauvaises décisions. Je vous présente <strong>AfriData Ready</strong> : une application qui transforme une donnée brute en une donnée fiable, documentée et prête pour l'intelligence artificielle : et cela, entièrement sur votre ordinateur. »</div>
+
+<h2>Diapos 2 et 3 : Problème et solution (0:45 : 2:00)</h2>
+<ul>
+<li>Rappeler que jusqu'à 80 % du temps d'un projet data est consacré au nettoyage.</li>
+<li>Souligner le manque d'outils simples, gratuits et confidentiels, surtout hors des grandes structures.</li>
+<li>Présenter AfriData Ready comme un assistant guidé, 100 % local, sans installation, bilingue.</li>
+</ul>
+<div class="say">« Le vrai problème n'est pas le manque de données, c'est leur qualité. AfriData Ready répond à ce problème en accompagnant l'utilisateur pas à pas, sans qu'aucune donnée ne quitte son appareil. »</div>
+
+<h2>Diapos 4 à 6 : Les concepts (2:00 : 4:00)</h2>
+<p>Expliquer FAIR, AI Readiness et AQI avec les définitions ci-dessus. Rester simple, donner un exemple concret (par exemple : « une colonne sans titre clair n'est ni trouvable ni réutilisable »).</p>
+<div class="say">« Ces principes ne sont pas des inventions maison : FAIR vient d'une publication de référence de 2016, la préparation à l'IA s'appuie sur les travaux de Google Research et d'Andrew Ng. Notre indice AQI les réunit en un seul score, inspiré des normes ISO. »</div>
+
+<h2>Diapos 7 et 8 : Parcours et assistant (4:00 : 6:00)</h2>
+<ul>
+<li>Présenter les 8 étapes : Importer, Qualité, Documenter, Métadonnées, FAIR, AI Readiness, Gouvernance, Tableau de bord AQI.</li>
+<li>Insister sur l'assistant : il détecte les problèmes, les explique, propose une correction automatique ou manuelle, et montre le gain réel sur l'AQI.</li>
+</ul>
+<div class="say">« L'utilisateur n'est jamais perdu : une barre lui fixe un objectif de qualité et lui dit exactement quelles actions auront le plus d'impact. »</div>
+
+<h2>Diapo 9 : Démonstration en direct (6:00 : 8:00)</h2>
+<p>Scénario recommandé (2 minutes) :</p>
+<ul>
+<li>Ouvrir l'application, choisir « Démarrage rapide ».</li>
+<li>Importer un fichier d'exemple : montrer l'AQI initial (par exemple 47/100).</li>
+<li>Cliquer sur « Tout corriger auto » : montrer l'AQI qui progresse.</li>
+<li>Aller au tableau de bord AQI : montrer la jauge, le radar, la progression.</li>
+<li>Montrer l'export du « Data Product » et le certificat.</li>
+</ul>
+<div class="say">« En deux clics, on passe d'une base brute à une base corrigée, documentée et notée. Voici le résultat. »</div>
+
+<h2>Diapos 10 et 11 : Différenciateurs et cas d'usage (8:00 : 9:30)</h2>
+<ul>
+<li>Différenciateurs : confidentialité (100 % local), hors-ligne/installable, accompagnement, standards, gratuit et bilingue, livrable complet.</li>
+<li>Cas d'usage : recherche, santé publique, agriculture, éducation, ONG et développement, administrations.</li>
+</ul>
+
+<h2>Diapo 12 : Conclusion (9:30 : 10:00)</h2>
+<div class="say">« AfriData Ready rend la qualité des données accessible à tous, sans compromis sur la confidentialité. Essayez-la dès maintenant à l'adresse affichée. Merci de votre attention : je suis à votre disposition pour vos questions. »</div>
+
+<h2>Questions probables et réponses</h2>
+<ul>
+<li><strong>Est-ce sécurisé ?</strong> Oui : aucune donnée ne quitte l'appareil, tout est traité dans le navigateur.</li>
+<li><strong>Est-ce une certification officielle ?</strong> Non : les scores sont des évaluations internes indicatives, inspirées de standards internationaux.</li>
+<li><strong>Faut-il Internet ?</strong> Non, une fois la page ouverte une première fois : l'application fonctionne hors-ligne et peut être installée.</li>
+<li><strong>Quels formats ?</strong> CSV, Excel (y compris multi-feuilles) et JSON.</li>
+</ul>
+
+<hr>
+<p class="small" style="text-align:center">AfriData Ready : From Raw Data to FAIR &amp; AI-Ready Data : Fondateur Patrick ALLA : UCAD / EBAD : 2026</p>
+</body></html>
