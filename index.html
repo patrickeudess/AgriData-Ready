@@ -384,6 +384,20 @@ function goStep(n) {
     if (APP.mode === 'project' && APP.projectId && typeof n === 'number') saveProject(true);
 }
 
+// Ouvre l'étape Gouvernance et défile jusqu'au journal (Data Lineage)
+function goToLineage() {
+    goStep(7);
+    setTimeout(() => {
+        const el = document.getElementById('lineage-section');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            el.style.transition = 'box-shadow .3s';
+            el.style.boxShadow = '0 0 0 3px var(--primary-light)';
+            setTimeout(() => { el.style.boxShadow = ''; }, 1400);
+        }
+    }, 80);
+}
+
 function updateFileInfo() {
     const el = document.getElementById('file-info');
     if (!APP.data) { el.style.display = 'none'; return; }
@@ -701,7 +715,7 @@ function renderDataStateBar() {
             <span style="color:#666;font-size:.86rem;margin-left:.4rem">${APP.data.length} ligne(s), ${APP.columns.length} colonne(s), ${APP.editHistory.length} action(s) tracée(s)</span>
         </div>
         <div class="btn-group">
-            <button class="btn btn-secondary btn-sm" onclick="goStep(7)">Voir l'historique</button>
+            <button class="btn btn-secondary btn-sm" onclick="goToLineage()">Voir l'historique</button>
             <button class="btn btn-primary btn-sm" onclick="goStep(9)">Préparer l'export</button>
         </div>
     </div>`;
@@ -1999,7 +2013,7 @@ function renderGovernance() {
         <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="goStep(4)">✏️ Compléter dans les métadonnées</button></div>`;
 
     // Data Lineage
-    html += `<div class="card"><h3>🧬 Data Lineage (traçabilité)</h3>`;
+    html += `<div class="card" id="lineage-section"><h3>🧬 Data Lineage (traçabilité)</h3>`;
     if (!APP.editHistory.length) {
         html += '<p style="color:#888">Aucune modification enregistrée pour le moment. Chaque correction (manuelle ou assistant) est automatiquement tracée : date, étape, action, détail, justification.</p>';
     } else {
