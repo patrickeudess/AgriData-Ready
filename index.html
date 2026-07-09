@@ -279,11 +279,33 @@ function hideLoading() {
     if (o) o.classList.remove('show');
 }
 
-// ── PWA : service worker (hors-ligne) + invite d'installation ──
+// ── PWA : service worker (hors-ligne) + mise a jour auto + invite d'installation ──
 let deferredInstallPrompt = null;
+let _reloadingForUpdate = false;
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            // Verifie une mise a jour a chaque chargement
+            reg.update().catch(() => {});
+            reg.addEventListener('updatefound', () => {
+                const nw = reg.installing;
+                if (!nw) return;
+                nw.addEventListener('statechange', () => {
+                    // Nouvelle version prete alors qu'une version tourne deja
+                    if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                        toast('🔄 Nouvelle version disponible. <u style="cursor:pointer">Actualiser</u>', 'info', 8000);
+                        const t = document.querySelector('#toasts .toast:last-child');
+                        if (t) t.onclick = () => { nw.postMessage && nw.postMessage('skipWaiting'); reg.waiting && reg.waiting.postMessage('skipWaiting'); location.reload(); };
+                    }
+                });
+            });
+        }).catch(() => {});
+        // Recharge une fois quand le nouveau SW prend le controle
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (_reloadingForUpdate) return;
+            _reloadingForUpdate = true;
+            // pas de reload automatique agressif : l'utilisateur reste maitre via le toast
+        });
     });
 }
 window.addEventListener('beforeinstallprompt', e => {
