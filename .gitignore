@@ -4,3 +4,4 @@ test_data.csv
 node_modules/
 package.json
 package-lock.json
+.codex_spreadsheet/
