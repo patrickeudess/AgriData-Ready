@@ -510,6 +510,33 @@ function setLang(lang) {
 }
 
 const PRO_PILOT_KEY = 'afridata_pro_pilot_enabled';
+const DEFAULT_PRO_ENDPOINT = 'https://argpihgogmkzpiotrlue.supabase.co/functions/v1/openrouter-chat';
+const PRO_PROFILE_LABELS = {
+    general: 'Général',
+    sante: 'Santé',
+    education: 'Éducation',
+    agriculture: 'Agriculture',
+    ong: 'ONG / projets',
+    recherche: 'Recherche',
+    administration: 'Administration publique'
+};
+const PRO_PROFILE_GUIDANCE = {
+    general: 'Priorise la qualité générale, la documentation, les métadonnées, la gouvernance et la réutilisation.',
+    sante: 'Sois attentif aux identifiants patients, données sensibles, dates incohérentes, âge, sexe, valeurs cliniques extrêmes et confidentialité.',
+    education: 'Sois attentif aux élèves, classes, notes, absences, doublons d’inscription, cohérence des niveaux et indicateurs scolaires.',
+    agriculture: 'Sois attentif aux cultures, rendements, superficies, saisons, localisation, unités de mesure et valeurs climatiques ou productives extrêmes.',
+    ong: 'Sois attentif au suivi projet, bénéficiaires, zones d’intervention, indicateurs bailleurs, doublons de ménages et données personnelles.',
+    recherche: 'Sois attentif à la reproductibilité, dictionnaire de variables, protocole, citation, licence, traçabilité et limites méthodologiques.',
+    administration: 'Sois attentif aux référentiels, identifiants administratifs, couverture territoriale, standards, anonymisation et données ouvertes.'
+};
+const PRO_QUICK_QUESTIONS = [
+    ['priorites', 'Que corriger en priorité ?', 'Que dois-je corriger en priorité avant de présenter ou publier ce fichier ?'],
+    ['resume', 'Résumé exécutif', 'Rédige un résumé exécutif professionnel de ce jeu de données pour un décideur.'],
+    ['methodo', 'Note méthodologique', 'Rédige une note méthodologique courte expliquant les contrôles réalisés et les limites restantes.'],
+    ['dictionnaire', 'Dictionnaire de données', 'Propose les descriptions des variables et les champs à compléter dans le dictionnaire de données.'],
+    ['presentation', 'Présentation orale', 'Prépare un court discours de présentation des résultats de qualité pour un webinaire.'],
+    ['risques', 'Risques & confidentialité', 'Identifie les risques de confidentialité, de gouvernance et de réutilisation du fichier.']
+];
 function isProPilotEnabled() {
     try {
         const params = new URLSearchParams(window.location.search || '');
@@ -565,8 +592,9 @@ const APP = {
     activeEditTab: 'edit-cells',
     notice: null,
     proPilotEnabled: isProPilotEnabled(),
-    proEndpoint: (() => { try { return localStorage.getItem('afridata_pro_endpoint') || ''; } catch (e) { return ''; } })(),
+    proEndpoint: (() => { try { const v = localStorage.getItem('afridata_pro_endpoint'); return v === '__local__' ? '' : (v || DEFAULT_PRO_ENDPOINT); } catch (e) { return DEFAULT_PRO_ENDPOINT; } })(),
     proModel: (() => { try { return localStorage.getItem('afridata_pro_model') || 'openai/gpt-4o-mini'; } catch (e) { return 'openai/gpt-4o-mini'; } })(),
+    proProfile: (() => { try { return localStorage.getItem('afridata_pro_profile') || 'general'; } catch (e) { return 'general'; } })(),
     proAnswer: '',
     proLastPrompt: '',
     proStatus: '',
@@ -2874,6 +2902,7 @@ ${m.description || '_Aucune description fournie._'}
 - \`metadata.yaml\`, \`metadata_datacite.xml\` : métadonnées
 - \`rapport_aqi\`, \`rapport_qualite\`, \`score_fair\`, \`score_ai_readiness\`
 - \`journal_modifications\` : data lineage
+- \`rapport_pro.md\` : analyse IA Pro, si elle a été générée
 - \`CITATION.cff\`, \`certificat_afridata.html\`
 
 > _Les évaluations sont inspirées de standards internationaux (ISO 8000, ISO 25012, ISO 11179, Dublin Core, DataCite, FAIR, RGPD) mais constituent une évaluation interne automatisée, non une certification officielle._
@@ -3012,6 +3041,7 @@ function exportZip() {
     aqiRows.push({ Dimension: 'AQI GLOBAL', Poids: '100%', Score: aqi.total + '/100 (' + aqi.level[0] + ')' });
     zip.file('rapport_aqi.xlsx', rowsToExcel(aqiRows, 'AQI'));
     zip.file('rapport_aqi.html', buildAQIReport());
+    if (APP.proAnswer) zip.file('rapport_pro.md', buildProMarkdownReport());
 
     // Données originales
     if (APP.originalData) zip.file('donnees_originales.csv', Papa.unparse(APP.originalData));
@@ -4201,14 +4231,64 @@ async function loadProjectsList() {
 function saveProConfig() {
     const endpoint = document.getElementById('pro-endpoint')?.value.trim() || '';
     const model = document.getElementById('pro-model')?.value.trim() || 'openai/gpt-4o-mini';
+    const profile = document.getElementById('pro-profile')?.value || APP.proProfile || 'general';
     APP.proEndpoint = endpoint;
     APP.proModel = model;
+    APP.proProfile = profile;
     try {
-        localStorage.setItem('afridata_pro_endpoint', endpoint);
+        localStorage.setItem('afridata_pro_endpoint', endpoint || '__local__');
         localStorage.setItem('afridata_pro_model', model);
+        localStorage.setItem('afridata_pro_profile', profile);
     } catch (e) {}
     toast(endpoint ? 'Configuration Pro enregistrée.' : 'Configuration Pro enregistrée en mode local.', 'success');
     renderStep();
+}
+
+function setProQuestion(text) {
+    const el = document.getElementById('pro-question');
+    if (el) {
+        el.value = text || '';
+        el.focus();
+    }
+}
+
+function setProProfile(profile) {
+    APP.proProfile = profile || 'general';
+    try { localStorage.setItem('afridata_pro_profile', APP.proProfile); } catch (e) {}
+    renderStep();
+}
+
+function proStatusBadge() {
+    if (!APP.proEndpoint) return '<span class="pro-badge" style="background:#F8FBFC;color:#607D86;border-color:#DCEBED">Mode local</span>';
+    return '<span class="pro-badge">IA connectée</span>';
+}
+
+function topValuesForColumn(col, limit = 5) {
+    const freq = {};
+    for (const row of APP.data || []) {
+        const v = row[col];
+        if (isNull(v)) continue;
+        const key = String(v).trim();
+        if (!key) continue;
+        freq[key] = (freq[key] || 0) + 1;
+    }
+    return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, limit).map(([value, count]) => ({ value, count }));
+}
+
+function safeSampleValues(col, limit = 4) {
+    const vals = [];
+    const seen = new Set();
+    const sensitive = sensitiveColumns().includes(col);
+    for (const row of APP.data || []) {
+        const raw = row[col];
+        if (isNull(raw)) continue;
+        const v = String(raw).trim();
+        if (!v || seen.has(v)) continue;
+        seen.add(v);
+        vals.push(sensitive ? '[valeur masquée]' : v.slice(0, 80));
+        if (vals.length >= limit) break;
+    }
+    return vals;
 }
 
 function proDatasetSummary() {
@@ -4221,6 +4301,19 @@ function proDatasetSummary() {
     const ai = APP.aiScore || computeAI();
     const aqi = APP.aqiScore || computeAQI();
     const numericCols = APP.columns.filter(c => isNumericCol(c));
+    const columnProfiles = APP.columns.slice(0, 40).map(c => {
+        const stats = (q.descStats || {})[c] || {};
+        return {
+            column: c,
+            detected_type: isNumericCol(c) ? 'numeric' : 'categorical_or_text',
+            missing: countMissing(c),
+            missing_percent: pct(countMissing(c), APP.data.length),
+            unique_values: stats.unique ?? undefined,
+            top_values: isNumericCol(c) ? undefined : topValuesForColumn(c, 5),
+            safe_examples: safeSampleValues(c, 4)
+        };
+    });
+    const sensitive = sensitiveColumns();
     const missingCols = APP.columns
         .map(c => ({ column: c, missing: countMissing(c), pct: pct(countMissing(c), APP.data.length) }))
         .filter(x => x.missing > 0)
@@ -4239,9 +4332,11 @@ function proDatasetSummary() {
     return {
         status: 'ready',
         file_name: APP.fileName || 'dataset',
+        business_profile: PRO_PROFILE_LABELS[APP.proProfile] || PRO_PROFILE_LABELS.general,
         rows: APP.data.length,
         columns: APP.columns.length,
         column_names: APP.columns,
+        column_profiles: columnProfiles,
         numeric_columns: numericCols,
         categorical_columns: APP.columns.filter(c => !numericCols.includes(c)),
         quality: {
@@ -4252,6 +4347,18 @@ function proDatasetSummary() {
             missing_columns_top: missingCols,
             outlier_columns: outlierCols,
             similar_value_columns: similarCols
+        },
+        governance: {
+            suspected_sensitive_columns: sensitive,
+            anonymized_columns: APP.anonymizedCols || [],
+            correction_history_count: APP.editHistory.length,
+            recent_corrections: APP.editHistory.slice(-8).map(h => ({
+                action: h.action,
+                detail: h.detail,
+                step: h.step,
+                date: h.date,
+                time: h.time
+            }))
         },
         documentation: {
             documented_columns: APP.columns.filter(c => APP.variableDocs[c] && APP.variableDocs[c].description).length,
@@ -4271,49 +4378,103 @@ function proDatasetSummary() {
 function buildProPrompt(question) {
     const summary = proDatasetSummary();
     const q = question || "Analyse ce jeu de données et propose les priorités d'amélioration.";
-    return `Tu es l'assistant Pro d'AfriData Ready. Reponds en francais clair, professionnel et actionnable.
+    const profile = APP.proProfile || 'general';
+    return `Tu es l'assistant Pro d'AfriData Ready. Réponds en français clair, professionnel et actionnable.
 
 Objectif :
-- expliquer l'etat du jeu de donnees ;
+- expliquer l'état du jeu de données ;
 - prioriser les corrections ;
-- proposer des formulations utiles pour un rapport ou une presentation ;
-- ne pas inventer de faits absents du resume.
+- proposer des formulations utiles pour un rapport ou une présentation ;
+- ne pas inventer de faits absents du résumé.
+
+Profil métier sélectionné :
+${PRO_PROFILE_LABELS[profile] || PRO_PROFILE_LABELS.general}
+
+Consigne métier :
+${PRO_PROFILE_GUIDANCE[profile] || PRO_PROFILE_GUIDANCE.general}
 
 Question utilisateur :
 ${q}
 
-Resume securise du jeu de donnees :
+Résumé sécurisé du jeu de données :
 ${JSON.stringify(summary, null, 2)}
 
 Format attendu :
 1. Diagnostic rapide
-2. Priorites de correction
+2. Priorités de correction
 3. Recommandations FAIR / AI-ready
-4. Texte court pret a coller dans un rapport`;
+4. Texte court prêt à coller dans un rapport`;
 }
 
 function localProAdvice(question) {
     if (!APP.data || !APP.data.length) {
-        return "Importez d'abord un fichier pour activer l'analyse Pro du jeu de donnees.";
+        return "Importez d'abord un fichier pour activer l'analyse Pro du jeu de données.";
     }
     const q = APP.qualityReport || analyzeQuality();
     const fair = APP.fairScore || computeFAIR();
     const ai = APP.aiScore || computeAI();
     const aqi = APP.aqiScore || computeAQI();
     const assist = buildAssistantActions();
+    const profile = PRO_PROFILE_LABELS[APP.proProfile] || PRO_PROFILE_LABELS.general;
     const missingMeta = ['title', 'author', 'description', 'license', 'contact'].filter(k => !APP.metadata[k]);
     const lines = [];
-    lines.push(`Diagnostic rapide\nAQI actuel : ${aqi.total}/100. Score FAIR : ${fair.total}/100. AI Readiness : ${ai.total}/100.`);
+    lines.push(`Diagnostic rapide\nProfil : ${profile}. AQI actuel : ${aqi.total}/100. Score FAIR : ${fair.total}/100. AI Readiness : ${ai.total}/100.`);
     lines.push(`Le fichier contient ${APP.data.length} ligne(s), ${APP.columns.length} colonne(s), ${q.totalMissing} valeur(s) manquante(s), ${q.n_duplicates} doublon(s) et ${Object.keys(q.outlierDetails || {}).length} colonne(s) avec valeurs aberrantes.`);
     if (assist.actions.length) {
-        lines.push(`\nPriorites de correction\n${assist.actions.map((a, i) => `${i + 1}. ${a.label} : ${a.why} Gain estime : +${a.gain} point(s).`).join('\n')}`);
+        lines.push(`\nPriorités de correction\n${assist.actions.map((a, i) => `${i + 1}. ${a.label} : ${a.why} Gain estimé : +${a.gain} point(s).`).join('\n')}`);
     } else {
-        lines.push("\nPriorites de correction\nAucune correction automatique majeure n'est disponible. Les gains restants viendront surtout de la documentation, des metadonnees et de la validation metier.");
+        lines.push("\nPriorités de correction\nAucune correction automatique majeure n'est disponible. Les gains restants viendront surtout de la documentation, des métadonnées et de la validation métier.");
     }
-    lines.push(`\nRecommandations FAIR / AI-ready\nDocumenter ${APP.columns.length - APP.columns.filter(c => APP.variableDocs[c] && APP.variableDocs[c].description).length} variable(s) restante(s). Completer les metadonnees manquantes : ${missingMeta.length ? missingMeta.join(', ') : 'aucune metadonnee cle manquante'}.`);
-    lines.push(`\nTexte court pret a coller dans un rapport\nLe jeu de donnees "${APP.fileName || 'analyse'}" a ete evalue avec AfriData Ready. L'analyse signale un score AQI de ${aqi.total}/100, un score FAIR de ${fair.total}/100 et un score AI Readiness de ${ai.total}/100. Les priorites portent sur la qualite des donnees, la documentation des variables et la completion des metadonnees avant publication ou reutilisation analytique.`);
-    if (question) lines.push(`\nQuestion traitee\n${question}`);
+    lines.push(`\nRecommandations FAIR / AI-ready\nDocumenter ${APP.columns.length - APP.columns.filter(c => APP.variableDocs[c] && APP.variableDocs[c].description).length} variable(s) restante(s). Compléter les métadonnées manquantes : ${missingMeta.length ? missingMeta.join(', ') : 'aucune métadonnée clé manquante'}.`);
+    lines.push(`\nTexte court prêt à coller dans un rapport\nLe jeu de données "${APP.fileName || 'analyse'}" a été évalué avec AfriData Ready. L'analyse signale un score AQI de ${aqi.total}/100, un score FAIR de ${fair.total}/100 et un score AI Readiness de ${ai.total}/100. Les priorités portent sur la qualité des données, la documentation des variables et la complétion des métadonnées avant publication ou réutilisation analytique.`);
+    if (question) lines.push(`\nQuestion traitée\n${question}`);
     return lines.join('\n');
+}
+
+function renderProAnswer() {
+    if (!APP.proAnswer) {
+        return `<div class="pro-response">L'analyse apparaîtra ici. En mode local, elle s'appuie sur les scores, problèmes et recommandations déjà calculés par AfriData Ready.</div>`;
+    }
+    const text = String(APP.proAnswer);
+    const sectionTitles = ['Diagnostic rapide', 'Priorités de correction', 'Recommandations FAIR', 'Texte court', 'Résumé exécutif', 'Note méthodologique', 'Risques'];
+    const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    let html = '<div class="pro-response">';
+    for (const line of lines) {
+        const plain = line.replace(/^\d+\.\s*/, '');
+        const isTitle = sectionTitles.some(t => plain.toLowerCase().startsWith(t.toLowerCase()));
+        if (isTitle) html += `<h4 style="color:var(--primary);margin:.7rem 0 .25rem">${escapeHtml(plain)}</h4>`;
+        else html += `<p style="margin:.25rem 0">${escapeHtml(line)}</p>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function buildProMarkdownReport() {
+    const summary = proDatasetSummary();
+    const generatedAt = new Date().toLocaleString('fr-FR');
+    return `# Rapport AfriData Ready Pro
+
+Date : ${generatedAt}
+Fichier : ${APP.fileName || 'Non renseigné'}
+Profil métier : ${PRO_PROFILE_LABELS[APP.proProfile] || PRO_PROFILE_LABELS.general}
+
+## Réponse de l'assistant
+
+${APP.proAnswer || 'Aucune analyse générée.'}
+
+## Résumé sécurisé transmis
+
+\`\`\`json
+${JSON.stringify(summary, null, 2)}
+\`\`\`
+`;
+}
+
+function downloadProReport() {
+    const blob = new Blob([buildProMarkdownReport()], { type: 'text/markdown;charset=utf-8;' });
+    const safe = String(APP.fileName || 'rapport_pro').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'rapport_pro';
+    saveAs(blob, `${safe}_rapport_pro.md`);
+    toast('Rapport Pro téléchargé.', 'success');
 }
 
 async function askProAssistant() {
@@ -4322,13 +4483,13 @@ async function askProAssistant() {
     APP.proLastPrompt = prompt;
     if (!APP.data || !APP.data.length) {
         APP.proAnswer = localProAdvice(question);
-        APP.proStatus = 'Mode local : aucun fichier importe.';
+        APP.proStatus = 'Mode local : aucun fichier importé.';
         renderStep();
         return;
     }
     if (!APP.proEndpoint) {
         APP.proAnswer = localProAdvice(question);
-        APP.proStatus = 'Mode local : aucun endpoint Supabase configure.';
+        APP.proStatus = 'Mode local : aucun endpoint Supabase configuré.';
         renderStep();
         return;
     }
@@ -4342,7 +4503,7 @@ async function askProAssistant() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || data.message || `Erreur HTTP ${res.status}`);
         APP.proAnswer = data.answer || data.content || JSON.stringify(data, null, 2);
-        APP.proStatus = 'Analyse IA generee via Supabase/OpenRouter.';
+        APP.proStatus = 'Analyse IA générée via Supabase/OpenRouter.';
         toast('Analyse Pro générée.', 'success');
     } catch (err) {
         APP.proAnswer = localProAdvice(question);
@@ -4370,14 +4531,19 @@ function renderPro() {
     const hasData = APP.data && APP.data.length;
     const q = hasData ? (APP.qualityReport || analyzeQuality()) : null;
     const aqi = hasData ? (APP.aqiScore || computeAQI()) : null;
-    const endpointHint = 'https://TON_PROJECT_REF.supabase.co/functions/v1/openrouter-chat';
+    const profileOptions = Object.entries(PRO_PROFILE_LABELS).map(([id, label]) => `<option value="${id}" ${APP.proProfile === id ? 'selected' : ''}>${label}</option>`).join('');
+    const quickButtons = PRO_QUICK_QUESTIONS.map(([, label, question]) => `<button class="btn btn-secondary btn-sm" type="button" onclick="setProQuestion(${jsString(question)})">${label}</button>`).join('');
     return `${stepHeaderHTML('pro')}
     <div class="card" style="border-left:5px solid var(--accent)">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
             <div>
-                <span class="pro-badge">Version Pro pilote</span>
-                <h3 style="border:none;margin:.6rem 0 .25rem">Assistant IA pour qualite, documentation et rapport</h3>
-                <p style="color:var(--text-muted);font-size:.9rem;max-width:760px">Cette page prepare la future offre Pro : l'application reste utilisable localement, puis peut appeler une Edge Function Supabase pour obtenir une analyse IA sans exposer la cle OpenRouter.</p>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.45rem">
+                    <span class="pro-badge">Version Pro pilote</span>
+                    ${proStatusBadge()}
+                    <span class="pro-badge" style="background:#E8F7F8;color:var(--primary);border-color:#BDECEF">${escapeHtml(PRO_PROFILE_LABELS[APP.proProfile] || PRO_PROFILE_LABELS.general)}</span>
+                </div>
+                <h3 style="border:none;margin:.6rem 0 .25rem">Assistant IA pour qualité, documentation et rapport</h3>
+                <p style="color:var(--text-muted);font-size:.9rem;max-width:820px">Cette page prépare la future offre Pro : analyse métier, rapport prêt à présenter, résumé sécurisé du jeu de données et appel Supabase/OpenRouter sans exposer la clé IA.</p>
             </div>
             <button class="btn btn-secondary" onclick="goStep(1)">Importer un fichier</button>
         </div>
@@ -4388,59 +4554,68 @@ function renderPro() {
             <div class="card">
                 <h3>1. Configuration du backend Pro</h3>
                 <div class="form-group">
-                    <label>Endpoint Supabase Edge Function</label>
-                    <input id="pro-endpoint" value="${escapeHtml(APP.proEndpoint)}" placeholder="${endpointHint}">
+                    <label>Profil métier</label>
+                    <select id="pro-profile" onchange="setProProfile(this.value)">${profileOptions}</select>
                 </div>
                 <div class="form-group">
-                    <label>Modele OpenRouter</label>
+                    <label>Endpoint Supabase Edge Function</label>
+                    <input id="pro-endpoint" value="${escapeHtml(APP.proEndpoint)}" placeholder="${DEFAULT_PRO_ENDPOINT}">
+                </div>
+                <div class="form-group">
+                    <label>Modèle OpenRouter</label>
                     <input id="pro-model" value="${escapeHtml(APP.proModel)}" placeholder="openai/gpt-4o-mini">
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="saveProConfig()">Enregistrer la configuration</button>
-                    <button class="btn btn-secondary" onclick="APP.proEndpoint='';try{localStorage.removeItem('afridata_pro_endpoint')}catch(e){};renderStep()">Mode local</button>
+                    <button class="btn btn-secondary" onclick="APP.proEndpoint='';try{localStorage.setItem('afridata_pro_endpoint','__local__')}catch(e){};renderStep()">Mode local</button>
+                    <button class="btn btn-secondary" onclick="APP.proEndpoint=DEFAULT_PRO_ENDPOINT;try{localStorage.setItem('afridata_pro_endpoint',DEFAULT_PRO_ENDPOINT)}catch(e){};renderStep()">Endpoint AfriData</button>
                 </div>
-                <p style="font-size:.78rem;color:var(--text-muted);margin-top:.7rem">Sans endpoint, l'assistant utilise une analyse locale. Avec Supabase, seul un resume securise est envoye par defaut.</p>
+                <p style="font-size:.78rem;color:var(--text-muted);margin-top:.7rem">Sans endpoint, l'assistant utilise une analyse locale. Avec Supabase, seul un résumé sécurisé est envoyé par défaut.</p>
             </div>
 
             <div class="card">
-                <h3>2. Question a poser a l'assistant</h3>
+                <h3>2. Question à poser à l'assistant</h3>
+                <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.8rem">${quickButtons}</div>
                 <div class="form-group">
-                    <textarea id="pro-question" rows="4" placeholder="Ex : Que dois-je corriger en priorite avant de presenter ce fichier ?"></textarea>
+                    <textarea id="pro-question" rows="4" placeholder="Ex : Que dois-je corriger en priorité avant de présenter ce fichier ?"></textarea>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="askProAssistant()">✨ Generer l'analyse Pro</button>
+                    <button class="btn btn-primary" onclick="askProAssistant()">✨ Générer l'analyse Pro</button>
                     <button class="btn btn-secondary" onclick="copyProPrompt()">Copier le prompt</button>
+                    <button class="btn btn-secondary" onclick="downloadProReport()" ${APP.proAnswer ? '' : 'disabled'}>Télécharger le rapport Pro</button>
                 </div>
                 ${APP.proStatus ? `<p style="margin-top:.7rem;color:var(--text-muted);font-size:.82rem">${escapeHtml(APP.proStatus)}</p>` : ''}
             </div>
 
             <div class="card">
-                <h3>3. Reponse Pro</h3>
-                <div class="pro-response">${APP.proAnswer ? escapeHtml(APP.proAnswer) : "L'analyse apparaitra ici. En mode local, elle s'appuie sur les scores, problemes et recommandations deja calcules par AfriData Ready."}</div>
+                <h3>3. Réponse Pro</h3>
+                ${renderProAnswer()}
             </div>
         </div>
 
         <aside>
             <div class="pro-panel">
-                <h3 style="border:none;margin-bottom:.5rem">Resume transmis</h3>
+                <h3 style="border:none;margin-bottom:.5rem">Résumé transmis</h3>
                 ${hasData ? `<div class="pro-kpi-row">
                     <div class="pro-kpi"><strong>${APP.data.length}</strong><span>Lignes</span></div>
                     <div class="pro-kpi"><strong>${APP.columns.length}</strong><span>Colonnes</span></div>
                     <div class="pro-kpi"><strong>${q.totalMissing}</strong><span>Valeurs manquantes</span></div>
                     <div class="pro-kpi"><strong>${aqi.total}/100</strong><span>AQI</span></div>
+                    <div class="pro-kpi"><strong>${Object.keys(q.outlierDetails || {}).length}</strong><span>Cols. aberrantes</span></div>
+                    <div class="pro-kpi"><strong>${sensitiveColumns().length}</strong><span>Cols. sensibles possibles</span></div>
                 </div>
-                <p style="font-size:.82rem;color:var(--text-muted)">Le resume ne contient pas les lignes brutes. Il contient les noms de colonnes, les scores, les statistiques de qualite et les priorites de correction.</p>` :
-                `<p style="font-size:.9rem;color:var(--text-muted)">Aucun fichier importe. Importez un jeu de donnees pour produire un resume Pro.</p>`}
+                <p style="font-size:.82rem;color:var(--text-muted)">Le résumé ne contient pas les lignes brutes. Il contient les noms de colonnes, scores, statistiques, valeurs fréquentes et exemples masqués pour les colonnes sensibles.</p>` :
+                `<p style="font-size:.9rem;color:var(--text-muted)">Aucun fichier importé. Importez un jeu de données pour produire un résumé Pro.</p>`}
             </div>
             <div class="card">
-                <h3>Fonctions Pro prevues</h3>
-                <div class="issue info">✨ Diagnostic explique en langage clair</div>
-                <div class="issue info">📖 Brouillon de dictionnaire de donnees</div>
-                <div class="issue info">📋 Resume executif pour rapport</div>
-                <div class="issue info">🏢 Profils metier : sante, education, ONG, recherche</div>
+                <h3>Fonctions Pro prévues</h3>
+                <div class="issue info">✨ Diagnostic expliqué en langage clair</div>
+                <div class="issue info">📖 Brouillon de dictionnaire de données</div>
+                <div class="issue info">📋 Résumé exécutif pour rapport</div>
+                <div class="issue info">🏢 Profils métier : santé, éducation, ONG, recherche</div>
             </div>
             <details class="card">
-                <summary style="cursor:pointer;font-weight:700;color:var(--primary)">Voir le prompt prepare</summary>
+                <summary style="cursor:pointer;font-weight:700;color:var(--primary)">Voir le prompt préparé</summary>
                 <pre style="white-space:pre-wrap;font-size:.75rem;color:#455;max-height:360px;overflow:auto;margin-top:.8rem">${escapeHtml(APP.proLastPrompt || buildProPrompt(''))}</pre>
             </details>
         </aside>
