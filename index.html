@@ -87,6 +87,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#263238;bac
 
 .card{background:var(--card);border-radius:var(--radius);padding:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem;border:1px solid #EEF5F6}
 .card h3{color:var(--primary);font-size:1rem;margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:2px solid var(--soft)}
+.pro-badge{display:inline-flex;align-items:center;gap:.35rem;background:#FFF4E5;color:#9A4D00;border:1px solid #FFD8A3;border-radius:999px;padding:.2rem .55rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.pro-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:1rem;align-items:start}
+.pro-panel{background:linear-gradient(135deg,#FFFFFF 0%,#F5FCFD 100%);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.pro-response{background:#F8FBFC;border:1px solid var(--border);border-radius:8px;padding:1rem;line-height:1.55;font-size:.9rem;white-space:pre-wrap}
+.pro-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.7rem;margin:.8rem 0}
+.pro-kpi{background:#fff;border:1px solid #EEF5F6;border-left:4px solid var(--primary-light);border-radius:8px;padding:.7rem}
+.pro-kpi strong{display:block;color:var(--primary);font-size:1.15rem}
+.pro-kpi span{font-size:.76rem;color:var(--text-muted)}
 
 /* Table */
 .table-wrap{overflow-x:auto;margin:.8rem 0;max-height:500px;overflow-y:auto}
@@ -219,6 +227,7 @@ textarea{min-height:64px}
 .page-header h2{font-size:1.25rem}
 .welcome-hero{grid-template-columns:1fr;text-align:left;gap:1rem}
 .mode-grid{grid-template-columns:1fr}
+.pro-grid{grid-template-columns:1fr}
 }
 @media(max-width:560px){
 .main{padding:4.4rem .8rem 2.5rem}
@@ -373,7 +382,7 @@ async function promptInstall() {
 const I18N = {
     fr: {
         steps: ['Importer les données', 'Qualité des données', 'Documenter les variables', 'Métadonnées', 'Score FAIR', 'AI Readiness', 'Gouvernance', 'Tableau de bord AQI', 'Exporter'],
-        aux: { home: 'Accueil', projects: 'Mes projets', reference: 'Référentiel utilisé', about: 'À propos' },
+        aux: { home: 'Accueil', projects: 'Mes projets', pro: 'Assistant Pro', reference: 'Référentiel utilisé', about: 'À propos' },
         btnBack: 'Retour', btnNext: 'Suivant',
         install: "Installer l'application",
         founder: 'Fondateur',
@@ -389,6 +398,7 @@ const I18N = {
             7: ['Étape 7 : Gouvernance', 'Sécurité, confidentialité, provenance et traçabilité (RGPD · ISO 25012 · DAMA-DMBOK)'],
             8: ['Étape 8 : Tableau de bord AQI', 'Score global, progression et visualisations de votre jeu de données'],
             9: ['Étape 9 : Exporter le Data Product', 'Téléchargez votre jeu de données documenté, certifié et conforme'],
+            pro: ['✨ Assistant Pro', 'Analyse augmentée, recommandations et rapports assistés par IA'],
             referentiel: ['📖 Référentiel utilisé', 'Standards internationaux mobilisés par AfriData Ready'],
             projects: ['📂 Mes projets', 'Vos projets sont stockés localement dans ce navigateur'],
             about: ["ℹ️ À propos d'AfriData Ready", 'Un outil local pour améliorer la qualité, la documentation et la réutilisation des données']
@@ -400,6 +410,8 @@ const I18N = {
             quickP1: '✓ Import direct du fichier', quickP2: '✓ Corrections qualité guidées', quickP3: '✓ Export final complet', quickBtn: 'Commencer →', sampleBtn: 'Fichier exemple',
             projTitle: 'Projet AfriData Ready', projDesc: 'Recommandé pour un travail en plusieurs étapes avec sauvegarde locale et reprise du traitement plus tard.',
             projP1: '✓ Sauvegarde automatique locale', projP2: '✓ Historique des corrections', projP3: '✓ Import/export de projets', projBtn: 'Ouvrir mes projets →',
+            proTitle: 'Version Pro pilote', proDesc: "Assistant IA pour expliquer, prioriser et rédiger la documentation du jeu de données.",
+            proP1: '✓ Résumé sécurisé du dataset', proP2: '✓ Recommandations prêtes à présenter', proP3: '✓ Branchable Supabase/OpenRouter', proBtn: 'Découvrir Pro →',
             trust: '🔒 Vos données restent sur votre ordinateur : aucun envoi sur Internet.',
             feat1Ico: '🔒', feat1T: '100% local', feat1D: 'Vos fichiers ne quittent jamais votre navigateur. Aucun serveur, fonctionne hors-ligne.',
             feat2Ico: '🎯', feat2T: 'Score AQI guidé', feat2D: 'Un score sur 100 et un assistant qui propose les corrections pour atteindre la qualité visée.',
@@ -428,7 +440,7 @@ const I18N = {
     },
     en: {
         steps: ['Import data', 'Data quality', 'Document variables', 'Metadata', 'FAIR score', 'AI Readiness', 'Governance', 'AQI dashboard', 'Export'],
-        aux: { home: 'Home', projects: 'My projects', reference: 'Standards used', about: 'About' },
+        aux: { home: 'Home', projects: 'My projects', pro: 'Pro assistant', reference: 'Standards used', about: 'About' },
         btnBack: 'Back', btnNext: 'Next',
         install: 'Install the app',
         founder: 'Founder',
@@ -444,6 +456,7 @@ const I18N = {
             7: ['Step 7: Governance', 'Security, privacy, provenance and traceability (GDPR · ISO 25012 · DAMA-DMBOK)'],
             8: ['Step 8: AQI dashboard', 'Overall score, progress and visualisations of your dataset'],
             9: ['Step 9: Export the Data Product', 'Download your documented, certified, compliant dataset'],
+            pro: ['✨ Pro Assistant', 'AI-assisted analysis, recommendations and reporting'],
             referentiel: ['📖 Standards used', 'International standards leveraged by AfriData Ready'],
             projects: ['📂 My projects', 'Your projects are stored locally in this browser'],
             about: ['ℹ️ About AfriData Ready', 'A local tool to improve data quality, documentation and reuse']
@@ -455,6 +468,8 @@ const I18N = {
             quickP1: '✓ Direct file import', quickP2: '✓ Guided quality fixes', quickP3: '✓ Complete final export', quickBtn: 'Start →', sampleBtn: 'Sample file',
             projTitle: 'AfriData Ready Project', projDesc: 'Recommended for multi-step work with local saving and resuming later.',
             projP1: '✓ Automatic local saving', projP2: '✓ Correction history', projP3: '✓ Project import/export', projBtn: 'Open my projects →',
+            proTitle: 'Pro pilot version', proDesc: 'AI assistant to explain, prioritize and draft dataset documentation.',
+            proP1: '✓ Safe dataset summary', proP2: '✓ Presentation-ready recommendations', proP3: '✓ Supabase/OpenRouter ready', proBtn: 'Explore Pro →',
             trust: '🔒 Your data stays on your computer: nothing is sent to the Internet.',
             feat1Ico: '🔒', feat1T: '100% local', feat1D: 'Your files never leave your browser. No server, works offline.',
             feat2Ico: '🎯', feat2T: 'Guided AQI score', feat2D: 'A score out of 100 and an assistant that suggests the fixes to reach your target quality.',
@@ -530,6 +545,11 @@ const APP = {
     anonymizedCols: [],  // colonnes sensibles pseudonymisées (gouvernance)
     activeEditTab: 'edit-cells',
     notice: null,
+    proEndpoint: (() => { try { return localStorage.getItem('afridata_pro_endpoint') || ''; } catch (e) { return ''; } })(),
+    proModel: (() => { try { return localStorage.getItem('afridata_pro_model') || 'openai/gpt-4o-mini'; } catch (e) { return 'openai/gpt-4o-mini'; } })(),
+    proAnswer: '',
+    proLastPrompt: '',
+    proStatus: '',
     _assistCache: null
 };
 const AQI_TARGET = 90;
@@ -578,6 +598,7 @@ function renderNav() {
         const auxItems = [
             ['welcome', '🏠', L().aux.home, false],
             ['projects', '📂', L().aux.projects, false],
+            ['pro', '✨', L().aux.pro, false],
             ['referentiel', '📖', L().aux.reference, false],
             ['about', 'ℹ️', L().aux.about, false]
         ];
@@ -4072,6 +4093,22 @@ function renderWelcome() {
             </div>
             <button class="btn btn-outline btn-block">${w.projBtn}</button>
         </div>
+        <div class="card mode-card" onclick="goStep('pro')">
+            <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.3rem">
+                    <div class="mode-icon mode-icon-proj">✨</div>
+                    <span class="pro-badge">Pro</span>
+                </div>
+                <h3>${w.proTitle}</h3>
+                <p>${w.proDesc}</p>
+                <div class="mode-points">
+                    <span>${w.proP1}</span>
+                    <span>${w.proP2}</span>
+                    <span>${w.proP3}</span>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block">${w.proBtn}</button>
+        </div>
     </div>
     <div class="welcome-feature-grid">
         <div class="welcome-feature"><div class="wf-ico">${w.feat1Ico}</div><h4>${w.feat1T}</h4><p>${w.feat1D}</p></div>
@@ -4134,6 +4171,256 @@ async function loadProjectsList() {
     el.innerHTML = html;
 }
 
+// ── Page Pro : assistant IA pilote (local + endpoint Supabase optionnel) ──
+function saveProConfig() {
+    const endpoint = document.getElementById('pro-endpoint')?.value.trim() || '';
+    const model = document.getElementById('pro-model')?.value.trim() || 'openai/gpt-4o-mini';
+    APP.proEndpoint = endpoint;
+    APP.proModel = model;
+    try {
+        localStorage.setItem('afridata_pro_endpoint', endpoint);
+        localStorage.setItem('afridata_pro_model', model);
+    } catch (e) {}
+    toast(endpoint ? 'Configuration Pro enregistrée.' : 'Configuration Pro enregistrée en mode local.', 'success');
+    renderStep();
+}
+
+function proDatasetSummary() {
+    if (!APP.data || !APP.data.length) return {
+        status: 'no_dataset',
+        message: 'Aucun jeu de données importé.'
+    };
+    const q = APP.qualityReport || analyzeQuality();
+    const fair = APP.fairScore || computeFAIR();
+    const ai = APP.aiScore || computeAI();
+    const aqi = APP.aqiScore || computeAQI();
+    const numericCols = APP.columns.filter(c => isNumericCol(c));
+    const missingCols = APP.columns
+        .map(c => ({ column: c, missing: countMissing(c), pct: pct(countMissing(c), APP.data.length) }))
+        .filter(x => x.missing > 0)
+        .sort((a, b) => b.missing - a.missing)
+        .slice(0, 10);
+    const outlierCols = Object.entries(q.outlierDetails || {}).map(([column, detail]) => ({
+        column,
+        count: detail.count,
+        normal_range: [detail.lo, detail.hi]
+    }));
+    const similarCols = Object.entries(q.similarValueDetails || {}).map(([column, groups]) => ({
+        column,
+        groups: groups.length,
+        examples: groups.slice(0, 3).map(g => ({ values_count: g.values.length, proposed_target: g.target, rows: g.count }))
+    }));
+    return {
+        status: 'ready',
+        file_name: APP.fileName || 'dataset',
+        rows: APP.data.length,
+        columns: APP.columns.length,
+        column_names: APP.columns,
+        numeric_columns: numericCols,
+        categorical_columns: APP.columns.filter(c => !numericCols.includes(c)),
+        quality: {
+            missing_values: q.totalMissing,
+            missing_percent: q.missingPct,
+            duplicates: q.n_duplicates,
+            empty_columns: q.emptyCols,
+            missing_columns_top: missingCols,
+            outlier_columns: outlierCols,
+            similar_value_columns: similarCols
+        },
+        documentation: {
+            documented_columns: APP.columns.filter(c => APP.variableDocs[c] && APP.variableDocs[c].description).length,
+            total_columns: APP.columns.length,
+            metadata_present: Object.entries(APP.metadata || {}).filter(([, v]) => Boolean(v)).map(([k]) => k),
+            metadata_missing: ['title', 'author', 'description', 'license', 'contact'].filter(k => !APP.metadata[k])
+        },
+        scores: {
+            aqi: aqi.total,
+            fair: fair.total,
+            ai_readiness: ai.total
+        },
+        privacy_note: 'Ce résumé ne contient pas les lignes brutes du fichier. Il transmet surtout des indicateurs, noms de colonnes et statistiques.'
+    };
+}
+
+function buildProPrompt(question) {
+    const summary = proDatasetSummary();
+    const q = question || "Analyse ce jeu de données et propose les priorités d'amélioration.";
+    return `Tu es l'assistant Pro d'AfriData Ready. Reponds en francais clair, professionnel et actionnable.
+
+Objectif :
+- expliquer l'etat du jeu de donnees ;
+- prioriser les corrections ;
+- proposer des formulations utiles pour un rapport ou une presentation ;
+- ne pas inventer de faits absents du resume.
+
+Question utilisateur :
+${q}
+
+Resume securise du jeu de donnees :
+${JSON.stringify(summary, null, 2)}
+
+Format attendu :
+1. Diagnostic rapide
+2. Priorites de correction
+3. Recommandations FAIR / AI-ready
+4. Texte court pret a coller dans un rapport`;
+}
+
+function localProAdvice(question) {
+    if (!APP.data || !APP.data.length) {
+        return "Importez d'abord un fichier pour activer l'analyse Pro du jeu de donnees.";
+    }
+    const q = APP.qualityReport || analyzeQuality();
+    const fair = APP.fairScore || computeFAIR();
+    const ai = APP.aiScore || computeAI();
+    const aqi = APP.aqiScore || computeAQI();
+    const assist = buildAssistantActions();
+    const missingMeta = ['title', 'author', 'description', 'license', 'contact'].filter(k => !APP.metadata[k]);
+    const lines = [];
+    lines.push(`Diagnostic rapide\nAQI actuel : ${aqi.total}/100. Score FAIR : ${fair.total}/100. AI Readiness : ${ai.total}/100.`);
+    lines.push(`Le fichier contient ${APP.data.length} ligne(s), ${APP.columns.length} colonne(s), ${q.totalMissing} valeur(s) manquante(s), ${q.n_duplicates} doublon(s) et ${Object.keys(q.outlierDetails || {}).length} colonne(s) avec valeurs aberrantes.`);
+    if (assist.actions.length) {
+        lines.push(`\nPriorites de correction\n${assist.actions.map((a, i) => `${i + 1}. ${a.label} : ${a.why} Gain estime : +${a.gain} point(s).`).join('\n')}`);
+    } else {
+        lines.push("\nPriorites de correction\nAucune correction automatique majeure n'est disponible. Les gains restants viendront surtout de la documentation, des metadonnees et de la validation metier.");
+    }
+    lines.push(`\nRecommandations FAIR / AI-ready\nDocumenter ${APP.columns.length - APP.columns.filter(c => APP.variableDocs[c] && APP.variableDocs[c].description).length} variable(s) restante(s). Completer les metadonnees manquantes : ${missingMeta.length ? missingMeta.join(', ') : 'aucune metadonnee cle manquante'}.`);
+    lines.push(`\nTexte court pret a coller dans un rapport\nLe jeu de donnees "${APP.fileName || 'analyse'}" a ete evalue avec AfriData Ready. L'analyse signale un score AQI de ${aqi.total}/100, un score FAIR de ${fair.total}/100 et un score AI Readiness de ${ai.total}/100. Les priorites portent sur la qualite des donnees, la documentation des variables et la completion des metadonnees avant publication ou reutilisation analytique.`);
+    if (question) lines.push(`\nQuestion traitee\n${question}`);
+    return lines.join('\n');
+}
+
+async function askProAssistant() {
+    const question = document.getElementById('pro-question')?.value.trim() || '';
+    const prompt = buildProPrompt(question);
+    APP.proLastPrompt = prompt;
+    if (!APP.data || !APP.data.length) {
+        APP.proAnswer = localProAdvice(question);
+        APP.proStatus = 'Mode local : aucun fichier importe.';
+        renderStep();
+        return;
+    }
+    if (!APP.proEndpoint) {
+        APP.proAnswer = localProAdvice(question);
+        APP.proStatus = 'Mode local : aucun endpoint Supabase configure.';
+        renderStep();
+        return;
+    }
+    showLoading('Assistant Pro en cours...');
+    try {
+        const res = await fetch(APP.proEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, model: APP.proModel || 'openai/gpt-4o-mini', temperature: 0.2 })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.message || `Erreur HTTP ${res.status}`);
+        APP.proAnswer = data.answer || data.content || JSON.stringify(data, null, 2);
+        APP.proStatus = 'Analyse IA generee via Supabase/OpenRouter.';
+        toast('Analyse Pro générée.', 'success');
+    } catch (err) {
+        APP.proAnswer = localProAdvice(question);
+        APP.proStatus = `Endpoint indisponible (${err.message}). Repli sur l'analyse locale.`;
+        toast('Endpoint Pro indisponible : analyse locale affichée.', 'info', 5000);
+    } finally {
+        hideLoading();
+        renderStep();
+    }
+}
+
+async function copyProPrompt() {
+    const prompt = APP.proLastPrompt || buildProPrompt(document.getElementById('pro-question')?.value.trim() || '');
+    try {
+        await navigator.clipboard.writeText(prompt);
+        toast('Prompt Pro copié.', 'success');
+    } catch (e) {
+        APP.proLastPrompt = prompt;
+        toast('Copie impossible automatiquement. Le prompt reste visible dans la page.', 'info');
+        renderStep();
+    }
+}
+
+function renderPro() {
+    const hasData = APP.data && APP.data.length;
+    const q = hasData ? (APP.qualityReport || analyzeQuality()) : null;
+    const aqi = hasData ? (APP.aqiScore || computeAQI()) : null;
+    const endpointHint = 'https://TON_PROJECT_REF.supabase.co/functions/v1/openrouter-chat';
+    return `${stepHeaderHTML('pro')}
+    <div class="card" style="border-left:5px solid var(--accent)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+            <div>
+                <span class="pro-badge">Version Pro pilote</span>
+                <h3 style="border:none;margin:.6rem 0 .25rem">Assistant IA pour qualite, documentation et rapport</h3>
+                <p style="color:var(--text-muted);font-size:.9rem;max-width:760px">Cette page prepare la future offre Pro : l'application reste utilisable localement, puis peut appeler une Edge Function Supabase pour obtenir une analyse IA sans exposer la cle OpenRouter.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goStep(1)">Importer un fichier</button>
+        </div>
+    </div>
+
+    <div class="pro-grid">
+        <div>
+            <div class="card">
+                <h3>1. Configuration du backend Pro</h3>
+                <div class="form-group">
+                    <label>Endpoint Supabase Edge Function</label>
+                    <input id="pro-endpoint" value="${escapeHtml(APP.proEndpoint)}" placeholder="${endpointHint}">
+                </div>
+                <div class="form-group">
+                    <label>Modele OpenRouter</label>
+                    <input id="pro-model" value="${escapeHtml(APP.proModel)}" placeholder="openai/gpt-4o-mini">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="saveProConfig()">Enregistrer la configuration</button>
+                    <button class="btn btn-secondary" onclick="APP.proEndpoint='';try{localStorage.removeItem('afridata_pro_endpoint')}catch(e){};renderStep()">Mode local</button>
+                </div>
+                <p style="font-size:.78rem;color:var(--text-muted);margin-top:.7rem">Sans endpoint, l'assistant utilise une analyse locale. Avec Supabase, seul un resume securise est envoye par defaut.</p>
+            </div>
+
+            <div class="card">
+                <h3>2. Question a poser a l'assistant</h3>
+                <div class="form-group">
+                    <textarea id="pro-question" rows="4" placeholder="Ex : Que dois-je corriger en priorite avant de presenter ce fichier ?"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="askProAssistant()">✨ Generer l'analyse Pro</button>
+                    <button class="btn btn-secondary" onclick="copyProPrompt()">Copier le prompt</button>
+                </div>
+                ${APP.proStatus ? `<p style="margin-top:.7rem;color:var(--text-muted);font-size:.82rem">${escapeHtml(APP.proStatus)}</p>` : ''}
+            </div>
+
+            <div class="card">
+                <h3>3. Reponse Pro</h3>
+                <div class="pro-response">${APP.proAnswer ? escapeHtml(APP.proAnswer) : "L'analyse apparaitra ici. En mode local, elle s'appuie sur les scores, problemes et recommandations deja calcules par AfriData Ready."}</div>
+            </div>
+        </div>
+
+        <aside>
+            <div class="pro-panel">
+                <h3 style="border:none;margin-bottom:.5rem">Resume transmis</h3>
+                ${hasData ? `<div class="pro-kpi-row">
+                    <div class="pro-kpi"><strong>${APP.data.length}</strong><span>Lignes</span></div>
+                    <div class="pro-kpi"><strong>${APP.columns.length}</strong><span>Colonnes</span></div>
+                    <div class="pro-kpi"><strong>${q.totalMissing}</strong><span>Valeurs manquantes</span></div>
+                    <div class="pro-kpi"><strong>${aqi.total}/100</strong><span>AQI</span></div>
+                </div>
+                <p style="font-size:.82rem;color:var(--text-muted)">Le resume ne contient pas les lignes brutes. Il contient les noms de colonnes, les scores, les statistiques de qualite et les priorites de correction.</p>` :
+                `<p style="font-size:.9rem;color:var(--text-muted)">Aucun fichier importe. Importez un jeu de donnees pour produire un resume Pro.</p>`}
+            </div>
+            <div class="card">
+                <h3>Fonctions Pro prevues</h3>
+                <div class="issue info">✨ Diagnostic explique en langage clair</div>
+                <div class="issue info">📖 Brouillon de dictionnaire de donnees</div>
+                <div class="issue info">📋 Resume executif pour rapport</div>
+                <div class="issue info">🏢 Profils metier : sante, education, ONG, recherche</div>
+            </div>
+            <details class="card">
+                <summary style="cursor:pointer;font-weight:700;color:var(--primary)">Voir le prompt prepare</summary>
+                <pre style="white-space:pre-wrap;font-size:.75rem;color:#455;max-height:360px;overflow:auto;margin-top:.8rem">${escapeHtml(APP.proLastPrompt || buildProPrompt(''))}</pre>
+            </details>
+        </aside>
+    </div>`;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // RENDER ENGINE
 // ═══════════════════════════════════════════════════════════════
@@ -4142,7 +4429,7 @@ function renderStep() {
     const renderers = {
         1: renderStep1, 2: renderStep2, 3: renderStep4, 4: renderStep5,
         5: renderStep6, 6: renderStep7, 7: renderGovernance, 8: renderAnalysis, 9: renderStep9,
-        analysis: renderAnalysis, referentiel: renderReferentiel, about: renderAbout,
+        analysis: renderAnalysis, pro: renderPro, referentiel: renderReferentiel, about: renderAbout,
         welcome: renderWelcome, projects: renderProjects
     };
     const showBar = APP.data && APP.data.length && (typeof APP.step === 'number' || APP.step === 'analysis');

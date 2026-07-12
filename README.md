@@ -21,6 +21,19 @@ AfriData Ready est une application d'accompagnement pour transformer un fichier 
 8. Recommandations priorisées et actions automatiques.
 9. Export d'un data product : données corrigées, dictionnaire, métadonnées, scores, rapport et certificat.
 
+## Version Pro pilote
+
+La version Pro ajoute une page `Assistant Pro` dans l'application statique.
+
+Elle permet de :
+
+- generer un diagnostic explique du jeu de donnees ;
+- prioriser les corrections a effectuer ;
+- preparer un resume executif pour un rapport ou une presentation ;
+- brancher une Edge Function Supabase `openrouter-chat` pour appeler OpenRouter sans exposer la cle API.
+
+Sans endpoint Supabase configure, l'assistant fonctionne en mode local avec les scores et recommandations deja calcules par AfriData Ready.
+
 ## Utilisation rapide
 
 ### Version web statique
